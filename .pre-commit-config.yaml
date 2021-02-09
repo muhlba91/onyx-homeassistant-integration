@@ -1,0 +1,33 @@
+---
+repos:
+  - repo: https://github.com/psf/black
+    rev: 20.8b1
+    hooks:
+      - id: black
+        language_version: python3
+  - repo: https://github.com/life4/flakehell.git
+    rev: v.0.7.1
+    hooks:
+      - id: flakehell
+        language_version: python3
+  - repo: https://github.com/talos-systems/conform
+    rev: master
+    hooks:
+      - id: conform
+        stages:
+          - commit-msg
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
+    hooks:
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-xml
+      - id: check-yaml
+      - id: detect-aws-credentials
+        args: [
+            "--allow-missing-credentials"
+        ]
+      - id: detect-private-key
+

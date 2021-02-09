@@ -1,0 +1,43 @@
+---
+name: "CodeQL"
+
+on:
+  push:
+    branches:
+      - master
+      - next
+  pull_request:
+    branches:
+      - master
+      - next
+  schedule:
+    - cron: '32 5 * * 1'
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'python' ]
+        python-version: [ 3.9 ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/config.yml
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1

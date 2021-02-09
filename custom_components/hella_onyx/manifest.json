@@ -1,0 +1,16 @@
+{
+  "domain": "hella_onyx",
+  "name": "Hella ONYX.CENTER",
+  "config_flow": true,
+  "documentation": "https://github.com/muhlba91/onyx-homeassistant-integration",
+  "requirements": [
+    "onyx-client>=2.1.0"
+  ],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": [
+    "@muhlba91"
+  ]
+}

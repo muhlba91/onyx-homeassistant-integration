@@ -1,0 +1,21 @@
+{
+  "title": "Hella ONYX.CENTER",
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "fingerprint": "[%key:common::config_flow::data::fingerprint%]",
+          "token": "[%key:common::config_flow::data::token%]",
+          "scan_interval": "[%key:common::config_flow::data::scan_interval%]"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+    }
+  }
+}
