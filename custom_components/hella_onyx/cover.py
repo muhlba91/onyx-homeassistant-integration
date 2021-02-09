@@ -8,6 +8,7 @@ from homeassistant.components.cover import (
     ATTR_POSITION,
     ATTR_TILT_POSITION,
     CoverEntity,
+    DEVICE_CLASS_SHUTTER,
     SUPPORT_CLOSE,
     SUPPORT_OPEN,
     SUPPORT_SET_POSITION,
@@ -80,12 +81,16 @@ class Shutter(OnyxEntity, CoverEntity):
         return f"{self._uuid}/Shutter"
 
     @property
+    def device_class(self) -> Optional[str]:
+        """Return the class of this device, from component DEVICE_CLASSES."""
+        return DEVICE_CLASS_SHUTTER
+
+    @property
     def supported_features(self):
         """Flag supported features."""
-        supported_features = SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP
-
-        if self.current_cover_position is not None:
-            supported_features |= SUPPORT_SET_POSITION
+        supported_features = (
+            SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP | SUPPORT_SET_POSITION
+        )
 
         if (
             self._type
