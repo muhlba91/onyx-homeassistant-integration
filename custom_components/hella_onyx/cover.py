@@ -1,6 +1,7 @@
 """The ONYX shutter entity."""
 import asyncio
 import logging
+from datetime import timedelta
 from typing import Any, Callable, Optional
 
 from homeassistant.components.cover import (
@@ -15,15 +16,19 @@ from homeassistant.components.cover import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.event import (
+    track_point_in_utc_time,
+)
 from homeassistant.helpers.typing import DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.util import utcnow
 from onyx_client.data.numeric_value import NumericValue
 from onyx_client.device import shutter
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
 from . import APIConnector, DOMAIN
-from .const import ONYX_API, ONYX_COORDINATOR
+from .const import INCREASED_UPDATE_INTERVAL, ONYX_API, ONYX_COORDINATOR
 from .moving_state import MovingState
 from .onyx_entity import OnyxEntity
 
@@ -45,7 +50,7 @@ async def async_setup_entry(
         Shutter(api, coordinator, device.name, device.device_type, device_id)
         for device_id, device in api.devices.items()
     ]
-    _LOGGER.debug("adding %s hella_onyx entities", len(shutters))
+    _LOGGER.info("adding %s hella_onyx entities", len(shutters))
     async_add_entities(shutters, True)
 
 
@@ -98,7 +103,7 @@ class Shutter(OnyxEntity, CoverEntity):
         None is unknown, 0 is closed, 100 is fully open.
         """
         position = self._device.actual_position
-        return (position.maximum - position.value) / position.maximum * 100
+        return int((position.maximum - position.value) / position.maximum * 100)
 
     @property
     def current_cover_tilt_position(self) -> int:
@@ -107,7 +112,7 @@ class Shutter(OnyxEntity, CoverEntity):
         None is unknown, 0 is closed, 100 is fully open.
         """
         position = self._device.actual_angle
-        return (position.maximum - position.value) / position.maximum * 100
+        return int(position.value / self._max_angle * 100)
 
     @property
     def is_opening(self) -> bool:
@@ -127,37 +132,39 @@ class Shutter(OnyxEntity, CoverEntity):
 
     def open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
-        self._set_state(MovingState.OPENING)
         asyncio.run_coroutine_threadsafe(
             self.api.send_device_command_action(self._uuid, Action.OPEN), self.hass.loop
         )
+        self._set_state(MovingState.OPENING)
 
     def close_cover(self, **kwargs: Any) -> None:
         """Close cover."""
-        self._set_state(MovingState.CLOSING)
         asyncio.run_coroutine_threadsafe(
             self.api.send_device_command_action(self._uuid, Action.CLOSE),
             self.hass.loop,
         )
+        self._set_state(MovingState.CLOSING)
 
     def set_cover_position(self, **kwargs):
         """Move the cover to a specific position."""
         if ATTR_POSITION in kwargs:
-            position = int(kwargs.get(ATTR_POSITION))
-            self._calculate_and_set_state(self._device.actual_position, position)
+            position = self._device.target_position.maximum - int(
+                kwargs.get(ATTR_POSITION)
+            )
             asyncio.run_coroutine_threadsafe(
                 self.api.send_device_command_properties(
-                    self._uuid, {"target_position": position}
+                    self._uuid, {"target_position": position, "target_angle": 0}
                 ),
                 self.hass.loop,
             )
+            self._calculate_and_set_state(self._device.actual_position, position)
 
     def stop_cover(self, **kwargs):
         """Stop the cover."""
-        self._set_state(MovingState.STILL)
         asyncio.run_coroutine_threadsafe(
             self.api.send_device_command_action(self._uuid, Action.STOP), self.hass.loop
         )
+        self._set_state(MovingState.STILL)
 
     def open_cover_tilt(self, **kwargs: Any) -> None:
         """Open the cover tilt."""
@@ -172,33 +179,51 @@ class Shutter(OnyxEntity, CoverEntity):
         if ATTR_TILT_POSITION in kwargs:
             angle = int(kwargs.get(ATTR_TILT_POSITION))
             hella_angle = int(angle * (self._max_angle / 100))
-            self._calculate_and_set_state(self._device.actual_angle, hella_angle)
             asyncio.run_coroutine_threadsafe(
                 self.api.send_device_command_properties(
                     self._uuid, {"target_angle": hella_angle}
                 ),
                 self.hass.loop,
             )
+            self._calculate_and_set_state(self._device.actual_angle, hella_angle)
 
     def stop_cover_tilt(self, **kwargs):
         """Stop the cover."""
-        self._set_state(MovingState.STILL)
         asyncio.run_coroutine_threadsafe(
             self.api.send_device_command_action(self._uuid, Action.STOP), self.hass.loop
         )
+        self._set_state(MovingState.STILL)
 
     def _set_state(self, state: MovingState):
         """Set the new moving state."""
         self._moving_state = state
+        if state != MovingState.STILL:
+            _LOGGER.debug("starting increased polling")
+            self._start_update_device_loop()
 
-    def _calculate_state(self, actual: NumericValue, new_value: int) -> MovingState:
-        """Calculate the new moving state."""
-        if new_value < actual.value:
-            return MovingState.CLOSING
-        elif new_value > actual.value:
-            return MovingState.OPENING
+    def _start_update_device_loop(self):
+        """Start the update loop."""
+        track_point_in_utc_time(
+            self.hass,
+            self._update_device,
+            utcnow() + timedelta(seconds=INCREASED_UPDATE_INTERVAL),
+        )
+
+    def _update_device(self, *args: Any):
+        """Update only this device."""
+        device = asyncio.run_coroutine_threadsafe(
+            self.api.update_device(self._uuid), self.hass.loop
+        ).result()
+        position = self._calculate_state(
+            device.actual_position, device.target_position.value
+        )
+        angle = self._calculate_state(device.actual_angle, device.target_angle.value)
+        if position == MovingState.STILL and angle == MovingState.STILL:
+            self._set_state(MovingState.STILL)
         else:
-            return MovingState.STILL
+            self._start_update_device_loop()
+
+        asyncio.run_coroutine_threadsafe(self.async_update_ha_state(), self.hass.loop)
 
     def _calculate_and_set_state(self, actual: NumericValue, new_value: int):
         """Calculate and set the new moving state."""
@@ -218,3 +243,13 @@ class Shutter(OnyxEntity, CoverEntity):
             return 180
         else:
             return 100
+
+    @staticmethod
+    def _calculate_state(actual: NumericValue, new_value: int) -> MovingState:
+        """Calculate the new moving state."""
+        if new_value < actual.value:
+            return MovingState.CLOSING
+        elif new_value > actual.value:
+            return MovingState.OPENING
+        else:
+            return MovingState.STILL

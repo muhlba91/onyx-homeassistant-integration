@@ -44,6 +44,13 @@ class APIConnector:
         groups = await client.devices(include_details=True)
         self.groups = {group.identifier: group for group in groups}
 
+    async def update_device(self, uuid: str):
+        """Update the given entity."""
+        client = self._client
+        device = await client.device(uuid)
+        self.devices[device.identifier] = device
+        return device
+
     async def send_device_command_action(self, uuid: str, action: Action):
         _LOGGER.info("executing %s for device %s", action.string(), uuid)
         success = await self._client.send_command(uuid, DeviceCommand(action=action))
