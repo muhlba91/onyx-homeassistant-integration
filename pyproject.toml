@@ -67,7 +67,7 @@ exclude_lines = [
     "parser\\..",
     "argparse\\..",
 ]
-fail_under = 93
+fail_under = 90
 show_missing = true
 
 [tool.flakehell]

@@ -48,14 +48,14 @@ async def async_setup_entry(
     coordinator = data[ONYX_COORDINATOR]
 
     shutters = [
-        Shutter(api, coordinator, device.name, device.device_type, device_id)
+        OnyxShutter(api, coordinator, device.name, device.device_type, device_id)
         for device_id, device in api.devices.items()
     ]
     _LOGGER.info("adding %s hella_onyx entities", len(shutters))
     async_add_entities(shutters, True)
 
 
-class Shutter(OnyxEntity, CoverEntity):
+class OnyxShutter(OnyxEntity, CoverEntity):
     """A shutter entity."""
 
     def __init__(
@@ -63,11 +63,11 @@ class Shutter(OnyxEntity, CoverEntity):
         api: APIConnector,
         coordinator: DataUpdateCoordinator,
         name: str,
-        type: DeviceType,
+        device_type: DeviceType,
         uuid: str,
     ):
         """Initialize a shutter entity."""
-        super().__init__(api, coordinator, name, type, uuid)
+        super().__init__(api, coordinator, name, device_type, uuid)
         self._moving_state = MovingState.STILL
 
     @property

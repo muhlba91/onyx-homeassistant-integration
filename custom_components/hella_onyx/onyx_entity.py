@@ -18,14 +18,14 @@ class OnyxEntity(CoordinatorEntity):
         api: APIConnector,
         coordinator: DataUpdateCoordinator,
         name: str,
-        type: DeviceType,
+        device_type: DeviceType,
         uuid: str,
     ):
         """Initialize a ONYX entity."""
         super().__init__(coordinator)
         self.api = api
         self._name = name
-        self._type = type
+        self._type = device_type
         self._uuid = uuid
 
     @property

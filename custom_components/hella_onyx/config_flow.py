@@ -1,4 +1,4 @@
-"""Config flow for LED-Pi integration."""
+"""Config flow for the ONYX integration."""
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
@@ -6,6 +6,8 @@ from homeassistant.const import (
     CONF_ACCESS_TOKEN,
     CONF_SCAN_INTERVAL,
 )
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from onyx_client import create_client
 
 from .const import CONF_FINGERPRINT, DOMAIN
 
@@ -39,8 +41,11 @@ class OnyxFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             token = user_input[CONF_ACCESS_TOKEN]
             scan_interval = user_input[CONF_SCAN_INTERVAL]
 
-            if await self._async_endpoint_existed(fingerprint):
+            if await self._async_exists(fingerprint):
                 return self.async_abort(reason="already_configured")
+
+            if not await self._async_verify_conn(fingerprint, token):
+                return self.async_abort(reason="cannot_connect")
 
             return self.async_create_entry(
                 title="ONYX",
@@ -59,9 +64,18 @@ class OnyxFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def _async_endpoint_existed(self, fingerprint):
+    async def _async_exists(self, fingerprint):
+        """Check if the endpoint exists already."""
         existing_fingerprints = [
             f"{entry.data.get(CONF_FINGERPRINT)}"
             for entry in self._async_current_entries()
         ]
         return fingerprint in existing_fingerprints
+
+    async def _async_verify_conn(self, fingerprint, token):
+        """Verify the connection credentials."""
+        return create_client(
+            fingerprint=fingerprint,
+            access_token=token,
+            client_session=async_get_clientsession(self.hass, False),
+        ).verify()

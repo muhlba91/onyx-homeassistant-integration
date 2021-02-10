@@ -10,6 +10,20 @@ This component creates an integration that provides **raffstore/shutter entities
 
 ---
 
+## Limitations
+
+This integration is under development and based on personal needs and Hella's API design and Home Assistant's
+interpretation of values diverges in a few aspects.
+
+Therefore, a few limitations are imposed on/by this integration:
+
+| Limitation | Description | Bound By |
+|------------|-------------|----------|
+| Fingerprint, Access Token Authentication | The API requires the ONYX.CENTER fingerprint and an access token. Basically, those can be retrieved programmatically, which is not implemented yet. | Personal Needs |
+| Shutter Position | Home Assistant takes the position 0 as closed and 100 as open, Hella the opposite. | Home Assistant |
+| Tilt Position | Home Assistant takes the position 0 as closed and 100 as open, Hella's values range between 0-90 and 0-180. | Home Assistant, Hella [<sup>1</sup>](https://github.com/hella-info/onyx_api/issues/2) |
+| Realtime Updates to Position Changes | The ONYX API polls devices approx. every 5 minutes but does not provide realtime updates. Therefore, setting a position in Home Assistant also triggers a timer sending a STOP command to force an update of the device's current value. | Hella [<sup>2</sup>](https://github.com/hella-info/onyx_api/issues/3) |
+
 ## Installation
 
 I recommend installation through [HACS](https://hacs.xyz/):
@@ -19,9 +33,32 @@ I recommend installation through [HACS](https://hacs.xyz/):
   category *Integration*.
 - Search for and install the "Hella ONYX.CENTER" integration.
 
+### Releases / Versions
+
+The integration offers the following possibilities:
+
+- `master`: the latest stable release
+- `next`: the next, cutting-edge release (**attention**: may be unstable)
+- releases following semantic versioning: if you need to pin the version, choose one of those
+
 ## Configuration
 
-Add it from the **Integrations menu**, set the desired configuration, and you're good to go.
+Add it from the **Integrations menu**, set the configuration, and you're good to go.
+
+| Configuration Key | Description |
+|-------------------|-------------|
+| Fingerprint | Your ONYX.CENTER fingerprint (see below). |
+| Access Token | The access token (see below). |
+| Scan Interval | Interval for polling for updates. |
+
+**Important!** Please read **[ONYX.CENTER API's Access Control](https://github.com/hella-info/onyx_api#access-control)**
+on how to retrieve the **fingerprint** and **access token**.
+
+Once configured, the integration **creates shutter entities** for:
+
+| Entity | Description |
+|--------|-------------|
+| Cover | Manage the shutter. ([API Reference](https://developers.home-assistant.io/docs/core/entity/cover/)) |
 
 ---
 
@@ -92,6 +129,8 @@ Finally, push with tags:
 ```bash
 $ git push --follow-tags
 ```
+
+**Note:** releasing is automated through the `master` branch!
 
 ---
 
