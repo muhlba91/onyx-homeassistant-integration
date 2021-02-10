@@ -4,7 +4,7 @@
   "config_flow": true,
   "documentation": "https://github.com/muhlba91/onyx-homeassistant-integration",
   "requirements": [
-    "onyx-client>=2.1.0"
+    "onyx-client==2.2.0"
   ],
   "ssdp": [],
   "zeroconf": [],
