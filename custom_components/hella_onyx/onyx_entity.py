@@ -42,3 +42,8 @@ class OnyxEntity(CoordinatorEntity):
             "manufacturer": "Hella",
             "model": self._type.string(),
         }
+
+    @property
+    def _device(self):
+        """Get the underlying device."""
+        return self.api.device(self._uuid)

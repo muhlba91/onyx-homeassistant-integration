@@ -3,6 +3,9 @@
 from unittest.mock import MagicMock
 
 import pytest
+from onyx_client.data.device_mode import DeviceMode
+from onyx_client.device.shutter import Shutter
+from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
 from custom_components.hella_onyx import DOMAIN
@@ -32,3 +35,14 @@ class TestOnyxEntity:
             "manufacturer": "Hella",
             "model": "raffstore_90",
         }
+
+    def test__device(self, entity, api):
+        device = Shutter(
+            "id",
+            "name",
+            DeviceType.RAFFSTORE_90,
+            DeviceMode(DeviceType.RAFFSTORE_90),
+            list(Action),
+        )
+        api.device.return_value = device
+        assert entity._device == device

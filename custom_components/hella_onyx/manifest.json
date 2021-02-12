@@ -3,6 +3,7 @@
   "name": "Hella ONYX.CENTER",
   "config_flow": true,
   "documentation": "https://github.com/muhlba91/onyx-homeassistant-integration",
+  "issue_tracker": "https://github.com/muhlba91/onyx-homeassistant-integration/issues",
   "requirements": [
     "onyx-client==2.3.1"
   ],

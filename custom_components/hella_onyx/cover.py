@@ -24,7 +24,6 @@ from homeassistant.helpers.event import (
 from homeassistant.helpers.typing import DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import utcnow
-from onyx_client.device import shutter
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
@@ -264,11 +263,6 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             delta=abs(actual - new_value),
             max_timedelta=max_timedelta,
         )
-
-    @property
-    def _device(self) -> shutter.Shutter:
-        """Get the underlying device."""
-        return self.api.device(self._uuid)
 
     @property
     def _max_angle(self) -> int:

@@ -2,10 +2,8 @@
   "name": "Hella ONYX.CENTER",
   "iot_class": "Cloud Polling",
   "domains": [
-    "hella",
-    "onyx",
-    "raffstore",
-    "shutter"
+    "hella_onyx",
+    "cover"
   ],
   "homeassistant": "2021.2.2",
   "render_readme": true

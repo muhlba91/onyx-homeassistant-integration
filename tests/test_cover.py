@@ -405,10 +405,6 @@ class TestOnyxShutter:
                     MovingState.CLOSING, delta=90, max_timedelta=10
                 )
 
-    def test__device(self, entity, device, api):
-        api.device.return_value = device
-        assert entity._device == device
-
     def test__max_angle(self, entity):
         assert entity._max_angle == 90
 
