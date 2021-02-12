@@ -58,6 +58,16 @@ jobs:
         run: |
           poetry run pytest
 
+  validate_hacs:
+    runs-on: ubuntu-latest
+    name: Check the Codebase
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
       - name: HACS Validation
         uses: hacs/action@main
         with:

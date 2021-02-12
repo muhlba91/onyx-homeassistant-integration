@@ -1,7 +1,9 @@
 {
   "releaseCommitMessageFormat": "chore(release): release {{currentTag}} [skip ci] [release]",
   "tagPrefix": "v",
-  "bumpFiles": [],
+  "bumpFiles": [
+    "custom_components/hella_onyx/manifest.json"
+  ],
   "packageFiles": [],
   "header": "# Changelog\n\n"
 }
