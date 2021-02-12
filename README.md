@@ -21,8 +21,15 @@ Therefore, a few limitations are imposed on/by this integration:
 |------------|-------------|----------|
 | Fingerprint, Access Token Authentication | The API requires the ONYX.CENTER fingerprint and an access token. Basically, those can be retrieved programmatically, which is not implemented yet. | Personal Needs |
 | Shutter Position | Home Assistant takes the position 0 as closed and 100 as open, Hella the opposite. | Home Assistant |
-| Tilt Position | Home Assistant takes the position 0 as closed and 100 as open, Hella's values range between 0-90 and 0-180. | Home Assistant, Hella [<sup>1</sup>](https://github.com/hella-info/onyx_api/issues/2) |
+| Tilt Position | Home Assistant takes the position 0 as closed and 100 as open, Hella's values range between 0-90 and 0-180. | Home Assistant |
 | Realtime Updates to Position Changes | The ONYX API polls devices approx. every 5 minutes but does not provide realtime updates. Therefore, setting a position in Home Assistant also triggers a timer sending a STOP command to force an update of the device's current value. | Hella [<sup>2</sup>](https://github.com/hella-info/onyx_api/issues/3) |
+
+### Drive Direction
+
+Hella offers a switch called "Change Drive Direction". Using this reverses opening and closing actions.
+
+This integration uses the value of this setting to invert the position and tilt angle. Therefore, if you encounter weird
+behaviour of raffstores/shutters showing the exact inverse of available actions, please check this property.
 
 ## Installation
 
@@ -39,7 +46,7 @@ The integration offers the following possibilities:
 
 - `master`: the latest stable release
 - `next`: the next, cutting-edge release (**attention**: may be unstable)
-- releases following semantic versioning: if you need to pin the version, choose one of those
+- `v*`: releases following semantic versioning - if you need to pin the version, choose one of those
 
 ## Configuration
 

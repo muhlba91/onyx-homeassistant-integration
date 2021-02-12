@@ -108,7 +108,11 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         None is unknown, 0 is closed, 100 is fully open.
         """
         position = self._device.actual_position
-        return int((position.maximum - position.value) / position.maximum * 100)
+        return int(
+            self._invert_position(position.value, position.maximum)
+            / position.maximum
+            * 100
+        )
 
     @property
     def current_cover_tilt_position(self) -> int:
@@ -117,7 +121,11 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         None is unknown, 0 is closed, 100 is fully open.
         """
         position = self._device.actual_angle
-        return int(position.value / self._max_angle * 100)
+        return int(
+            self._invert_position(position.value, self._max_angle, True)
+            / self._max_angle
+            * 100
+        )
 
     @property
     def is_opening(self) -> bool:
@@ -161,8 +169,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
     def set_cover_position(self, **kwargs):
         """Move the cover to a specific position."""
         if ATTR_POSITION in kwargs:
-            position = self._device.target_position.maximum - int(
-                kwargs.get(ATTR_POSITION)
+            position = self._invert_position(
+                int(kwargs.get(ATTR_POSITION)), self._device.target_position.maximum
             )
             asyncio.run_coroutine_threadsafe(
                 self.api.send_device_command_properties(
@@ -197,7 +205,9 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         """Move the cover tilt to a specific position."""
         if ATTR_TILT_POSITION in kwargs:
             angle = int(kwargs.get(ATTR_TILT_POSITION))
-            hella_angle = ceil(angle * (self._max_angle / 100))
+            hella_angle = self._invert_position(
+                ceil(angle * (self._max_angle / 100)), self._max_angle, False
+            )
             asyncio.run_coroutine_threadsafe(
                 self.api.send_device_command_properties(
                     self._uuid, {"target_angle": hella_angle}
@@ -243,13 +253,14 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
     def _calculate_and_set_state(self, actual: int, new_value: int, max_timedelta: int):
         """Calculate and set the new moving state."""
+        new_state = self._calculate_state(actual, new_value)
         if max_timedelta == -1:
-            if actual < new_value:
+            if new_state == MovingState.CLOSING:
                 max_timedelta = self._device.drivetime_down.value
-            else:
+            elif new_state == MovingState.OPENING:
                 max_timedelta = self._device.drivetime_up.value
         self._set_state(
-            self._calculate_state(actual, new_value),
+            new_state,
             delta=abs(actual - new_value),
             max_timedelta=max_timedelta,
         )
@@ -269,12 +280,25 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         else:
             return 100
 
-    @staticmethod
-    def _calculate_state(actual: int, new_value: int) -> MovingState:
+    def _calculate_state(self, actual: int, new_value: int) -> MovingState:
         """Calculate the new moving state."""
         if new_value < actual:
-            return MovingState.CLOSING
+            return (
+                MovingState.CLOSING
+                if not self._device.switch_drive_direction.value
+                else MovingState.OPENING
+            )
         elif new_value > actual:
-            return MovingState.OPENING
+            return (
+                MovingState.OPENING
+                if not self._device.switch_drive_direction.value
+                else MovingState.CLOSING
+            )
         else:
             return MovingState.STILL
+
+    def _invert_position(self, value: int, maximum: int, invert: bool = True) -> int:
+        """Inverts the position based on the drive direction."""
+        if self._device.switch_drive_direction.value and invert:
+            return value
+        return maximum - value
