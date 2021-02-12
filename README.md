@@ -1,7 +1,7 @@
 # LED-Pi Custom Component for Home Assistant
 
 [![](https://img.shields.io/github/license/muhlba91/onyx-homeassistant-integration?style=for-the-badge)](LICENSE)
-[![](https://img.shields.io/github/workflow/status/muhlba91/onyx-homeassistant-integration/Python%20package?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/actions)
+[![](https://img.shields.io/github/workflow/status/muhlba91/onyx-homeassistant-integration/Release?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/actions)
 [![](https://img.shields.io/coveralls/github/muhlba91/onyx-homeassistant-integration?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
 <a href="https://www.buymeacoffee.com/muhlba91" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="28" width="150"></a>

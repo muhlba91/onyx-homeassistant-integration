@@ -1,4 +1,4 @@
-name: Python package
+name: Release
 
 on:
   push:
@@ -63,6 +63,11 @@ jobs:
           poetry run coveralls
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+
+      - name: HACS Validation
+        uses: hacs/action@main
+        with:
+          category: integration
 
   release:
     runs-on: ubuntu-latest
