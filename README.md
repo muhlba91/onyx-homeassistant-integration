@@ -23,7 +23,7 @@ Therefore, a few limitations are imposed on/by this integration:
 | Fingerprint, Access Token Authentication | The API requires the ONYX.CENTER fingerprint and an access token. Basically, those can be retrieved programmatically, which is not implemented yet. | Personal Needs |
 | Shutter Position | Home Assistant takes the position 0 as closed and 100 as open, Hella the opposite. | Home Assistant |
 | Tilt Position | Home Assistant takes the position 0 as closed and 100 as open, Hella's values range between 0-90 and 0-180. | Home Assistant / Hella |
-| Realtime Updates to Position Changes | The ONYX API polls devices approx. every 5 minutes but does not provide complete realtime updates. See below for more information. | Hella [<sup>2</sup>](https://github.com/hella-info/onyx_api/issues/3) |
+| Realtime Updates to Position Changes | The ONYX API polls devices approx. every 5 minutes but does not provide complete realtime updates. See below for more information. | Hella [<sup>1</sup>](https://github.com/hella-info/onyx_api/issues/3) |
 
 ### Realtime Updates
 
