@@ -20,7 +20,9 @@ from .const import (
     DOMAIN,
     ONYX_API,
     ONYX_COORDINATOR,
+    ONYX_THREAD,
 )
+from .event_thread import EventThread
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -73,10 +75,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         request_refresh_debouncer=Debouncer(hass, _LOGGER, cooldown=0, immediate=True),
     )
 
+    thread = EventThread(onyx_api, coordinator)
     hass.data[DOMAIN][entry.entry_id] = {
         ONYX_API: onyx_api,
         ONYX_COORDINATOR: coordinator,
+        ONYX_THREAD: thread,
     }
+    thread.start()
 
     for platform in PLATFORMS:
         hass.async_create_task(

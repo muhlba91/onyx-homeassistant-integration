@@ -460,7 +460,7 @@ python-versions = "*"
 
 [[package]]
 name = "onyx-client"
-version = "2.3.1"
+version = "2.4.0"
 description = "HTTP Client for Hella's ONYX.CENTER API."
 category = "main"
 optional = false
@@ -823,7 +823,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "5f9cd56d9f231b047aea19afb54a091c6c5e9cd75624505dcf35e12aec6f46f4"
+content-hash = "e891cb1a9a42d3cb6ba17b4efbaeb839d9b1854fbe8b116077789785f098d216"
 
 [metadata.files]
 aiohttp = [
@@ -1266,8 +1266,8 @@ nodeenv = [
     {file = "nodeenv-1.5.0.tar.gz", hash = "sha256:ab45090ae383b716c4ef89e690c41ff8c2b257b85b309f01f3654df3d084bd7c"},
 ]
 onyx-client = [
-    {file = "onyx-client-2.3.1.tar.gz", hash = "sha256:448ca2788e1d94678b086ff84cfa5f9fc1e04b000d807ff8d62d6391d4f9dcf5"},
-    {file = "onyx_client-2.3.1-py3-none-any.whl", hash = "sha256:8b5155cbaaf4e0ee752639f39b7b3088048b83bfbb422049de5f3796db4e8dd0"},
+    {file = "onyx-client-2.4.0.tar.gz", hash = "sha256:3a24014f0bfb890470558e888a9d750ac00abbfbe6eb5f76b0cb2c015b0c6bf2"},
+    {file = "onyx_client-2.4.0-py3-none-any.whl", hash = "sha256:e0211de1eb5639fbc11afda3aeed919b3bc85ce54840d5d2682e9ec467b658a2"},
 ]
 packaging = [
     {file = "packaging-20.9-py2.py3-none-any.whl", hash = "sha256:67714da7f7bc052e064859c05c595155bd1ee9f69f76557e21f051443c20947a"},
