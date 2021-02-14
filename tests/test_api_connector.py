@@ -74,9 +74,16 @@ class TestAPIConnector:
                 await api.send_device_command_properties("id", {"fail": 0})
             assert mock_client.called
 
+    @pytest.mark.asyncio
+    async def test_listen_events(self, api):
+        with patch.object(api, "_client", new=MockClient) as mock_client:
+            async for device in api.listen_events():
+                assert device is not None
+            assert mock_client.called
+
 
 class MockClient:
-    def __init__(self):
+    def __init__(self, *kwargs):
         self.called = False
 
     def called(self):
@@ -113,4 +120,13 @@ class MockClient:
         self.called = True
         return command.action == Action.STOP or (
             command.properties is not None and "fail" not in command.properties
+        )
+
+    async def events(self):
+        yield Shutter(
+            "id",
+            "other",
+            DeviceType.RAFFSTORE_90,
+            DeviceMode(DeviceType.RAFFSTORE_90),
+            list(Action),
         )

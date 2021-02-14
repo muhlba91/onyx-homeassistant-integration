@@ -9,13 +9,13 @@ from homeassistant.const import (
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from onyx_client import create_client
 
-from .const import CONF_FINGERPRINT, DOMAIN
+from .const import CONF_FINGERPRINT, DEFAULT_INTERVAL, DOMAIN
 
 AUTH_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_FINGERPRINT): cv.string,
         vol.Required(CONF_ACCESS_TOKEN): cv.string,
-        vol.Required(CONF_SCAN_INTERVAL, default=5): cv.positive_int,
+        vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_INTERVAL): cv.positive_int,
     }
 )
 

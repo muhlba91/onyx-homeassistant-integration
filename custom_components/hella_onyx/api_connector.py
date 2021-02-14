@@ -1,6 +1,7 @@
 """API connector for the ONYX integration."""
 import logging
 
+import aiohttp
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from onyx_client import create_client
 from onyx_client.data.device_command import DeviceCommand
@@ -17,16 +18,16 @@ class APIConnector:
         self.hass = hass
         self.fingerprint = fingerprint
         self.token = token
-        self.verify_tls = False
         self.devices = {}
         self.groups = {}
 
-    def _client(self):
-        session = async_get_clientsession(self.hass, self.verify_tls)
+    def _client(self, session=None):
         return create_client(
             fingerprint=self.fingerprint,
             access_token=self.token,
-            client_session=session,
+            client_session=session
+            if session is not None
+            else async_get_clientsession(self.hass),
         )
 
     async def update(self):
@@ -63,6 +64,13 @@ class APIConnector:
         )
         if not success:
             raise CommandException("ONYX_ACTION_ERROR", uuid)
+
+    async def listen_events(self):
+        """Listen for events."""
+        async with aiohttp.ClientSession() as session:
+            client = self._client(session)
+            async for device in client.events():
+                yield device
 
 
 class CommandException(Exception):
