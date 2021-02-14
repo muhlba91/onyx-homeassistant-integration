@@ -23,16 +23,17 @@ Therefore, a few limitations are imposed on/by this integration:
 | Fingerprint, Access Token Authentication | The API requires the ONYX.CENTER fingerprint and an access token. Basically, those can be retrieved programmatically, which is not implemented yet. | Personal Needs |
 | Shutter Position | Home Assistant takes the position 0 as closed and 100 as open, Hella the opposite. | Home Assistant |
 | Tilt Position | Home Assistant takes the position 0 as closed and 100 as open, Hella's values range between 0-90 and 0-180. | Home Assistant / Hella |
-| Realtime Updates to Position Changes | The ONYX API polls devices approx. every 5 minutes but does not provide complete realtime updates. See below for more information. | Hella [<sup>1</sup>](https://github.com/hella-info/onyx_api/issues/3) |
+| Realtime Updates to Position Changes | The ONYX API does not provide complete realtime updates. See below for more information. | Hella [<sup>1</sup>](https://github.com/hella-info/onyx_api/issues/3) |
 
 ### Realtime Updates
 
 Since `v2` of the ONYX API, a dedicated event endpoint is available which pushed occurring events from the ONYX.CENTER
 to all clients; however, pushes only include partial updates.
 
-This integration makes use of this and keeps a connection open to the ONYX API server and updates the devices in
-near-realtime. Since exceptions occur, and the endpoint only pushes partial updates, all device states are updated
-periodically as well to ensure current states are available and correct.
+The integration makes use of this and keeps a connection open to the ONYX API server to update the devices in
+near-realtime. Since exceptions can occur, and the endpoint only pushes partial updates, all device states are updated
+periodically as well to ensure current states are available and correct. Please ensure a proper update interval,
+suggested is anywhere between 30-180 minutes.
 
 ### Drive Direction
 
@@ -64,7 +65,7 @@ Add it from the **Integrations menu**, set the configuration, and you're good to
 |-------------------|-------------|
 | Fingerprint | Your ONYX.CENTER fingerprint (see below). |
 | Access Token | The access token (see below). |
-| Scan Interval | Interval for polling for updates. Please use a value of 5 minutes or more (suggested: 5-15 minutes). |
+| Scan Interval | Interval for polling for updates. This is used as a fallback if near realtime updates are failing and can be set to a higher value. |
 
 **Important!** Please read **[ONYX.CENTER API's Access Control](https://github.com/hella-info/onyx_api#access-control)**
 on how to retrieve the **fingerprint** and **access token**.

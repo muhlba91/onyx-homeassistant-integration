@@ -1,6 +1,6 @@
 """Test for the EventThread."""
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from onyx_client.data.device_mode import DeviceMode
@@ -14,6 +14,7 @@ from custom_components.hella_onyx import (
 from custom_components.hella_onyx.api_connector import (
     UnknownStateException,
 )
+from custom_components.hella_onyx.const import MAX_BACKOFF_TIME
 
 
 class TestEventThread:
@@ -27,7 +28,7 @@ class TestEventThread:
 
     @pytest.fixture
     def thread(self, api, coordinator):
-        yield EventThread(api, coordinator)
+        yield EventThread(api, coordinator, backoff=False)
 
     @pytest.mark.asyncio
     async def test_update(self, thread, api, coordinator):
@@ -37,27 +38,53 @@ class TestEventThread:
 
     @pytest.mark.asyncio
     async def test_update_invalid_device(self, thread, api, coordinator):
+        api.fail_device = True
+        await thread._update()
+        assert api.called
+        assert not coordinator.async_set_updated_data.called
+
+    @pytest.mark.asyncio
+    async def test_update_connection_error(self, thread, api, coordinator):
         api.fail = True
         await thread._update()
         assert api.called
         assert not coordinator.async_set_updated_data.called
+
+    @pytest.mark.asyncio
+    async def test_update_backoff(self, thread, api, coordinator):
+        async def sleep_called(backoff: int):
+            assert backoff > 0
+            assert backoff / 60 < MAX_BACKOFF_TIME
+            thread._backoff = False
+
+        with patch("asyncio.sleep", new=sleep_called):
+            thread._backoff = True
+            api.fail = True
+            assert thread._backoff
+            await thread._update()
+            assert api.called
+            assert not thread._backoff
+            assert not coordinator.async_set_updated_data.called
 
 
 class MockAPI:
     def __init__(self):
         self.called = False
         self.fail = False
+        self.fail_device = False
 
     def called(self):
         return self.called
 
     def device(self, uuid: str):
-        if self.fail:
+        if self.fail_device:
             raise UnknownStateException("ERROR")
         return Shutter("uuid", "name", None, None, None)
 
     async def listen_events(self):
         self.called = True
+        if self.fail:
+            raise NotImplementedError()
         yield Shutter(
             "uuid",
             "other",
