@@ -1,8 +1,9 @@
 """Test for the ONYX API Connector."""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
+from onyx_client import OnyxClient
 from onyx_client.data.device_command import DeviceCommand
 from onyx_client.data.device_mode import DeviceMode
 from onyx_client.device.shutter import Shutter
@@ -80,6 +81,11 @@ class TestAPIConnector:
             async for device in api.listen_events():
                 assert device is not None
             assert mock_client.called
+
+    def test__client(self, api):
+        client = api._client(session=MagicMock())
+        assert client is not None
+        assert isinstance(client, OnyxClient)
 
 
 class MockClient:
