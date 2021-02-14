@@ -29,6 +29,7 @@ class EventThread(threading.Thread):
     async def _update(self):
         """Listen for updates."""
         while True:
+            backoff = int(uniform(0, MAX_BACKOFF_TIME) * 60)
             try:
                 async for device in self._api.listen_events():
                     try:
@@ -37,9 +38,13 @@ class EventThread(threading.Thread):
                     except UnknownStateException:
                         _LOGGER.debug("ignoring update for %s", device.identifier)
             except Exception as ex:
-                _LOGGER.info("connection reset: %s, restarting: %s", ex, self._backoff)
+                _LOGGER.info(
+                    "connection reset: %s, restarting: %s (backoff = %s seconds)",
+                    ex,
+                    self._backoff,
+                    backoff,
+                )
             if self._backoff:
-                backoff = int(uniform(0, MAX_BACKOFF_TIME) * 60)
                 await asyncio.sleep(backoff)
             else:
                 break

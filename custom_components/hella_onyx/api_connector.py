@@ -2,6 +2,7 @@
 import logging
 
 import aiohttp
+from aiohttp import ClientTimeout
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from onyx_client import create_client
 from onyx_client.data.device_command import DeviceCommand
@@ -67,7 +68,11 @@ class APIConnector:
 
     async def listen_events(self):
         """Listen for events."""
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(
+            timeout=ClientTimeout(
+                total=None, connect=None, sock_connect=None, sock_read=None
+            )
+        ) as session:
             client = self._client(session)
             async for device in client.events():
                 yield device
