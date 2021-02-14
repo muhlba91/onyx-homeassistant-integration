@@ -35,9 +35,9 @@ class EventThread(threading.Thread):
                         self._api.device(device.identifier).update_with(device)
                         self._coordinator.async_set_updated_data(None)
                     except UnknownStateException:
-                        _LOGGER.info("ignoring update for %s", device.identifier)
+                        _LOGGER.debug("ignoring update for %s", device.identifier)
             except Exception as ex:
-                _LOGGER.error("connection reset: %s, restarting: %s", ex, self._backoff)
+                _LOGGER.info("connection reset: %s, restarting: %s", ex, self._backoff)
             if self._backoff:
                 backoff = int(uniform(0, MAX_BACKOFF_TIME) * 60)
                 await asyncio.sleep(backoff)
