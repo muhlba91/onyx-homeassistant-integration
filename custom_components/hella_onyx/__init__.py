@@ -21,6 +21,7 @@ from .const import (
     ONYX_API,
     ONYX_COORDINATOR,
     ONYX_THREAD,
+    ONYX_TIMEZONE,
 )
 from .event_thread import EventThread
 
@@ -65,6 +66,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     onyx_api = APIConnector(hass, fingerprint, token)
     await onyx_api.update()
+    onyx_timezone = await onyx_api.get_timezone()
 
     coordinator = DataUpdateCoordinator(
         hass,
@@ -78,6 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     thread = EventThread(onyx_api, coordinator)
     hass.data[DOMAIN][entry.entry_id] = {
         ONYX_API: onyx_api,
+        ONYX_TIMEZONE: onyx_timezone,
         ONYX_COORDINATOR: coordinator,
         ONYX_THREAD: thread,
     }

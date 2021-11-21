@@ -16,6 +16,7 @@ class OnyxEntity(CoordinatorEntity):
     def __init__(
         self,
         api: APIConnector,
+        timezone: str,
         coordinator: DataUpdateCoordinator,
         name: str,
         device_type: DeviceType,
@@ -24,6 +25,7 @@ class OnyxEntity(CoordinatorEntity):
         """Initialize a ONYX entity."""
         super().__init__(coordinator)
         self.api = api
+        self.timezone = timezone
         self._name = name
         self._type = device_type
         self._uuid = uuid

@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from onyx_client import OnyxClient
+from onyx_client.data.date_information import DateInformation
 from onyx_client.data.device_command import DeviceCommand
 from onyx_client.data.device_mode import DeviceMode
 from onyx_client.device.shutter import Shutter
@@ -31,6 +32,20 @@ class TestAPIConnector:
             await api.update()
             assert len(api.devices) == 1
             assert len(api.groups) == 1
+            assert mock_client.called
+
+    @pytest.mark.asyncio
+    async def test_get_timezone(self, api):
+        with patch.object(api, "_client", new=MockClient) as mock_client:
+            tz = await api.get_timezone()
+            assert tz == "Europe/Vienna"
+            assert mock_client.called
+
+    @pytest.mark.asyncio
+    async def test_get_timezone_fallback(self, api):
+        with patch.object(api, "_client", new=MockClientNoDate) as mock_client:
+            tz = await api.get_timezone()
+            assert tz == "UTC"
             assert mock_client.called
 
     def test_device(self, api):
@@ -136,3 +151,19 @@ class MockClient:
             DeviceMode(DeviceType.RAFFSTORE_90),
             list(Action),
         )
+
+    async def date_information(self):
+        self.called = True
+        return DateInformation(100.0, "Europe/Vienna", 3600)
+
+
+class MockClientNoDate:
+    def __init__(self, *kwargs):
+        self.called = False
+
+    def called(self):
+        return self.called
+
+    async def date_information(self):
+        self.called = True
+        return None

@@ -1,6 +1,7 @@
 """The ONYX shutter entity."""
 import asyncio
 import logging
+import time
 from datetime import timedelta
 from math import ceil
 from typing import Any, Callable, Optional
@@ -24,10 +25,11 @@ from homeassistant.helpers.event import (
 from homeassistant.helpers.typing import DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import utcnow
+from onyx_client.data.animation_value import AnimationValue
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
-from . import APIConnector, DOMAIN
+from . import APIConnector, DOMAIN, ONYX_TIMEZONE
 from .const import INCREASED_INTERVAL_DELTA, ONYX_API, ONYX_COORDINATOR
 from .moving_state import MovingState
 from .onyx_entity import OnyxEntity
@@ -44,10 +46,13 @@ async def async_setup_entry(
     """Set up the ONYX shutter platform."""
     data = hass.data[DOMAIN][entry.entry_id]
     api = data[ONYX_API]
+    timezone = data[ONYX_TIMEZONE]
     coordinator = data[ONYX_COORDINATOR]
 
     shutters = [
-        OnyxShutter(api, coordinator, device.name, device.device_type, device_id)
+        OnyxShutter(
+            api, timezone, coordinator, device.name, device.device_type, device_id
+        )
         for device_id, device in api.devices.items()
     ]
     _LOGGER.info("adding %s hella_onyx entities", len(shutters))
@@ -60,13 +65,14 @@ class OnyxShutter(OnyxEntity, CoverEntity):
     def __init__(
         self,
         api: APIConnector,
+        timezone: str,
         coordinator: DataUpdateCoordinator,
         name: str,
         device_type: DeviceType,
         uuid: str,
     ):
         """Initialize a shutter entity."""
-        super().__init__(api, coordinator, name, device_type, uuid)
+        super().__init__(api, timezone, coordinator, name, device_type, uuid)
         self._moving_state = MovingState.STILL
 
     @property
@@ -107,11 +113,16 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         None is unknown, 0 is closed, 100 is fully open.
         """
         position = self._device.actual_position
-        return int(
-            self._invert_position(position.value, position.maximum)
-            / position.maximum
-            * 100
+        _LOGGER.debug(
+            "received position fo device %s: %s (%s/%s)",
+            self._uuid,
+            position.value,
+            position.minimum,
+            position.maximum,
         )
+        if position.animation is not None and len(position.animation.keyframes) > 0:
+            self._start_moving_device(position.animation)
+        return int(position.value / position.maximum * 100)
 
     @property
     def current_cover_tilt_position(self) -> int:
@@ -120,11 +131,16 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         None is unknown, 0 is closed, 100 is fully open.
         """
         position = self._device.actual_angle
-        return int(
-            self._invert_position(position.value, self._max_angle, True)
-            / self._max_angle
-            * 100
+        _LOGGER.debug(
+            "received tilt position fo device %s: %s (%s/%s)",
+            self._uuid,
+            position.value,
+            position.minimum,
+            position.maximum,
         )
+        if position.animation is not None and len(position.animation.keyframes) > 0:
+            self._start_moving_device(position.animation)
+        return int(position.value / self._max_angle * 100)
 
     @property
     def is_opening(self) -> bool:
@@ -144,33 +160,24 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
     def open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
+        self._set_state(MovingState.OPENING)
         asyncio.run_coroutine_threadsafe(
             self.api.send_device_command_action(self._uuid, Action.OPEN), self.hass.loop
-        )
-        self._set_state(
-            MovingState.OPENING,
-            delta=self._device.actual_position.value,
-            max_timedelta=self._device.drivetime_up.value,
         )
 
     def close_cover(self, **kwargs: Any) -> None:
         """Close cover."""
+        self._set_state(MovingState.CLOSING)
         asyncio.run_coroutine_threadsafe(
             self.api.send_device_command_action(self._uuid, Action.CLOSE),
             self.hass.loop,
-        )
-        self._set_state(
-            MovingState.CLOSING,
-            delta=100 - self._device.actual_position.value,
-            max_timedelta=self._device.drivetime_down.value,
         )
 
     def set_cover_position(self, **kwargs):
         """Move the cover to a specific position."""
         if ATTR_POSITION in kwargs:
-            position = self._invert_position(
-                int(kwargs.get(ATTR_POSITION)), self._device.target_position.maximum
-            )
+            position = int(kwargs.get(ATTR_POSITION))
+            self._calculate_and_set_state(self._device.actual_position.value, position)
             asyncio.run_coroutine_threadsafe(
                 self.api.send_device_command_properties(
                     self._uuid,
@@ -181,16 +188,13 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                 ),
                 self.hass.loop,
             )
-            self._calculate_and_set_state(
-                self._device.actual_position.value, position, -1
-            )
 
     def stop_cover(self, **kwargs):
         """Stop the cover."""
+        self._set_state(MovingState.STILL)
         asyncio.run_coroutine_threadsafe(
             self.api.send_device_command_action(self._uuid, Action.STOP), self.hass.loop
-        ).result()
-        self._set_state(MovingState.STILL)
+        )
 
     def open_cover_tilt(self, **kwargs: Any) -> None:
         """Open the cover tilt."""
@@ -204,8 +208,10 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         """Move the cover tilt to a specific position."""
         if ATTR_TILT_POSITION in kwargs:
             angle = int(kwargs.get(ATTR_TILT_POSITION))
-            hella_angle = self._invert_position(
-                ceil(angle * (self._max_angle / 100)), self._max_angle, False
+            hella_angle = ceil(angle * (self._max_angle / 100))
+            self._calculate_and_set_state(
+                self._device.actual_angle.value,
+                hella_angle,
             )
             asyncio.run_coroutine_threadsafe(
                 self.api.send_device_command_properties(
@@ -213,56 +219,59 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                 ),
                 self.hass.loop,
             )
-            self._calculate_and_set_state(
-                self._device.actual_angle.value,
-                hella_angle,
-                self._device.rotationtime.value,
-            )
 
     def stop_cover_tilt(self, **kwargs):
         """Stop the cover."""
+        self._set_state(MovingState.STILL)
         asyncio.run_coroutine_threadsafe(
             self.api.send_device_command_action(self._uuid, Action.STOP), self.hass.loop
         )
-        self._set_state(MovingState.STILL)
 
-    def _set_state(self, state: MovingState, **kwargs: Any):
+    def _set_state(self, state: MovingState):
         """Set the new moving state."""
         self._moving_state = state
-        if state != MovingState.STILL:
-            delta = int(kwargs.get("delta"))
-            max_timedelta = int(kwargs.get("max_timedelta"))
-            needed_time = int(max_timedelta / 100 * delta)
-            _LOGGER.debug("moving by %s takes %s", delta, needed_time)
-            self._start_moving_device(needed_time)
-        else:
-            asyncio.run_coroutine_threadsafe(self.async_update(), self.hass.loop)
+        asyncio.run_coroutine_threadsafe(self.async_update(), self.hass.loop)
 
-    def _start_moving_device(self, delta: int):
+    def _start_moving_device(self, animation: AnimationValue):
         """Start the update loop."""
-        track_point_in_utc_time(
-            self.hass,
-            self._end_moving_device,
-            utcnow() + timedelta(milliseconds=delta + INCREASED_INTERVAL_DELTA),
+        if self._moving_state == MovingState.STILL:
+            _LOGGER.debug("not moving device %s", self._uuid)
+            return
+
+        keyframes = len(animation.keyframes)
+        keyframe = animation.keyframes[keyframes - 1]
+
+        current_time = time.time()
+        end_time = animation.start + keyframe.duration
+        delta = end_time - current_time
+        moving = current_time > end_time
+
+        _LOGGER.debug(
+            "moving device %s with current_time %s and end_time %s: %s",
+            self._uuid,
+            current_time,
+            end_time,
+            moving,
         )
+
+        if moving:
+            _LOGGER.debug("end moving device %s due to too old data", self._uuid)
+            self._end_moving_device()
+        else:
+            track_point_in_utc_time(
+                self.hass,
+                self._end_moving_device,
+                utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
+            )
 
     def _end_moving_device(self, *args: Any):
         """Call STOP to update the device values on ONYX."""
         self.stop_cover()
 
-    def _calculate_and_set_state(self, actual: int, new_value: int, max_timedelta: int):
+    def _calculate_and_set_state(self, actual: int, new_value: int):
         """Calculate and set the new moving state."""
         new_state = self._calculate_state(actual, new_value)
-        if max_timedelta == -1:
-            if new_state == MovingState.CLOSING:
-                max_timedelta = self._device.drivetime_down.value
-            elif new_state == MovingState.OPENING:
-                max_timedelta = self._device.drivetime_up.value
-        self._set_state(
-            new_state,
-            delta=abs(actual - new_value),
-            max_timedelta=max_timedelta,
-        )
+        self._set_state(new_state)
 
     @property
     def _max_angle(self) -> int:
@@ -274,25 +283,12 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         else:
             return 100
 
-    def _calculate_state(self, actual: int, new_value: int) -> MovingState:
+    @staticmethod
+    def _calculate_state(actual: int, new_value: int) -> MovingState:
         """Calculate the new moving state."""
         if new_value < actual:
-            return (
-                MovingState.CLOSING
-                if not self._device.switch_drive_direction.value
-                else MovingState.OPENING
-            )
+            return MovingState.CLOSING
         elif new_value > actual:
-            return (
-                MovingState.OPENING
-                if not self._device.switch_drive_direction.value
-                else MovingState.CLOSING
-            )
+            return MovingState.OPENING
         else:
             return MovingState.STILL
-
-    def _invert_position(self, value: int, maximum: int, invert: bool = True) -> int:
-        """Inverts the position based on the drive direction."""
-        if self._device.switch_drive_direction.value and invert:
-            return value
-        return maximum - value

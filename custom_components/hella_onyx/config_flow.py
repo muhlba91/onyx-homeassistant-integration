@@ -74,7 +74,7 @@ class OnyxFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _async_verify_conn(self, fingerprint, token):
         """Verify the connection credentials."""
-        return create_client(
+        return await create_client(
             fingerprint=fingerprint,
             access_token=token,
             client_session=async_get_clientsession(self.hass, False),

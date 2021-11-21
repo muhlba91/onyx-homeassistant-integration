@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from onyx_client.data.device_mode import DeviceMode
+from onyx_client.data.numeric_value import NumericValue
 from onyx_client.device.shutter import Shutter
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
@@ -32,12 +33,14 @@ class TestEventThread:
 
     @pytest.mark.asyncio
     async def test_update(self, thread, api, coordinator):
+        api.called = False
         await thread._update()
         assert api.called
         assert coordinator.async_set_updated_data.called
 
     @pytest.mark.asyncio
     async def test_update_invalid_device(self, thread, api, coordinator):
+        api.called = False
         api.fail_device = True
         await thread._update()
         assert api.called
@@ -45,6 +48,7 @@ class TestEventThread:
 
     @pytest.mark.asyncio
     async def test_update_connection_error(self, thread, api, coordinator):
+        api.called = False
         api.fail = True
         await thread._update()
         assert api.called
@@ -52,6 +56,8 @@ class TestEventThread:
 
     @pytest.mark.asyncio
     async def test_update_backoff(self, thread, api, coordinator):
+        api.called = False
+
         async def sleep_called(backoff: int):
             assert backoff > 0
             assert backoff / 60 < MAX_BACKOFF_TIME
@@ -77,9 +83,13 @@ class MockAPI:
         return self.called
 
     def device(self, uuid: str):
+        self.called = True
         if self.fail_device:
             raise UnknownStateException("ERROR")
-        return Shutter("uuid", "name", None, None, None)
+        numeric = NumericValue(10, 10, 10, False, None)
+        return Shutter(
+            "uuid", "name", None, None, None, None, numeric, numeric, numeric
+        )
 
     async def listen_events(self):
         self.called = True
