@@ -30,6 +30,15 @@ class APIConnector:
             else async_get_clientsession(self.hass),
         )
 
+    async def get_timezone(self):
+        """Gets the ONYX.CENTER timezone."""
+        client = self._client()
+        date_information = await client.date_information()
+        if date_information is not None:
+            return date_information.timezone
+        else:
+            return "UTC"
+
     async def update(self):
         """Update all entities."""
         client = self._client()
@@ -74,6 +83,7 @@ class APIConnector:
         ) as session:
             client = self._client(session)
             async for device in client.events():
+                _LOGGER.debug("received device data for %s", device.identifier)
                 yield device
 
 

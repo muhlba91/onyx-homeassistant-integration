@@ -23,7 +23,9 @@ class TestOnyxEntity:
 
     @pytest.fixture
     def entity(self, api, coordinator):
-        yield OnyxEntity(api, coordinator, "name", DeviceType.RAFFSTORE_90, "uuid")
+        yield OnyxEntity(
+            api, "UTC", coordinator, "name", DeviceType.RAFFSTORE_90, "uuid"
+        )
 
     def test_icon(self, entity):
         assert entity.icon == "mdi:window-shutter"

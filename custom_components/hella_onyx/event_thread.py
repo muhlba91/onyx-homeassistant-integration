@@ -38,7 +38,7 @@ class EventThread(threading.Thread):
                     except UnknownStateException:
                         _LOGGER.debug("ignoring update for %s", device.identifier)
             except Exception as ex:
-                _LOGGER.info(
+                _LOGGER.error(
                     "connection reset: %s, restarting: %s (backoff = %s seconds)",
                     ex,
                     self._backoff,

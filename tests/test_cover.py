@@ -1,8 +1,10 @@
 """Test for the ONYX Shutter Entity."""
-
+from datetime import datetime
+import time
 from unittest.mock import MagicMock, patch
 
 import pytest
+import pytz
 from homeassistant.components.cover import (
     DEVICE_CLASS_SHUTTER,
     SUPPORT_CLOSE,
@@ -13,14 +15,20 @@ from homeassistant.components.cover import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from onyx_client.data.boolean_value import BooleanValue
+from onyx_client.data.animation_keyframe import AnimationKeyframe
+from onyx_client.data.animation_value import AnimationValue
 from onyx_client.data.device_mode import DeviceMode
 from onyx_client.data.numeric_value import NumericValue
 from onyx_client.device.shutter import Shutter
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
-from custom_components.hella_onyx import DOMAIN, ONYX_API, ONYX_COORDINATOR
+from custom_components.hella_onyx import (
+    DOMAIN,
+    ONYX_API,
+    ONYX_COORDINATOR,
+    ONYX_TIMEZONE,
+)
 from custom_components.hella_onyx.cover import OnyxShutter, async_setup_entry
 from custom_components.hella_onyx.moving_state import MovingState
 
@@ -40,7 +48,9 @@ async def test_async_setup_entry(mock_hass):
     async_add_entries = AsyncAddEntries()
 
     mock_hass.data.return_value = {
-        DOMAIN: {"entry_id": {ONYX_API: None, ONYX_COORDINATOR: None}}
+        DOMAIN: {
+            "entry_id": {ONYX_API: None, ONYX_COORDINATOR: None, ONYX_TIMEZONE: "UTC"}
+        }
     }
 
     await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
@@ -64,13 +74,17 @@ class TestOnyxShutter:
 
     @pytest.fixture
     def entity(self, api, coordinator, hass):
-        shutter = OnyxShutter(api, coordinator, "name", DeviceType.RAFFSTORE_90, "uuid")
+        shutter = OnyxShutter(
+            api, "UTC", coordinator, "name", DeviceType.RAFFSTORE_90, "uuid"
+        )
         shutter.hass = hass
         yield shutter
 
     @pytest.fixture
     def rollershutter_entity(self, api, coordinator):
-        yield OnyxShutter(api, coordinator, "name", DeviceType.ROLLERSHUTTER, "uuid")
+        yield OnyxShutter(
+            api, "UTC", coordinator, "name", DeviceType.ROLLERSHUTTER, "uuid"
+        )
 
     @pytest.fixture
     def device(self):
@@ -109,38 +123,54 @@ class TestOnyxShutter:
         device.actual_position = NumericValue(
             value=10, minimum=0, maximum=100, read_only=False
         )
-        device.switch_drive_direction = BooleanValue(value=False, read_only=False)
-        api.device.return_value = device
-        assert entity.current_cover_position == 90
-        assert api.device.called
-
-    def test_current_cover_position_switched_drive_direction(self, api, entity, device):
-        device.actual_position = NumericValue(
-            value=10, minimum=0, maximum=100, read_only=False
-        )
-        device.switch_drive_direction = BooleanValue(value=True, read_only=False)
         api.device.return_value = device
         assert entity.current_cover_position == 10
+        assert api.device.called
+
+    def test_current_cover_position_with_animation(self, api, entity, device):
+        animation = AnimationValue(
+            start=0,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", duration=10, delay=0, value=10
+                )
+            ],
+        )
+        device.actual_position = NumericValue(
+            value=10, minimum=0, maximum=100, read_only=False, animation=animation
+        )
+        api.device.return_value = device
+        with patch.object(entity, "_start_moving_device") as mock_start_moving_device:
+            assert entity.current_cover_position == 10
+            mock_start_moving_device.assert_called_with(animation)
         assert api.device.called
 
     def test_current_cover_tilt_position(self, api, entity, device):
         device.actual_angle = NumericValue(
             value=10, minimum=0, maximum=100, read_only=False
         )
-        device.switch_drive_direction = BooleanValue(value=False, read_only=False)
-        api.device.return_value = device
-        assert entity.current_cover_tilt_position == 88
-        assert api.device.called
-
-    def test_current_cover_tilt_position_switched_drive_direction(
-        self, api, entity, device
-    ):
-        device.actual_angle = NumericValue(
-            value=10, minimum=0, maximum=100, read_only=False
-        )
-        device.switch_drive_direction = BooleanValue(value=True, read_only=False)
         api.device.return_value = device
         assert entity.current_cover_tilt_position == 11
+        assert api.device.called
+
+    def test_current_cover_tilt_position_with_animation(self, api, entity, device):
+        animation = AnimationValue(
+            start=0,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", duration=10, delay=0, value=10
+                )
+            ],
+        )
+        device.actual_angle = NumericValue(
+            value=10, minimum=0, maximum=100, read_only=False, animation=animation
+        )
+        api.device.return_value = device
+        with patch.object(entity, "_start_moving_device") as mock_start_moving_device:
+            assert entity.current_cover_tilt_position == 11
+            mock_start_moving_device.assert_called_with(animation)
         assert api.device.called
 
     def test_is_not_opening(self, entity):
@@ -173,6 +203,25 @@ class TestOnyxShutter:
         assert entity.is_closed
         assert api.device.called
 
+    def test_start_moving_device_end(self, api, entity, device):
+        current_time = time.mktime(datetime.now(pytz.timezone("UTC")).timetuple())
+        animation = AnimationValue(
+            start=current_time - 100,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=10,
+                    delay=0,
+                )
+            ],
+        )
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            entity._start_moving_device(animation)
+            mock_end_moving_device.assert_called()
+
     @patch("asyncio.run_coroutine_threadsafe")
     def test_open_cover(self, mock_run_coroutine_threadsafe, api, entity, device):
         device.actual_position = NumericValue(
@@ -184,11 +233,8 @@ class TestOnyxShutter:
         api.device.return_value = device
         with patch.object(entity, "_set_state") as mock_set_state:
             entity.open_cover()
-            mock_set_state.assert_called_with(
-                MovingState.OPENING, delta=100, max_timedelta=0
-            )
+            mock_set_state.assert_called_with(MovingState.OPENING)
         api.send_device_command_action.assert_called_with("uuid", Action.OPEN)
-        assert api.device.called
         assert mock_run_coroutine_threadsafe.called
 
     @patch("asyncio.run_coroutine_threadsafe")
@@ -202,11 +248,8 @@ class TestOnyxShutter:
         api.device.return_value = device
         with patch.object(entity, "_set_state") as mock_set_state:
             entity.close_cover()
-            mock_set_state.assert_called_with(
-                MovingState.CLOSING, delta=0, max_timedelta=0
-            )
+            mock_set_state.assert_called_with(MovingState.CLOSING)
         api.send_device_command_action.assert_called_with("uuid", Action.CLOSE)
-        assert api.device.called
         assert mock_run_coroutine_threadsafe.called
 
     @patch("asyncio.run_coroutine_threadsafe")
@@ -222,43 +265,12 @@ class TestOnyxShutter:
         device.target_angle = NumericValue(
             value=30, maximum=100, minimum=0, read_only=False
         )
-        device.switch_drive_direction = BooleanValue(value=False, read_only=True)
         api.device.return_value = device
         with patch.object(
             entity, "_calculate_and_set_state"
         ) as mock_calculate_and_set_state:
             entity.set_cover_position(position=10)
-            mock_calculate_and_set_state.assert_called_with(10, 90, -1)
-        api.send_device_command_properties.assert_called_with(
-            "uuid",
-            {
-                "target_position": 90,
-                "target_angle": 30,
-            },
-        )
-        assert api.device.called
-        assert mock_run_coroutine_threadsafe.called
-
-    @patch("asyncio.run_coroutine_threadsafe")
-    def test_set_cover_position_switched_drive_direction(
-        self, mock_run_coroutine_threadsafe, api, entity, device
-    ):
-        device.target_position = NumericValue(
-            value=100, maximum=100, minimum=0, read_only=False
-        )
-        device.actual_position = NumericValue(
-            value=10, maximum=100, minimum=0, read_only=False
-        )
-        device.target_angle = NumericValue(
-            value=30, maximum=100, minimum=0, read_only=False
-        )
-        device.switch_drive_direction = BooleanValue(value=True, read_only=True)
-        api.device.return_value = device
-        with patch.object(
-            entity, "_calculate_and_set_state"
-        ) as mock_calculate_and_set_state:
-            entity.set_cover_position(position=10)
-            mock_calculate_and_set_state.assert_called_with(10, 10, -1)
+            mock_calculate_and_set_state.assert_called_with(10, 10)
         api.send_device_command_properties.assert_called_with(
             "uuid",
             {
@@ -295,38 +307,14 @@ class TestOnyxShutter:
         device.actual_angle = NumericValue(
             value=10, maximum=100, minimum=0, read_only=False
         )
-        device.switch_drive_direction = BooleanValue(value=False, read_only=True)
         api.device.return_value = device
         with patch.object(
             entity, "_calculate_and_set_state"
         ) as mock_calculate_and_set_state:
             entity.set_cover_tilt_position(tilt_position=10)
-            mock_calculate_and_set_state.assert_called_with(10, 81, 100)
+            mock_calculate_and_set_state.assert_called_with(10, 9)
         api.send_device_command_properties.assert_called_with(
-            "uuid", {"target_angle": 81}
-        )
-        assert api.device.called
-        assert mock_run_coroutine_threadsafe.called
-
-    @patch("asyncio.run_coroutine_threadsafe")
-    def test_set_cover_tilt_position_switched_drive_direction(
-        self, mock_run_coroutine_threadsafe, api, entity, device
-    ):
-        device.rotationtime = NumericValue(
-            value=100, maximum=100, minimum=0, read_only=False
-        )
-        device.actual_angle = NumericValue(
-            value=10, maximum=100, minimum=0, read_only=False
-        )
-        device.switch_drive_direction = BooleanValue(value=True, read_only=True)
-        api.device.return_value = device
-        with patch.object(
-            entity, "_calculate_and_set_state"
-        ) as mock_calculate_and_set_state:
-            entity.set_cover_tilt_position(tilt_position=10)
-            mock_calculate_and_set_state.assert_called_with(10, 81, 100)
-        api.send_device_command_properties.assert_called_with(
-            "uuid", {"target_angle": 81}
+            "uuid", {"target_angle": 9}
         )
         assert api.device.called
         assert mock_run_coroutine_threadsafe.called
@@ -347,16 +335,12 @@ class TestOnyxShutter:
         assert not entity.is_closing
 
     def test__set_state_CLOSING(self, entity):
-        with patch.object(entity, "_start_moving_device") as mock_start_moving_device:
-            entity._set_state(MovingState.CLOSING, delta=10, max_timedelta=100)
-            mock_start_moving_device.assert_called_once_with(10)
+        entity._set_state(MovingState.CLOSING)
         assert not entity.is_opening
         assert entity.is_closing
 
     def test__set_state_OPENING(self, entity):
-        with patch.object(entity, "_start_moving_device") as mock_start_moving_device:
-            entity._set_state(MovingState.OPENING, delta=10, max_timedelta=100)
-            mock_start_moving_device.assert_called_once_with(10)
+        entity._set_state(MovingState.OPENING)
         assert entity.is_opening
         assert not entity.is_closing
 
@@ -373,12 +357,9 @@ class TestOnyxShutter:
         with patch.object(entity, "_set_state") as mock_set_state:
             with patch.object(entity, "_calculate_state") as mock_calculate_state:
                 mock_calculate_state.return_value = MovingState.CLOSING
-                entity._calculate_and_set_state(10, 100, -1)
+                entity._calculate_and_set_state(10, 100)
                 mock_calculate_state.assert_called_once_with(10, 100)
-                mock_set_state.assert_called_once_with(
-                    MovingState.CLOSING, delta=90, max_timedelta=50
-                )
-        assert api.device.called
+                mock_set_state.assert_called_once_with(MovingState.CLOSING)
 
     def test__calculate_and_set_state_OPENING(self, entity, device, api):
         device.drivetime_up = NumericValue(
@@ -388,22 +369,17 @@ class TestOnyxShutter:
         with patch.object(entity, "_set_state") as mock_set_state:
             with patch.object(entity, "_calculate_state") as mock_calculate_state:
                 mock_calculate_state.return_value = MovingState.OPENING
-                entity._calculate_and_set_state(100, 10, -1)
+                entity._calculate_and_set_state(100, 10)
                 mock_calculate_state.assert_called_once_with(100, 10)
-                mock_set_state.assert_called_once_with(
-                    MovingState.OPENING, delta=90, max_timedelta=50
-                )
-        assert api.device.called
+                mock_set_state.assert_called_once_with(MovingState.OPENING)
 
     def test__calculate_and_set_state_tilt(self, entity):
         with patch.object(entity, "_set_state") as mock_set_state:
             with patch.object(entity, "_calculate_state") as mock_calculate_state:
                 mock_calculate_state.return_value = MovingState.CLOSING
-                entity._calculate_and_set_state(10, 100, 10)
+                entity._calculate_and_set_state(10, 100)
                 mock_calculate_state.assert_called_once_with(10, 100)
-                mock_set_state.assert_called_once_with(
-                    MovingState.CLOSING, delta=90, max_timedelta=10
-                )
+                mock_set_state.assert_called_once_with(MovingState.CLOSING)
 
     def test__max_angle(self, entity):
         assert entity._max_angle == 90
@@ -416,46 +392,12 @@ class TestOnyxShutter:
         assert rollershutter_entity._max_angle == 100
 
     def test__calculate_state_CLOSING(self, entity, device, api):
-        device.switch_drive_direction = BooleanValue(value=False, read_only=True)
-        api.device.return_value = device
         assert entity._calculate_state(100, 10) == MovingState.CLOSING
-        assert api.device.called
 
     def test__calculate_state_OPENING(self, entity, device, api):
-        device.switch_drive_direction = BooleanValue(value=False, read_only=True)
-        api.device.return_value = device
         assert entity._calculate_state(10, 100) == MovingState.OPENING
-        assert api.device.called
-
-    def test__calculate_state_CLOSING_switched_drive_direction(
-        self, entity, device, api
-    ):
-        device.switch_drive_direction = BooleanValue(value=True, read_only=True)
-        api.device.return_value = device
-        assert entity._calculate_state(10, 100) == MovingState.CLOSING
-        assert api.device.called
-
-    def test__calculate_state_OPENING_switched_drive_direction(
-        self, entity, device, api
-    ):
-        device.switch_drive_direction = BooleanValue(value=True, read_only=True)
-        api.device.return_value = device
-        assert entity._calculate_state(100, 10) == MovingState.OPENING
-        assert api.device.called
 
     def test__calculate_state_STILL(self, entity, api):
         api.device.return_value = None
         assert entity._calculate_state(10, 10) == MovingState.STILL
         assert not api.device.called
-
-    def test__invert_position(self, entity, device, api):
-        device.switch_drive_direction = BooleanValue(value=False, read_only=True)
-        api.device.return_value = device
-        assert entity._invert_position(10, 100) == 90
-        assert api.device.called
-
-    def test__invert_position_switched_drive_direction(self, entity, device, api):
-        device.switch_drive_direction = BooleanValue(value=True, read_only=True)
-        api.device.return_value = device
-        assert entity._invert_position(10, 100) == 10
-        assert api.device.called
