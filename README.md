@@ -24,10 +24,10 @@ Therefore, a few limitations are imposed on/by this integration:
 | Shutter Position | Home Assistant takes the position 0 as closed and 100 as open, Hella the opposite. | Home Assistant |
 | Tilt Position | Home Assistant takes the position 0 as closed and 100 as open, Hella's values range between 0-90 and 0-180. | Home Assistant / Hella |
 
-### Realtime Updates
+### Realtime Updates / Streaming API
 
-Since `v2` of the ONYX API, a dedicated event endpoint is available which pushed occurring events from the ONYX.CENTER
-to all clients; however, pushes only include partial updates.
+Since `v2` of the ONYX API, a dedicated event streaming endpoint is available which pushed occurring events from the
+ONYX.CENTER to all clients; however, pushes only include partial updates.
 
 The integration makes use of this and keeps a connection open to the ONYX API server to update the devices in
 near-realtime. Since exceptions can occur, and the endpoint only pushes partial updates, all device states are updated
@@ -45,7 +45,7 @@ I recommend installation through [HACS](https://hacs.xyz/):
 
 The integration offers the following possibilities:
 
-- `master`: the latest stable release
+- `main`: the latest stable release
 - `next`: the next, cutting-edge release (**attention**: may be unstable)
 - `v*`: releases following semantic versioning - if you need to pin the version, choose one of those
 
@@ -53,21 +53,22 @@ The integration offers the following possibilities:
 
 Add it from the **Integrations menu**, set the configuration, and you're good to go.
 
-| Configuration Key | Description |
-|-------------------|-------------|
-| Fingerprint       | Your ONYX.CENTER fingerprint (see below). |
-| Access Token      | The access token (see below). |
-| Scan Interval     | Interval for polling for updates. This is used as a fallback if near realtime updates are failing and can be set to a higher value. |
+| Configuration Key        | Description                                                                                                                                                                                                                     |
+|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Fingerprint              | Your ONYX.CENTER fingerprint (see below).                                                                                                                                                                                       |
+| Access Token             | The access token (see below).                                                                                                                                                                                                   |
+| Scan Interval            | Interval for polling for updates. This is used as a fallback if near realtime updates are failing and can be set to a higher value.                                                                                             |
+| Disable partial updates? | The integration relies on the streaming API. Hence, only partial device data will be retrieved. Enable this option to always retrieve the full device data. *Attention*: this may lead to more API requests and is discouraged. |
 
 **Important!** Please read **[ONYX.CENTER API's Access Control](https://github.com/hella-info/onyx_api#access-control)**
 on how to retrieve the **fingerprint** and **access token**.
 
 Once configured, the integration **creates entities** for:
 
-| Entity | Description                                                                                                      |
-|--------|------------------------------------------------------------------------------------------------------------------|
-| Cover  | Manage the shutter. ([API Reference](https://developers.home-assistant.io/docs/core/entity/cover/))              |
-| Sensor | The device type of the shutter. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Entity               | Description                                                                                                      |
+|----------------------|------------------------------------------------------------------------------------------------------------------|
+| Cover                | Manage the shutter. ([API Reference](https://developers.home-assistant.io/docs/core/entity/cover/))              |
+| Sensor (Device Type) | The device type of the shutter. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 
 ---
 
