@@ -6,6 +6,7 @@ import pytest
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
     CONF_SCAN_INTERVAL,
+    CONF_FORCE_UPDATE,
 )
 
 from custom_components.hella_onyx import CONF_FINGERPRINT
@@ -35,6 +36,7 @@ class TestOnyxFlowHandler:
                 CONF_FINGERPRINT: "finger",
                 CONF_ACCESS_TOKEN: "token",
                 CONF_SCAN_INTERVAL: 10,
+                CONF_FORCE_UPDATE: False,
             }
         )
         assert mock_async_exists.called
@@ -66,6 +68,7 @@ class TestOnyxFlowHandler:
                 CONF_FINGERPRINT: "finger",
                 CONF_ACCESS_TOKEN: "token",
                 CONF_SCAN_INTERVAL: 10,
+                CONF_FORCE_UPDATE: False,
             }
         )
         assert mock_async_exists.called
@@ -98,6 +101,7 @@ class TestOnyxFlowHandler:
                 CONF_FINGERPRINT: "finger",
                 CONF_ACCESS_TOKEN: "token",
                 CONF_SCAN_INTERVAL: 10,
+                CONF_FORCE_UPDATE: False,
             }
         )
         assert mock_async_exists.called
