@@ -124,7 +124,7 @@ class TestOnyxShutter:
             value=10, minimum=0, maximum=100, read_only=False
         )
         api.device.return_value = device
-        assert entity.current_cover_position == 10
+        assert entity.current_cover_position == 90
         assert api.device.called
 
     def test_current_cover_position_with_animation(self, api, entity, device):
@@ -142,7 +142,7 @@ class TestOnyxShutter:
         )
         api.device.return_value = device
         with patch.object(entity, "_start_moving_device") as mock_start_moving_device:
-            assert entity.current_cover_position == 10
+            assert entity.current_cover_position == 90
             mock_start_moving_device.assert_called_with(animation)
         assert api.device.called
 
@@ -222,6 +222,25 @@ class TestOnyxShutter:
             entity._start_moving_device(animation)
             mock_end_moving_device.assert_called()
 
+    def test_start_moving_device_still(self, api, entity, device):
+        current_time = time.mktime(datetime.now(pytz.timezone("UTC")).timetuple())
+        animation = AnimationValue(
+            start=current_time - 100,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=10,
+                    delay=0,
+                )
+            ],
+        )
+        entity._moving_state = MovingState.STILL
+        with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            entity._start_moving_device(animation)
+            mock_end_moving_device.assert_not_called()
+
     @patch("asyncio.run_coroutine_threadsafe")
     def test_open_cover(self, mock_run_coroutine_threadsafe, api, entity, device):
         device.actual_position = NumericValue(
@@ -270,11 +289,11 @@ class TestOnyxShutter:
             entity, "_calculate_and_set_state"
         ) as mock_calculate_and_set_state:
             entity.set_cover_position(position=10)
-            mock_calculate_and_set_state.assert_called_with(10, 10)
+            mock_calculate_and_set_state.assert_called_with(10, 90)
         api.send_device_command_properties.assert_called_with(
             "uuid",
             {
-                "target_position": 10,
+                "target_position": 90,
                 "target_angle": 30,
             },
         )
@@ -345,9 +364,15 @@ class TestOnyxShutter:
         assert not entity.is_closing
 
     def test__end_moving_device(self, entity):
+        entity._moving_state = MovingState.CLOSING
         with patch.object(entity, "stop_cover") as mock_stop_cover:
             entity._end_moving_device()
             assert mock_stop_cover.called
+
+    def test__end_moving_device_still(self, entity):
+        with patch.object(entity, "stop_cover") as mock_stop_cover:
+            entity._end_moving_device()
+            assert not mock_stop_cover.called
 
     def test__calculate_and_set_state_CLOSING(self, entity, device, api):
         device.drivetime_down = NumericValue(
@@ -392,10 +417,10 @@ class TestOnyxShutter:
         assert rollershutter_entity._max_angle == 100
 
     def test__calculate_state_CLOSING(self, entity, device, api):
-        assert entity._calculate_state(100, 10) == MovingState.CLOSING
+        assert entity._calculate_state(100, 10) == MovingState.OPENING
 
     def test__calculate_state_OPENING(self, entity, device, api):
-        assert entity._calculate_state(10, 100) == MovingState.OPENING
+        assert entity._calculate_state(10, 100) == MovingState.CLOSING
 
     def test__calculate_state_STILL(self, entity, api):
         api.device.return_value = None

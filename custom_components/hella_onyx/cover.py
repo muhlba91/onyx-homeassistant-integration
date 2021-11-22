@@ -122,7 +122,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         )
         if position.animation is not None and len(position.animation.keyframes) > 0:
             self._start_moving_device(position.animation)
-        return int(position.value / position.maximum * 100)
+        return 100 - int(position.value / position.maximum * 100)
 
     @property
     def current_cover_tilt_position(self) -> int:
@@ -158,6 +158,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         position = self._device.actual_position
         return position.value == position.maximum
 
+    # FIXME
     def open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
         self._set_state(MovingState.OPENING)
@@ -165,6 +166,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             self.api.send_device_command_action(self._uuid, Action.OPEN), self.hass.loop
         )
 
+    # FIXME
     def close_cover(self, **kwargs: Any) -> None:
         """Close cover."""
         self._set_state(MovingState.CLOSING)
@@ -176,13 +178,16 @@ class OnyxShutter(OnyxEntity, CoverEntity):
     def set_cover_position(self, **kwargs):
         """Move the cover to a specific position."""
         if ATTR_POSITION in kwargs:
-            position = int(kwargs.get(ATTR_POSITION))
+            position = 100 - int(kwargs.get(ATTR_POSITION))
+            hella_position = ceil(
+                position * (self._device.target_position.maximum / 100)
+            )
             self._calculate_and_set_state(self._device.actual_position.value, position)
             asyncio.run_coroutine_threadsafe(
                 self.api.send_device_command_properties(
                     self._uuid,
                     {
-                        "target_position": position,
+                        "target_position": hella_position,
                         "target_angle": self._device.target_angle.value,
                     },
                 ),
@@ -266,7 +271,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
     def _end_moving_device(self, *args: Any):
         """Call STOP to update the device values on ONYX."""
-        self.stop_cover()
+        if self._moving_state != MovingState.STILL:
+            self.stop_cover()
 
     def _calculate_and_set_state(self, actual: int, new_value: int):
         """Calculate and set the new moving state."""
@@ -287,8 +293,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
     def _calculate_state(actual: int, new_value: int) -> MovingState:
         """Calculate the new moving state."""
         if new_value < actual:
-            return MovingState.CLOSING
-        elif new_value > actual:
             return MovingState.OPENING
+        elif new_value > actual:
+            return MovingState.CLOSING
         else:
             return MovingState.STILL
