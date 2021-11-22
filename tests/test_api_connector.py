@@ -23,30 +23,35 @@ from custom_components.hella_onyx.api_connector import (
 
 class TestAPIConnector:
     @pytest.fixture
+    def client(self):
+        yield MockClient()
+
+    @pytest.fixture
     def api(self):
         yield APIConnector(None, "finger", "token")
 
     @pytest.mark.asyncio
-    async def test_update(self, api):
-        with patch.object(api, "_client", new=MockClient) as mock_client:
+    async def test_update(self, api, client):
+        with patch.object(api, "_client", new=client.make):
             await api.update()
             assert len(api.devices) == 1
             assert len(api.groups) == 1
-            assert mock_client.called
+            assert client.is_called
 
     @pytest.mark.asyncio
-    async def test_get_timezone(self, api):
-        with patch.object(api, "_client", new=MockClient) as mock_client:
+    async def test_get_timezone(self, api, client):
+        with patch.object(api, "_client", new=client.make):
             tz = await api.get_timezone()
             assert tz == "Europe/Vienna"
-            assert mock_client.called
+            assert client.is_called
 
     @pytest.mark.asyncio
     async def test_get_timezone_fallback(self, api):
-        with patch.object(api, "_client", new=MockClientNoDate) as mock_client:
+        client = MockClientNoDate()
+        with patch.object(api, "_client", new=client.make):
             tz = await api.get_timezone()
             assert tz == "UTC"
-            assert mock_client.called
+            assert client.called
 
     def test_device(self, api):
         api.devices = {"uuid": "device"}
@@ -57,45 +62,54 @@ class TestAPIConnector:
             api.device("uuid")
 
     @pytest.mark.asyncio
-    async def test_update_device(self, api):
+    async def test_update_device(self, api, client):
         assert len(api.devices) == 0
-        with patch.object(api, "_client", new=MockClient) as mock_client:
+        with patch.object(api, "_client", new=client.make):
             await api.update_device("id")
             assert len(api.devices) == 1
-            assert mock_client.called
+            assert client.is_called
 
     @pytest.mark.asyncio
-    async def test_send_device_command_action(self, api):
-        with patch.object(api, "_client", new=MockClient) as mock_client:
+    async def test_send_device_command_action(self, api, client):
+        with patch.object(api, "_client", new=client.make):
             await api.send_device_command_action("id", Action.STOP)
-            assert mock_client.called
+            assert client.is_called
 
     @pytest.mark.asyncio
-    async def test_send_device_command_action_failed(self, api):
-        with patch.object(api, "_client", new=MockClient) as mock_client:
+    async def test_send_device_command_action_failed(self, api, client):
+        with patch.object(api, "_client", new=client.make):
             with pytest.raises(CommandException):
                 await api.send_device_command_action("id", Action.CLOSE)
-            assert mock_client.called
+            assert client.is_called
 
     @pytest.mark.asyncio
-    async def test_send_device_command_properties(self, api):
-        with patch.object(api, "_client", new=MockClient) as mock_client:
+    async def test_send_device_command_properties(self, api, client):
+        with patch.object(api, "_client", new=client.make):
             await api.send_device_command_properties("id", {"action": 0})
-            assert mock_client.called
+            assert client.is_called
 
     @pytest.mark.asyncio
-    async def test_send_device_command_properties_failed(self, api):
-        with patch.object(api, "_client", new=MockClient) as mock_client:
+    async def test_send_device_command_properties_failed(self, api, client):
+        with patch.object(api, "_client", new=client.make):
             with pytest.raises(CommandException):
                 await api.send_device_command_properties("id", {"fail": 0})
-            assert mock_client.called
+            assert client.is_called
 
     @pytest.mark.asyncio
-    async def test_listen_events(self, api):
-        with patch.object(api, "_client", new=MockClient) as mock_client:
+    async def test_listen_events(self, api, client):
+        with patch.object(api, "_client", new=client.make):
             async for device in api.listen_events():
                 assert device is not None
-            assert mock_client.called
+            assert client.is_called
+            assert not client.is_force_update
+
+    @pytest.mark.asyncio
+    async def test_listen_events_force_update(self, api, client):
+        with patch.object(api, "_client", new=client.make):
+            async for device in api.listen_events(True):
+                assert device is not None
+            assert client.is_called
+            assert client.is_force_update
 
     def test__client(self, api):
         client = api._client(session=MagicMock())
@@ -104,11 +118,24 @@ class TestAPIConnector:
 
 
 class MockClient:
-    def __init__(self, *kwargs):
+    def __init__(self):
         self.called = False
+        self.force_update = False
+        self.date = None
 
-    def called(self):
+    def make(self, *kwargs):
+        self.called = False
+        self.force_update = False
+        self.date = DateInformation(100.0, "Europe/Vienna", 3600)
+        return self
+
+    @property
+    def is_called(self):
         return self.called
+
+    @property
+    def is_force_update(self):
+        return self.force_update
 
     async def devices(self, include_details: bool):
         assert include_details
@@ -143,7 +170,9 @@ class MockClient:
             command.properties is not None and "fail" not in command.properties
         )
 
-    async def events(self):
+    async def events(self, force_update: bool):
+        self.called = True
+        self.force_update = force_update
         yield Shutter(
             "id",
             "other",
@@ -154,16 +183,10 @@ class MockClient:
 
     async def date_information(self):
         self.called = True
-        return DateInformation(100.0, "Europe/Vienna", 3600)
+        return self.date
 
 
-class MockClientNoDate:
-    def __init__(self, *kwargs):
-        self.called = False
-
-    def called(self):
-        return self.called
-
+class MockClientNoDate(MockClient):
     async def date_information(self):
         self.called = True
         return None

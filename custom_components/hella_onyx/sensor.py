@@ -31,10 +31,12 @@ async def async_setup_entry(
                 api, timezone, coordinator, device.name, device.device_type, device_id
             ),
         ]
-        for device_id, device in api.devices.items()
+        for device_id, device in filter(
+            lambda item: item[1].device_type.is_shutter(), api.devices.items()
+        )
     ]
     sensors = [item for sublist in sensors for item in sublist]
-    _LOGGER.info("adding %s hella_onyx sensor entities", len(sensors))
+    _LOGGER.info("adding %s hella_onyx shutter sensor entities", len(sensors))
     async_add_entities(sensors, True)
 
 

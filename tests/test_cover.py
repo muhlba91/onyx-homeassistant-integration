@@ -1,6 +1,6 @@
 """Test for the ONYX Shutter Entity."""
-from datetime import datetime
 import time
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -19,6 +19,7 @@ from onyx_client.data.animation_keyframe import AnimationKeyframe
 from onyx_client.data.animation_value import AnimationValue
 from onyx_client.data.device_mode import DeviceMode
 from onyx_client.data.numeric_value import NumericValue
+from onyx_client.device.light import Light
 from onyx_client.device.shutter import Shutter
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
@@ -37,24 +38,68 @@ from custom_components.hella_onyx.moving_state import MovingState
 @pytest.mark.asyncio
 async def test_async_setup_entry(mock_hass):
     config_entry = ConfigEntry(1, DOMAIN, "entry", {}, "source", "POLL", {})
-
-    class AsyncAddEntries:
-        def __init__(self):
-            self.called_async_add_entities = False
-
-        def call(self, shutters, boolean):
-            self.called_async_add_entities = True
-
+    api = MagicMock()
+    api.devices = {
+        "shutter": Shutter(
+            "shutter",
+            "name",
+            DeviceType.RAFFSTORE_90,
+            DeviceMode(DeviceType.RAFFSTORE_90),
+            list(),
+        ),
+        "light": Light(
+            "light",
+            "name",
+            DeviceType.BASIC_LIGHT,
+            DeviceMode(DeviceType.BASIC_LIGHT),
+            list(),
+        ),
+    }
     async_add_entries = AsyncAddEntries()
-
-    mock_hass.data.return_value = {
+    mock_hass.data = {
         DOMAIN: {
-            "entry_id": {ONYX_API: None, ONYX_COORDINATOR: None, ONYX_TIMEZONE: "UTC"}
+            config_entry.entry_id: {
+                ONYX_API: api,
+                ONYX_COORDINATOR: None,
+                ONYX_TIMEZONE: "UTC",
+            }
         }
     }
 
     await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
     assert async_add_entries.called_async_add_entities
+    assert len(async_add_entries.data) == 1
+    assert async_add_entries.data[0]._uuid == "shutter"
+
+
+@patch("homeassistant.core.HomeAssistant")
+@pytest.mark.asyncio
+async def test_async_setup_entry_filter_all(mock_hass):
+    config_entry = ConfigEntry(1, DOMAIN, "entry", {}, "source", "POLL", {})
+    api = MagicMock()
+    api.devices = {
+        "light": Light(
+            "light",
+            "name",
+            DeviceType.BASIC_LIGHT,
+            DeviceMode(DeviceType.BASIC_LIGHT),
+            list(),
+        )
+    }
+    async_add_entries = AsyncAddEntries()
+    mock_hass.data = {
+        DOMAIN: {
+            config_entry.entry_id: {
+                ONYX_API: api,
+                ONYX_COORDINATOR: None,
+                ONYX_TIMEZONE: "UTC",
+            }
+        }
+    }
+
+    await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
+    assert async_add_entries.called_async_add_entities
+    assert len(async_add_entries.data) == 0
 
 
 class TestOnyxShutter:
@@ -349,7 +394,7 @@ class TestOnyxShutter:
     def test__set_state_STILL(self, entity):
         with patch.object(entity, "async_update") as mock_async_update:
             entity._set_state(MovingState.STILL)
-            assert mock_async_update.called
+            assert not mock_async_update.called
         assert not entity.is_opening
         assert not entity.is_closing
 
@@ -365,9 +410,33 @@ class TestOnyxShutter:
 
     def test__end_moving_device(self, entity):
         entity._moving_state = MovingState.CLOSING
+        entity._device.actual_angle.animation = AnimationValue(
+            time.time() - 1000, 10, [AnimationKeyframe("linear", 0, 100, 90)]
+        )
         with patch.object(entity, "stop_cover") as mock_stop_cover:
             entity._end_moving_device()
             assert mock_stop_cover.called
+
+    def test__end_moving_device_within_time(self, entity):
+        entity._moving_state = MovingState.CLOSING
+        entity._device.actual_angle.animation = AnimationValue(
+            time.time(), 10, [AnimationKeyframe("linear", 0, 20000, 90)]
+        )
+        entity._device.actual_position.animation = AnimationValue(
+            time.time(), 10, [AnimationKeyframe("linear", 0, 10000, 90)]
+        )
+        with patch.object(entity, "stop_cover") as mock_stop_cover:
+            entity._end_moving_device()
+            assert not mock_stop_cover.called
+
+    def test__end_moving_device_within_time_using_delay(self, entity):
+        entity._moving_state = MovingState.CLOSING
+        entity._device.actual_position.animation = AnimationValue(
+            time.time() - 100, 10, [AnimationKeyframe("linear", 100000, 10, 90)]
+        )
+        with patch.object(entity, "stop_cover") as mock_stop_cover:
+            entity._end_moving_device()
+            assert not mock_stop_cover.called
 
     def test__end_moving_device_still(self, entity):
         with patch.object(entity, "stop_cover") as mock_stop_cover:
@@ -426,3 +495,13 @@ class TestOnyxShutter:
         api.device.return_value = None
         assert entity._calculate_state(10, 10) == MovingState.STILL
         assert not api.device.called
+
+
+class AsyncAddEntries:
+    def __init__(self):
+        self.called_async_add_entities = False
+        self.data = list()
+
+    def call(self, data, boolean):
+        self.data = data
+        self.called_async_add_entities = True

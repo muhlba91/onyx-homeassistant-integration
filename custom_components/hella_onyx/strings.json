@@ -6,7 +6,8 @@
         "data": {
           "fingerprint": "[%key:common::config_flow::data::fingerprint%]",
           "token": "[%key:common::config_flow::data::token%]",
-          "scan_interval": "[%key:common::config_flow::data::scan_interval%]"
+          "scan_interval": "[%key:common::config_flow::data::scan_interval%]",
+          "force_update": "[%key:common::config_flow::data::force_update%]"
         }
       }
     },

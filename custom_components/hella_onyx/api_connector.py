@@ -74,7 +74,7 @@ class APIConnector:
         if not success:
             raise CommandException("ONYX_ACTION_ERROR", uuid)
 
-    async def listen_events(self):
+    async def listen_events(self, force_update: bool = False):
         """Listen for events."""
         async with ClientSession(
             timeout=ClientTimeout(
@@ -82,8 +82,7 @@ class APIConnector:
             )
         ) as session:
             client = self._client(session)
-            # FIXME
-            async for device in client.events():
+            async for device in client.events(force_update):
                 _LOGGER.debug("received device data for %s", device.identifier)
                 yield device
 
@@ -93,7 +92,7 @@ class CommandException(Exception):
 
     def __init__(self, msg: str, uuid: str):
         super().__init__(msg)
-        _LOGGER.error("Command errored: %s for id %s", msg, uuid)
+        _LOGGER.error("command errored: %s for id %s", msg, uuid)
 
 
 class UnknownStateException(Exception):
@@ -101,4 +100,4 @@ class UnknownStateException(Exception):
 
     def __init__(self, msg):
         super().__init__(msg)
-        _LOGGER.error("Unknown state: %s", msg)
+        _LOGGER.error("unknown state: %s", msg)

@@ -19,11 +19,13 @@ class EventThread(threading.Thread):
         self,
         api: APIConnector,
         coordinator: DataUpdateCoordinator,
+        force_update: bool = False,
         backoff: bool = True,
     ):
         threading.Thread.__init__(self, name="HellaOnyx")
         self._api = api
         self._coordinator = coordinator
+        self._force_update = force_update
         self._backoff = backoff
 
     async def _update(self):
@@ -31,7 +33,7 @@ class EventThread(threading.Thread):
         while True:
             backoff = int(uniform(0, MAX_BACKOFF_TIME) * 60)
             try:
-                async for device in self._api.listen_events():
+                async for device in self._api.listen_events(self._force_update):
                     try:
                         self._api.device(device.identifier).update_with(device)
                         self._coordinator.async_set_updated_data(None)

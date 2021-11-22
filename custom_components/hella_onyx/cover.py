@@ -53,9 +53,11 @@ async def async_setup_entry(
         OnyxShutter(
             api, timezone, coordinator, device.name, device.device_type, device_id
         )
-        for device_id, device in api.devices.items()
+        for device_id, device in filter(
+            lambda item: item[1].device_type.is_shutter(), api.devices.items()
+        )
     ]
-    _LOGGER.info("adding %s hella_onyx entities", len(shutters))
+    _LOGGER.info("adding %s hella_onyx shutter entities", len(shutters))
     async_add_entities(shutters, True)
 
 
@@ -158,7 +160,6 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         position = self._device.actual_position
         return position.value == position.maximum
 
-    # FIXME
     def open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
         self._set_state(MovingState.OPENING)
@@ -166,7 +167,6 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             self.api.send_device_command_action(self._uuid, Action.OPEN), self.hass.loop
         )
 
-    # FIXME
     def close_cover(self, **kwargs: Any) -> None:
         """Close cover."""
         self._set_state(MovingState.CLOSING)
@@ -235,21 +235,20 @@ class OnyxShutter(OnyxEntity, CoverEntity):
     def _set_state(self, state: MovingState):
         """Set the new moving state."""
         self._moving_state = state
-        asyncio.run_coroutine_threadsafe(self.async_update(), self.hass.loop)
 
     def _start_moving_device(self, animation: AnimationValue):
         """Start the update loop."""
         if self._moving_state == MovingState.STILL:
-            _LOGGER.debug("not moving device %s", self._uuid)
+            _LOGGER.debug("not moving still device %s", self._uuid)
             return
 
         keyframes = len(animation.keyframes)
         keyframe = animation.keyframes[keyframes - 1]
 
         current_time = time.time()
-        end_time = animation.start + keyframe.duration
+        end_time = animation.start + keyframe.duration + keyframe.delay
         delta = end_time - current_time
-        moving = current_time > end_time
+        moving = current_time < end_time
 
         _LOGGER.debug(
             "moving device %s with current_time %s and end_time %s: %s",
@@ -260,19 +259,59 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         )
 
         if moving:
-            _LOGGER.debug("end moving device %s due to too old data", self._uuid)
-            self._end_moving_device()
-        else:
             track_point_in_utc_time(
                 self.hass,
                 self._end_moving_device,
                 utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
             )
+        else:
+            _LOGGER.debug("end moving device %s due to too old data", self._uuid)
+            self._end_moving_device()
 
     def _end_moving_device(self, *args: Any):
         """Call STOP to update the device values on ONYX."""
+        position_animation = self._device.actual_position.animation
+        position_keyframe = (
+            position_animation.keyframes[len(position_animation.keyframes) - 1]
+            if position_animation is not None and len(position_animation.keyframes) > 0
+            else None
+        )
+        position_end_time = (
+            (
+                position_animation.start
+                + position_keyframe.duration
+                + position_keyframe.delay
+            )
+            if position_keyframe is not None
+            else None
+        )
+
+        angle_animation = self._device.actual_angle.animation
+        angle_keyframe = (
+            angle_animation.keyframes[len(angle_animation.keyframes) - 1]
+            if angle_animation is not None and len(angle_animation.keyframes) > 0
+            else None
+        )
+        angle_end_time = (
+            (angle_animation.start + angle_keyframe.duration + angle_keyframe.delay)
+            if angle_keyframe is not None
+            else None
+        )
+
+        current_time = time.time()
+
         if self._moving_state != MovingState.STILL:
-            self.stop_cover()
+            if (
+                (angle_end_time is None and current_time > position_end_time)
+                or (position_end_time is None and current_time > angle_end_time)
+                or (current_time > position_end_time and current_time > angle_end_time)
+            ):
+                self.stop_cover()
+            else:
+                _LOGGER.debug(
+                    "not ending moving device %s. overlapping angle and positioning",
+                    self._uuid,
+                )
 
     def _calculate_and_set_state(self, actual: int, new_value: int):
         """Calculate and set the new moving state."""
