@@ -82,14 +82,13 @@ jobs:
   release:
     runs-on: ubuntu-latest
     name: Release
-    if: github.ref == 'refs/heads/main'
     needs:
       - test
       - validate_hacs
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [ 3.8 ]
+        node-version: [ 15 ]
 
     steps:
       - name: Checkout repository
@@ -100,7 +99,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v2
         with:
-          node-version: '12'
+          node-version: ${{ matrix.node-version }}
 
       - name: Setup Git
         run: |
@@ -109,9 +108,16 @@ jobs:
           git fetch --tags
 
       - name: Versioning and Changelog
+        if: github.ref == 'refs/heads/main'
         run: |
           npx standard-version -i release-CHANGELOG.md --skip.commit --skip.tag
           npx standard-version
+
+      - name: Beta Versioning and Changelog
+        if: github.ref == 'refs/heads/next'
+        run: |
+          npx standard-version -i release-CHANGELOG.md --skip.commit --skip.tag --prerelease beta
+          npx standard-version --prerelease beta
 
       - name: Push to Repository
         run: |
@@ -128,3 +134,4 @@ jobs:
           name: '${{ env.TAG_NAME }}'
           tag: '${{ env.TAG_NAME }}'
           token: '${{ secrets.GITHUB_TOKEN }}'
+          prerelease: '${{ github.ref == "refs/heads/next" }}'
