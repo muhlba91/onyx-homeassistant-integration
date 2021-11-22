@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [2.0.0-beta.2](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2021-11-22)
+
+
+### Bug Fixes
+
+* bump onyx-client to 3.0.4; filter unknown devices ([58c1c7b](https://github.com/muhlba91/onyx-homeassistant-integration/commit/58c1c7b6d95a8eda0a804018d6561fe5b2056863))
+
 ## [2.0.0-beta.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v2.0.0-beta.0...v2.0.0-beta.1) (2021-11-22)
 
 
