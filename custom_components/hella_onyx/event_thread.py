@@ -5,6 +5,7 @@ import threading
 from random import uniform
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from onyx_client.enum.device_type import DeviceType
 
 from .api_connector import APIConnector, UnknownStateException
 from .const import MAX_BACKOFF_TIME
@@ -34,11 +35,12 @@ class EventThread(threading.Thread):
             backoff = int(uniform(0, MAX_BACKOFF_TIME) * 60)
             try:
                 async for device in self._api.listen_events(self._force_update):
-                    try:
-                        self._api.device(device.identifier).update_with(device)
-                        self._coordinator.async_set_updated_data(None)
-                    except UnknownStateException:
-                        _LOGGER.debug("ignoring update for %s", device.identifier)
+                    if device is not None and device.device_type != DeviceType.UNKNOWN:
+                        try:
+                            self._api.device(device.identifier).update_with(device)
+                            self._coordinator.async_set_updated_data(None)
+                        except UnknownStateException:
+                            _LOGGER.warning("ignoring update for %s", device.identifier)
             except Exception as ex:
                 _LOGGER.error(
                     "connection reset: %s, restarting: %s (backoff = %s seconds)",
