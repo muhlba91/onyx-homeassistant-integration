@@ -58,6 +58,15 @@ class TestEventThread:
         assert not coordinator.async_set_updated_data.called
 
     @pytest.mark.asyncio
+    async def test_update_none_device(self, thread, api, coordinator):
+        api.called = False
+        api.none_device = True
+        await thread._update()
+        assert api.is_called
+        assert not api.is_force_update
+        assert not coordinator.async_set_updated_data.called
+
+    @pytest.mark.asyncio
     async def test_update_connection_error(self, thread, api, coordinator):
         api.called = False
         api.fail = True
@@ -92,6 +101,7 @@ class MockAPI:
         self.force_update = False
         self.fail = False
         self.fail_device = False
+        self.none_device = False
 
     @property
     def is_called(self):
@@ -103,6 +113,8 @@ class MockAPI:
 
     def device(self, uuid: str):
         self.called = True
+        if self.none_device:
+            return None
         if self.fail_device:
             raise UnknownStateException("ERROR")
         numeric = NumericValue(10, 10, 10, False, None)
