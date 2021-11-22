@@ -5,6 +5,7 @@ from homeassistant import config_entries
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
     CONF_SCAN_INTERVAL,
+    CONF_FORCE_UPDATE,
 )
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from onyx_client import create_client
@@ -16,6 +17,7 @@ AUTH_SCHEMA = vol.Schema(
         vol.Required(CONF_FINGERPRINT): cv.string,
         vol.Required(CONF_ACCESS_TOKEN): cv.string,
         vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_INTERVAL): cv.positive_int,
+        vol.Required(CONF_FORCE_UPDATE, default=False): cv.boolean,
     }
 )
 
@@ -40,6 +42,7 @@ class OnyxFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             fingerprint = user_input[CONF_FINGERPRINT]
             token = user_input[CONF_ACCESS_TOKEN]
             scan_interval = user_input[CONF_SCAN_INTERVAL]
+            force_update = user_input[CONF_FORCE_UPDATE]
 
             if await self._async_exists(fingerprint):
                 return self.async_abort(reason="already_configured")
@@ -53,6 +56,7 @@ class OnyxFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_FINGERPRINT: fingerprint,
                     CONF_ACCESS_TOKEN: token,
                     CONF_SCAN_INTERVAL: scan_interval,
+                    CONF_FORCE_UPDATE: force_update,
                 },
             )
 
