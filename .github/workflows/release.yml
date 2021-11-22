@@ -134,4 +134,4 @@ jobs:
           name: '${{ env.TAG_NAME }}'
           tag: '${{ env.TAG_NAME }}'
           token: '${{ secrets.GITHUB_TOKEN }}'
-          prerelease: '${{ github.ref == "refs/heads/next" }}'
+          prerelease: ${{ github.ref == 'refs/heads/next' }}
