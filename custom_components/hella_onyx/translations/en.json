@@ -12,7 +12,8 @@
         "data": {
           "fingerprint": "Fingerprint",
           "token": "Access Token",
-          "scan_interval": "Scan Interval in Minutes"
+          "scan_interval": "Scan Interval in Minutes",
+          "force_update": "Disable partial updates?"
         }
       }
     }

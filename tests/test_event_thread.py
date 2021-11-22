@@ -29,13 +29,23 @@ class TestEventThread:
 
     @pytest.fixture
     def thread(self, api, coordinator):
-        yield EventThread(api, coordinator, backoff=False)
+        yield EventThread(api, coordinator, force_update=False, backoff=False)
 
     @pytest.mark.asyncio
     async def test_update(self, thread, api, coordinator):
         api.called = False
         await thread._update()
-        assert api.called
+        assert api.is_called
+        assert not api.is_force_update
+        assert coordinator.async_set_updated_data.called
+
+    @pytest.mark.asyncio
+    async def test_update_force_update(self, thread, api, coordinator):
+        thread._force_update = True
+        api.called = False
+        await thread._update()
+        assert api.is_called
+        assert api.is_force_update
         assert coordinator.async_set_updated_data.called
 
     @pytest.mark.asyncio
@@ -43,7 +53,8 @@ class TestEventThread:
         api.called = False
         api.fail_device = True
         await thread._update()
-        assert api.called
+        assert api.is_called
+        assert not api.is_force_update
         assert not coordinator.async_set_updated_data.called
 
     @pytest.mark.asyncio
@@ -51,7 +62,8 @@ class TestEventThread:
         api.called = False
         api.fail = True
         await thread._update()
-        assert api.called
+        assert api.is_called
+        assert not api.is_force_update
         assert not coordinator.async_set_updated_data.called
 
     @pytest.mark.asyncio
@@ -68,7 +80,8 @@ class TestEventThread:
             api.fail = True
             assert thread._backoff
             await thread._update()
-            assert api.called
+            assert api.is_called
+            assert not api.is_force_update
             assert not thread._backoff
             assert not coordinator.async_set_updated_data.called
 
@@ -76,11 +89,17 @@ class TestEventThread:
 class MockAPI:
     def __init__(self):
         self.called = False
+        self.force_update = False
         self.fail = False
         self.fail_device = False
 
-    def called(self):
+    @property
+    def is_called(self):
         return self.called
+
+    @property
+    def is_force_update(self):
+        return self.force_update
 
     def device(self, uuid: str):
         self.called = True
@@ -91,8 +110,9 @@ class MockAPI:
             "uuid", "name", None, None, None, None, numeric, numeric, numeric
         )
 
-    async def listen_events(self):
+    async def listen_events(self, force_update: bool):
         self.called = True
+        self.force_update = force_update
         if self.fail:
             raise NotImplementedError()
         yield Shutter(

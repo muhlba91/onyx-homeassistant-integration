@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - master
+      - main
       - next
 
 jobs:
@@ -66,7 +66,7 @@ jobs:
 
   validate_hacs:
     runs-on: ubuntu-latest
-    name: Check the Codebase
+    name: Validate HACS
 
     steps:
       - name: Checkout repository
@@ -82,7 +82,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     name: Release
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     needs:
       - test
       - validate_hacs

@@ -8,6 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
     CONF_SCAN_INTERVAL,
+    CONF_FORCE_UPDATE,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
@@ -33,6 +34,7 @@ ONYX_SCHEMA = vol.Schema(
             vol.Required(CONF_FINGERPRINT): cv.string,
             vol.Required(CONF_ACCESS_TOKEN): cv.string,
             vol.Required(CONF_SCAN_INTERVAL): cv.positive_int,
+            vol.Required(CONF_FORCE_UPDATE, default=False): cv.boolean,
         },
     )
 )
@@ -61,8 +63,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     fingerprint = entry.data[CONF_FINGERPRINT]
     token = entry.data[CONF_ACCESS_TOKEN]
     scan_interval = entry.data[CONF_SCAN_INTERVAL]
+    force_update = entry.data.get(CONF_FORCE_UPDATE, False)
 
-    _LOGGER.debug("Setting up %s integration with fingerprint %s", DOMAIN, fingerprint)
+    _LOGGER.debug("setting up %s integration with fingerprint %s", DOMAIN, fingerprint)
+    if force_update:
+        _LOGGER.warning(
+            "Disabling partial updates. "
+            "This may lead to a higher amount of API calls to Hella, "
+            "and performance impacts. It is advised to not enable this option."
+        )
 
     onyx_api = APIConnector(hass, fingerprint, token)
     await onyx_api.update()
@@ -77,7 +86,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         request_refresh_debouncer=Debouncer(hass, _LOGGER, cooldown=0, immediate=True),
     )
 
-    thread = EventThread(onyx_api, coordinator)
+    thread = EventThread(onyx_api, coordinator, force_update)
     hass.data[DOMAIN][entry.entry_id] = {
         ONYX_API: onyx_api,
         ONYX_TIMEZONE: onyx_timezone,
