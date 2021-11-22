@@ -82,6 +82,7 @@ class APIConnector:
             )
         ) as session:
             client = self._client(session)
+            # FIXME
             async for device in client.events():
                 _LOGGER.debug("received device data for %s", device.identifier)
                 yield device
