@@ -19,7 +19,7 @@ speedups = ["aiodns", "brotlipy", "cchardet"]
 
 [[package]]
 name = "anyio"
-version = "3.3.4"
+version = "3.4.0"
 description = "High level compatibility layer for multiple asynchronous event loop implementations"
 category = "dev"
 optional = false
@@ -31,7 +31,7 @@ sniffio = ">=1.1"
 
 [package.extras]
 doc = ["sphinx-rtd-theme", "sphinx-autodoc-typehints (>=1.2.0)"]
-test = ["coverage[toml] (>=4.5)", "hypothesis (>=4.0)", "pytest (>=6.0)", "pytest-mock (>=3.6.1)", "trustme", "uvloop (<0.15)", "mock (>=4)", "uvloop (>=0.15)"]
+test = ["coverage[toml] (>=4.5)", "hypothesis (>=4.0)", "pytest (>=6.0)", "pytest-mock (>=3.6.1)", "trustme", "contextlib2", "uvloop (<0.15)", "mock (>=4)", "uvloop (>=0.15)"]
 trio = ["trio (>=0.16)"]
 
 [[package]]
@@ -513,7 +513,7 @@ python-versions = "*"
 
 [[package]]
 name = "onyx-client"
-version = "3.0.4"
+version = "3.1.1"
 description = "HTTP Client for Hella's ONYX.CENTER API."
 category = "main"
 optional = false
@@ -882,7 +882,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "c09d619a55ecb02edba0c50d83169627d2b9aba32aef5d8cd82d98b99770488f"
+content-hash = "83edd5ddc6d642e960f850f843b8b2f682e4286aca15b0cfd7ac7529a2900f8a"
 
 [metadata.files]
 aiohttp = [
@@ -925,8 +925,8 @@ aiohttp = [
     {file = "aiohttp-3.7.4.post0.tar.gz", hash = "sha256:493d3299ebe5f5a7c66b9819eacdcfbbaaf1a8e84911ddffcdc48888497afecf"},
 ]
 anyio = [
-    {file = "anyio-3.3.4-py3-none-any.whl", hash = "sha256:4fd09a25ab7fa01d34512b7249e366cd10358cdafc95022c7ff8c8f8a5026d66"},
-    {file = "anyio-3.3.4.tar.gz", hash = "sha256:67da67b5b21f96b9d3d65daa6ea99f5d5282cb09f50eb4456f8fb51dffefc3ff"},
+    {file = "anyio-3.4.0-py3-none-any.whl", hash = "sha256:2855a9423524abcdd652d942f8932fda1735210f77a6b392eafd9ff34d3fe020"},
+    {file = "anyio-3.4.0.tar.gz", hash = "sha256:24adc69309fb5779bc1e06158e143e0b6d2c56b302a3ac3de3083c705a6ed39d"},
 ]
 astral = [
     {file = "astral-2.2-py2.py3-none-any.whl", hash = "sha256:b9ef70faf32e81a8ba174d21e8f29dc0b53b409ef035f27e0749ddc13cb5982a"},
@@ -1440,8 +1440,8 @@ nodeenv = [
     {file = "nodeenv-1.6.0.tar.gz", hash = "sha256:3ef13ff90291ba2a4a7a4ff9a979b63ffdd00a464dbe04acf0ea6471517a4c2b"},
 ]
 onyx-client = [
-    {file = "onyx-client-3.0.4.tar.gz", hash = "sha256:38bf83eb9d59f246fabd1e2bdbeaa7098843582f87776834b0625cee20f29d6c"},
-    {file = "onyx_client-3.0.4-py3-none-any.whl", hash = "sha256:95244cd2c0fa07f62300859486a0a10dc386a14f234c21b99484d033cc53da65"},
+    {file = "onyx-client-3.1.1.tar.gz", hash = "sha256:2d4b63ee3c73e8040f5d458538a3976d8afb668f8ca070e4133593cac8c1c928"},
+    {file = "onyx_client-3.1.1-py3-none-any.whl", hash = "sha256:b0919f1046d97d99e199141c9f6407f231394e9e99c7e4b6659c42297358828a"},
 ]
 packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},

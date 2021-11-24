@@ -8,7 +8,7 @@ from homeassistant.const import (
     CONF_FORCE_UPDATE,
 )
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from onyx_client import create_client
+from onyx_client.client import create
 
 from .const import CONF_FINGERPRINT, DEFAULT_INTERVAL, DOMAIN
 
@@ -78,7 +78,7 @@ class OnyxFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _async_verify_conn(self, fingerprint, token):
         """Verify the connection credentials."""
-        return await create_client(
+        return await create(
             fingerprint=fingerprint,
             access_token=token,
             client_session=async_get_clientsession(self.hass, False),

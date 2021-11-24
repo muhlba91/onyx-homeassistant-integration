@@ -18,11 +18,11 @@ interpretation of values diverges in a few aspects.
 
 Therefore, a few limitations are imposed on/by this integration:
 
-| Limitation | Description | Bound By |
-|------------|-------------|----------|
-| Fingerprint, Access Token Authentication | The API requires the ONYX.CENTER fingerprint and an access token. Basically, those can be retrieved programmatically, which is not implemented yet. | Personal Needs |
-| Shutter Position | Home Assistant takes the position 0 as closed and 100 as open, Hella the opposite. | Home Assistant |
-| Tilt Position | Home Assistant takes the position 0 as closed and 100 as open, Hella's values range between 0-90 and 0-180. | Home Assistant / Hella |
+| Limitation                               | Description                                                                                                                                         | Bound By               |
+|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|------------------------|
+| Fingerprint, Access Token Authentication | The API requires the ONYX.CENTER fingerprint and an access token. Basically, those can be retrieved programmatically, which is not implemented yet. | Personal Needs         |
+| Shutter Position                         | Home Assistant takes the position 0 as closed and 100 as open, Hella the opposite.                                                                  | Home Assistant         |
+| Tilt Position                            | Home Assistant takes the position 0 as closed and 100 as open, Hella's values range between 0-90 and 0-180.                                         | Home Assistant / Hella |
 
 ### Realtime Updates / Streaming API
 
@@ -33,6 +33,8 @@ The integration makes use of this and keeps a connection open to the ONYX API se
 near-realtime. Since exceptions can occur, and the endpoint only pushes partial updates, all device states are updated
 periodically as well to ensure current states are available and correct. Please ensure a proper update interval,
 suggested is anywhere between 30-180 minutes.
+
+This integration uses API `v3`.
 
 ## Installation
 

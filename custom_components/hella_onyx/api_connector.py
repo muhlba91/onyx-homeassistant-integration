@@ -3,7 +3,7 @@ import logging
 
 from aiohttp import ClientSession, ClientTimeout
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from onyx_client import create_client
+from onyx_client.client import create
 from onyx_client.data.device_command import DeviceCommand
 from onyx_client.enum.action import Action
 
@@ -22,7 +22,7 @@ class APIConnector:
         self.groups = {}
 
     def _client(self, session=None):
-        return create_client(
+        return create(
             fingerprint=self.fingerprint,
             access_token=self.token,
             client_session=session
