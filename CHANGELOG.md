@@ -1,6 +1,26 @@
 # Changelog
 
 
+## [2.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v1.2.0...v2.0.0) (2021-11-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* fix #9
+
+### Features
+
+* prepare for api v3 ([147311f](https://github.com/muhlba91/onyx-homeassistant-integration/commit/147311f43b8dc2cf5bdc4f87f3ba1c2ac024e5c7))
+* upgrade to API v3; fix [#9](https://github.com/muhlba91/onyx-homeassistant-integration/issues/9) ([24db3c6](https://github.com/muhlba91/onyx-homeassistant-integration/commit/24db3c6058f21b284b5ca4d501e1beaeaa1d18eb))
+
+
+### Bug Fixes
+
+* bump onyx-client to 3.0.2; related to [#8](https://github.com/muhlba91/onyx-homeassistant-integration/issues/8) ([f360592](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f360592abb877f6473b3f71cf9d43d0090ef0f80))
+* bump onyx-client to 3.0.4; filter unknown devices ([0a13e4a](https://github.com/muhlba91/onyx-homeassistant-integration/commit/0a13e4a63bc1498c5c155f1e1ad9391a801535d5))
+* detect cover position according to hella and home assistant requirements; fix [#9](https://github.com/muhlba91/onyx-homeassistant-integration/issues/9) ([fb8538e](https://github.com/muhlba91/onyx-homeassistant-integration/commit/fb8538ef23e5ceb539bd3c9e9ded6c7c66c1aa59))
+* filter entities, fix state detection, add property to enforce getting all data; [#9](https://github.com/muhlba91/onyx-homeassistant-integration/issues/9) ([d7e24a5](https://github.com/muhlba91/onyx-homeassistant-integration/commit/d7e24a5f389bae58db5d59cf37129838fa414b7d))
+
 ## [2.0.0-beta.3](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2021-11-24)
 
 ## [2.0.0-beta.2](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2021-11-22)
