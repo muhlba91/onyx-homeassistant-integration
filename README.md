@@ -1,4 +1,4 @@
-# LED-Pi Custom Component for Home Assistant
+# Hella ONYX.CENTER Custom Component for Home Assistant
 
 [![](https://img.shields.io/github/license/muhlba91/onyx-homeassistant-integration?style=for-the-badge)](LICENSE)
 [![](https://img.shields.io/github/workflow/status/muhlba91/onyx-homeassistant-integration/Release?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/actions)
