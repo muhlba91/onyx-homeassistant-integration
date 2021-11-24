@@ -5,7 +5,7 @@
   "documentation": "https://github.com/muhlba91/onyx-homeassistant-integration",
   "issue_tracker": "https://github.com/muhlba91/onyx-homeassistant-integration/issues",
   "requirements": [
-    "onyx-client==3.0.4"
+    "onyx-client==3.1.1"
   ],
   "ssdp": [],
   "zeroconf": [],
@@ -14,5 +14,6 @@
   "codeowners": [
     "@muhlba91"
   ],
-  "version": "2.0.0-beta.2"
+  "iot_class": "cloud_polling",
+  "version": "2.0.0-beta.1"
 }
