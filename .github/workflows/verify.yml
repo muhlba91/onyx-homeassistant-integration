@@ -51,7 +51,7 @@ jobs:
       - name: Lint files
         run: |
           poetry check
-          poetry run flakehell lint
+          poetry run flakeheaven lint
           poetry run black --check .
 
       - name: Run tests
