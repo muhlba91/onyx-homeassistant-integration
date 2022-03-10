@@ -4,6 +4,7 @@
 [![](https://img.shields.io/github/workflow/status/muhlba91/onyx-homeassistant-integration/Release?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/actions)
 [![](https://img.shields.io/coveralls/github/muhlba91/onyx-homeassistant-integration?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
+[![Known Vulnerabilities](https://snyk.io/test/github/muhlba91/onyx-homeassistant-integration/badge.svg)](https://snyk.io/test/github/muhlba91/onyx-homeassistant-integration/)
 <a href="https://www.buymeacoffee.com/muhlba91" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="28" width="150"></a>
 
 This component creates an integration that provides **raffstore/shutter entities** to control
