@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [2.1.0-beta.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v2.0.1...v2.1.0-beta.0) (2022-03-10)
+
+
+### Features
+
+* **ci:** add snyk monitor ([c79d231](https://github.com/muhlba91/onyx-homeassistant-integration/commit/c79d231cb641112c9b5bc897c0c82bf4afe4cd41))
+
 ### [2.0.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v2.0.0...v2.0.1) (2022-01-16)
 
 ## [2.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v1.2.0...v2.0.0) (2021-11-24)
