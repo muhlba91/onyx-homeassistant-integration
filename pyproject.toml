@@ -27,19 +27,20 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-onyx-client = "^3.1.2"
+python = "^3.9"
+onyx-client = "^4.0.1"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.5"
+pytest = "^7.1.2"
 pytest-cov = { extras = ["toml"], version = "^3.0.0" }
-flakeheaven = "^0.11.0"
-coverage = { extras = ["toml"], version = "^6.1.2" }
-black = "^21.11b1"
-pre-commit = "^2.15.0"
-homeassistant = "^2021.12.9"
-pytest-asyncio = "^0.16.0"
-coveralls = "^3.0.0"
+flakeheaven = "^2.0.0"
+coverage = { extras = ["toml"], version = "^6.4.1" }
+black = "^22.6"
+pre-commit = "^2.19.0"
+pytest-asyncio = "^0.18.3"
+aioresponses = "^0.7.3"
+coveralls = "^3.3.1"
+homeassistant = "^2022.7.1"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
