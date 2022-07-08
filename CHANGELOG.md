@@ -1,6 +1,8 @@
 # Changelog
 
 
+## [3.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v3.0.0-beta.0...v3.0.0) (2022-07-08)
+
 ## [3.0.0-beta.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v2.1.0-beta.0...v3.0.0-beta.0) (2022-07-08)
 
 
