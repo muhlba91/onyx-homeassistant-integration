@@ -1,6 +1,24 @@
 # Changelog
 
 
+## [3.0.0-beta.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v2.1.0-beta.0...v3.0.0-beta.0) (2022-07-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* update to python 3.9
+
+### Features
+
+* update to home assistant 2022.7.0; update onyx-client to 4.x ([9b8bf7c](https://github.com/muhlba91/onyx-homeassistant-integration/commit/9b8bf7c129e379e3d9f53f961fd2b2b22e20e3ec))
+
+
+### Bug Fixes
+
+* **ci:** fix python version ([0d63965](https://github.com/muhlba91/onyx-homeassistant-integration/commit/0d639651f68332db3e553fe05b41fdec2a676bae))
+* fix hacs configuration ([35ec796](https://github.com/muhlba91/onyx-homeassistant-integration/commit/35ec796e860f83b7d03217ad67d5387acff22d79))
+* fix hacs configuration ([b703357](https://github.com/muhlba91/onyx-homeassistant-integration/commit/b703357e4ae7346727106d763a826d79c950abc0))
+
 ## [2.1.0-beta.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v2.0.1...v2.1.0-beta.0) (2022-03-10)
 
 
