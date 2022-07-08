@@ -1,6 +1,5 @@
 {
   "name": "Hella ONYX.CENTER",
-  "iot_class": "Cloud Polling",
   "domains": [
     "hella_onyx",
     "cover"
