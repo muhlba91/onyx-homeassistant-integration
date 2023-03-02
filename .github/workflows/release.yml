@@ -13,26 +13,26 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [ 3.9 ]
-        poetry-version: [ 1.1.13 ]
+        python-version: [3.11]
+        poetry-version: [1.4.0]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Set up Poetry ${{ matrix.poetry-version }}
-        uses: abatilo/actions-poetry@v2.1.0
+        uses: abatilo/actions-poetry@v2
         with:
           poetry-version: ${{ matrix.poetry-version }}
 
       - name: Cache Poetry
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: cache-poetry
         with:
@@ -70,7 +70,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -88,16 +88,16 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        node-version: [ 16 ]
+        node-version: [16]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Set up Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -131,7 +131,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           bodyFile: "release-CHANGELOG.md"
-          name: '${{ env.TAG_NAME }}'
-          tag: '${{ env.TAG_NAME }}'
-          token: '${{ secrets.GITHUB_TOKEN }}'
+          name: "${{ env.TAG_NAME }}"
+          tag: "${{ env.TAG_NAME }}"
+          token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: ${{ github.ref == 'refs/heads/next' }}

@@ -1,7 +1,7 @@
 ---
 repos:
   - repo: https://github.com/psf/black
-    rev: 22.6.0
+    rev: 23.1.0
     hooks:
       - id: black
         language_version: python3
@@ -11,13 +11,13 @@ repos:
       - id: flakehell
         language_version: python3
   - repo: https://github.com/talos-systems/conform
-    rev: v0.1.0-alpha.26
+    rev: v0.1.0-alpha.27
     hooks:
       - id: conform
         stages:
           - commit-msg
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v4.4.0
     hooks:
       - id: check-json
       - id: check-merge-conflict
