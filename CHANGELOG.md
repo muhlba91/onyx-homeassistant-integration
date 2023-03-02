@@ -1,6 +1,17 @@
 # Changelog
 
 
+## [4.0.0-beta.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v3.0.0...v4.0.0-beta.0) (2023-03-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* update to python 3.11
+
+### Features
+
+* update dependencies ([08fea02](https://github.com/muhlba91/onyx-homeassistant-integration/commit/08fea02b68efcda876c6cdf266a1a676ecedd9b1))
+
 ## [3.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v3.0.0-beta.0...v3.0.0) (2022-07-08)
 
 ## [3.0.0-beta.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v2.1.0-beta.0...v3.0.0-beta.0) (2022-07-08)
