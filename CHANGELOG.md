@@ -1,6 +1,13 @@
 # Changelog
 
 
+### [5.0.2-beta.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v5.0.2-beta.0...v5.0.2-beta.1) (2023-03-24)
+
+
+### Bug Fixes
+
+* remove DEVICE_CLASS_* usage; fixes [#15](https://github.com/muhlba91/onyx-homeassistant-integration/issues/15) ([7052b5d](https://github.com/muhlba91/onyx-homeassistant-integration/commit/7052b5dd3b775acbf73130fc014b336f0127219b))
+
 ### [5.0.2-beta.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v5.0.1...v5.0.2-beta.0) (2023-03-24)
 
 
