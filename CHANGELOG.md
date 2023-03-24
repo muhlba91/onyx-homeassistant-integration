@@ -1,6 +1,15 @@
 # Changelog
 
 
+### [5.0.2-beta.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v5.0.1...v5.0.2-beta.0) (2023-03-24)
+
+
+### Bug Fixes
+
+* merge main ([a9578bb](https://github.com/muhlba91/onyx-homeassistant-integration/commit/a9578bbc8d131f02f93b2c2355bf7ae2696908f1))
+
+## [5.0.0-beta.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v4.0.0...v5.0.0-beta.0) (2023-03-24)
+
 ### [5.0.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v5.0.0...v5.0.1) (2023-03-24)
 
 
