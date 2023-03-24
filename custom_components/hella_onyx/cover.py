@@ -9,8 +9,8 @@ from typing import Any, Callable, Optional
 from homeassistant.components.cover import (
     ATTR_POSITION,
     ATTR_TILT_POSITION,
+    CoverDeviceClass,
     CoverEntity,
-    DEVICE_CLASS_SHUTTER,
     SUPPORT_CLOSE,
     SUPPORT_OPEN,
     SUPPORT_SET_POSITION,
@@ -89,8 +89,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
     @property
     def device_class(self) -> Optional[str]:
-        """Return the class of this device, from component DEVICE_CLASSES."""
-        return DEVICE_CLASS_SHUTTER
+        """Return the class of this device, from component device class."""
+        return CoverDeviceClass.SHUTTER
 
     @property
     def supported_features(self):

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import pytz
 from homeassistant.components.cover import (
-    DEVICE_CLASS_SHUTTER,
+    CoverDeviceClass,
     SUPPORT_CLOSE,
     SUPPORT_OPEN,
     SUPPORT_SET_POSITION,
@@ -148,7 +148,7 @@ class TestOnyxShutter:
         assert entity.unique_id == "uuid/Shutter"
 
     def test_device_class(self, entity):
-        assert entity.device_class == DEVICE_CLASS_SHUTTER
+        assert entity.device_class == CoverDeviceClass.SHUTTER
 
     def test_supported_features_with_tilt(self, entity):
         assert entity.supported_features == (
