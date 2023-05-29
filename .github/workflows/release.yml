@@ -5,6 +5,11 @@ on:
     branches:
       - main
       - next
+    paths:
+      - "custom_components/**"
+      - "poetry.lock"
+      - "pyproject.toml"
+      - "hacs.json"
 
 jobs:
   test:
