@@ -1,8 +1,0 @@
----
-name: "CodeQL config"
-
-queries:
-  - uses: security-and-quality
-
-paths:
-  - custom_components

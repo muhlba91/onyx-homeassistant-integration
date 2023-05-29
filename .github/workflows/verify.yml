@@ -1,7 +1,8 @@
-name: Python package
+name: Verify
 
 on:
   push:
+  pull_request:
 
 jobs:
   snyk:
@@ -63,7 +64,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     name: Check the Codebase
-    if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/next' }}
     strategy:
       max-parallel: 4
       matrix:

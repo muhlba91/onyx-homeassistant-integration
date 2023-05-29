@@ -1,7 +1,7 @@
 # Hella ONYX.CENTER Custom Component for Home Assistant
 
 [![](https://img.shields.io/github/license/muhlba91/onyx-homeassistant-integration?style=for-the-badge)](LICENSE)
-[![](https://img.shields.io/github/workflow/status/muhlba91/onyx-homeassistant-integration/Release?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/actions)
+[![](https://img.shields.io/github/actions/workflow/status/muhlba91/onyx-homeassistant-integration/release.yml?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/actions/workflows/release.yml)
 [![](https://img.shields.io/coveralls/github/muhlba91/onyx-homeassistant-integration?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
 [![Known Vulnerabilities](https://snyk.io/test/github/muhlba91/onyx-homeassistant-integration/badge.svg)](https://snyk.io/test/github/muhlba91/onyx-homeassistant-integration/)
@@ -80,8 +80,8 @@ Once configured, the integration **creates entities** for:
 The project uses [poetry](https://poetry.eustace.io/) and to install all dependencies and the build environment, run:
 
 ```bash
-$ pip install poetry
-$ poetry install
+pip install poetry
+poetry install
 ```
 
 ### Testing
@@ -90,9 +90,9 @@ $ poetry install
 2) Run `pytest` by:
 
 ```bash
-$ poetry run pytest
+poetry run pytest
 # or
-$ pytest
+pytest
 ```
 
 ### Linting and Code Style
@@ -105,19 +105,19 @@ using [pre-commit](https://pre-commit.com/).
 2) (Optional) Install pre-commit hooks:
 
 ```bash
-$ poetry run pre-commit install
+poetry run pre-commit install
 ```
 
 3) Run black:
 
 ```bash
-$ poetry run black .
+poetry run black .
 ```
 
 4) Run flakehell:
 
 ```bash
-$ poetry run flakehell lint
+poetry run flakehell lint
 ```
 
 ### Commit Message
@@ -132,15 +132,15 @@ adhere to the additional rules outlined in `.conform.yaml`.
 To draft a release, use [standard-version](https://github.com/conventional-changelog/standard-version):
 
 ```bash
-$ standard-version
+standard-version
 # alternatively
-$ npx standard-version
+npx standard-version
 ```
 
 Finally, push with tags:
 
 ```bash
-$ git push --follow-tags
+git push --follow-tags
 ```
 
 **Note:** releasing is automated through the `master` branch!

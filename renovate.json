@@ -1,0 +1,29 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": [
+        "config:base",
+        ":dependencyDashboard"
+    ],
+    "prHourlyLimit": 0,
+    "prConcurrentLimit": 0,
+    "baseBranches": [
+        "next"
+    ],
+    "enabledManagers": [
+        "github-actions",
+        "poetry"
+    ],
+    "github-actions": {
+        "commitMessageTopic": "chore(deps): update github actions {{ depName }}",
+        "fileMatch": [
+            "^(workflow-templates|\\.github/workflows)/[^/]+\\.ya?ml$",
+            "(^|/)action\\.ya?ml$"
+        ]
+    },
+    "poetry": {
+        "commitMessageTopic": "chore(deps): update python/poetry package {{ depName }}",
+        "fileMatch": [
+            "(^|/)pyproject\\.toml$"
+        ]
+    }
+}
