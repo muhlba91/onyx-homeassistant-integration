@@ -15,5 +15,5 @@
     "@muhlba91"
   ],
   "iot_class": "cloud_polling",
-  "version": "5.0.2"
+  "version": "5.0.3-beta.0"
 }
