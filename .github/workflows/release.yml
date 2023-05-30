@@ -10,6 +10,7 @@ on:
       - "poetry.lock"
       - "pyproject.toml"
       - "hacs.json"
+  workflow_dispatch:
 
 jobs:
   test:
