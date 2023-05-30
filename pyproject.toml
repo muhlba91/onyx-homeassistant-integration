@@ -31,16 +31,16 @@ python = "^3.10"
 onyx-client = "^6.0.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.2.1"
-pytest-cov = { extras = ["toml"], version = "^4.0.0" }
-flakeheaven = "^3.2.1"
+pytest = "^7.3.1"
+pytest-cov = { extras = ["toml"], version = "^4.1.0" }
+flakeheaven = "^3.3.0"
 coverage = { extras = ["toml"], version = "^6.5.0" }
-black = "^23.1.0"
-pre-commit = "^3.1.1"
-pytest-asyncio = "^0.20.3"
+black = "^23.3.0"
+pre-commit = "^3.3.2"
+pytest-asyncio = "^0.21.0"
 aioresponses = "^0.7.4"
 coveralls = "^3.3.1"
-homeassistant = "^2023.3.0"
+homeassistant = "^2023.5.4"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
