@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [5.1.0-beta.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v5.1.0-beta.0...v5.1.0-beta.1) (2023-05-30)
+
+
+### Features
+
+* update onyx-client ([c24b113](https://github.com/muhlba91/onyx-homeassistant-integration/commit/c24b113fc459f066a32a33366c01144ae2a2f448))
+
 ## [5.1.0-beta.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v5.0.2...v5.1.0-beta.0) (2023-05-30)
 
 
