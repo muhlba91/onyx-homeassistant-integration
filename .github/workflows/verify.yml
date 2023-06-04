@@ -2,6 +2,9 @@ name: Verify
 
 on:
   push:
+    branches:
+      - main
+      - next
   pull_request:
   workflow_dispatch:
 
@@ -13,7 +16,7 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: ["3.10"]
-        poetry-version: [1.4.0]
+        poetry-version: [1.5.1]
 
     steps:
       - name: Checkout repository
@@ -69,7 +72,7 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: ["3.10"]
-        poetry-version: [1.4.0]
+        poetry-version: [1.5.1]
 
     steps:
       - name: Checkout repository
@@ -112,6 +115,12 @@ jobs:
       - name: Run tests
         run: |
           poetry run pytest
+          poetry run coverage xml
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          file: coverage.xml
 
   validate_hacs:
     runs-on: ubuntu-latest
