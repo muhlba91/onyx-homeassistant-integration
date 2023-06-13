@@ -3,12 +3,12 @@
     "extends": [
         "config:base",
         ":dependencyDashboard",
-	":semanticCommitTypeAll(chore)"
+        ":semanticCommitTypeAll(chore)"
     ],
     "prHourlyLimit": 0,
     "prConcurrentLimit": 0,
     "baseBranches": [
-        "next"
+        "main"
     ],
     "enabledManagers": [
         "github-actions",
