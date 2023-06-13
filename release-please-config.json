@@ -1,0 +1,72 @@
+{
+    "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+    "packages": {
+        ".": {
+            "release-type": "python",
+            "package-name": "hella_onyx",
+            "include-component-in-tag": false,
+            "changelog-path": "CHANGELOG.md",
+            "extra-files": [
+                {
+                    "type": "json",
+                    "path": "custom_components/hella_onyx/manifest.json",
+                    "jsonpath": "$.version"
+                }
+            ]
+        }
+    },
+    "include-v-in-tag": true,
+    "skip-github-release": false,
+    "group-pull-request-title-pattern": "chore(release): release ${version}",
+    "pull-request-header": ":robot: I have created a release",
+    "label": "release",
+    "changelog-type": "default",
+    "changelog-sections": [
+        {
+            "type": "feat",
+            "section": "Features"
+        },
+        {
+            "type": "fix",
+            "section": "Bug Fixes"
+        },
+        {
+            "type": "perf",
+            "section": "Performance Improvements"
+        },
+        {
+            "type": "revert",
+            "section": "Reverts"
+        },
+        {
+            "type": "chore",
+            "section": "Miscellaneous Chores"
+        },
+        {
+            "type": "docs",
+            "section": "Documentation",
+            "hidden": true
+        },
+        {
+            "type": "refactor",
+            "section": "Code Refactoring",
+            "hidden": true
+        },
+        {
+            "type": "test",
+            "section": "Tests",
+            "hidden": true
+        },
+        {
+            "type": "build",
+            "section": "Build System",
+            "hidden": true
+        },
+        {
+            "type": "ci",
+            "section": "Continuous Integration",
+            "hidden": true
+        }
+    ],
+    "bootstrap-sha": "d8b6b2c7789c401df758a3ef71cd733428fa9303"
+}

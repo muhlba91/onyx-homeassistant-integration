@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - next
   pull_request:
   workflow_dispatch:
 
@@ -34,18 +33,6 @@ jobs:
           poetry-version: ${{ matrix.poetry-version }}
       - name: Set up Snyk
         uses: snyk/actions/setup@master
-
-      - name: Cache Poetry
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-poetry
-        with:
-          path: ~/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
 
       - name: Install dependencies
         run: |
@@ -88,18 +75,6 @@ jobs:
         uses: abatilo/actions-poetry@v2
         with:
           poetry-version: ${{ matrix.poetry-version }}
-
-      - name: Cache Poetry
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-poetry
-        with:
-          path: ~/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
 
       - name: Install dependencies
         run: |
