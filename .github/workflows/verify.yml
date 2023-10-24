@@ -11,6 +11,11 @@ jobs:
   snyk:
     runs-on: ubuntu-latest
     name: Snyk
+    permissions:
+      actions: read
+      contents: read
+      statuses: read
+      security-events: write
     strategy:
       max-parallel: 4
       matrix:
