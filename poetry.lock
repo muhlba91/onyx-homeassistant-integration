@@ -1362,17 +1362,17 @@ setuptools = "*"
 
 [[package]]
 name = "onyx-client"
-version = "7.1.1"
+version = "7.2.1"
 description = "HTTP Client for Hella's ONYX.CENTER API."
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "onyx_client-7.1.1-py3-none-any.whl", hash = "sha256:592dd21cc29878838bbe9e8952bc32875a3ff84557c8ad56e9c861b6d153ae52"},
-    {file = "onyx_client-7.1.1.tar.gz", hash = "sha256:587092c6feb1665cc74f8b5e74068baa8a5f252919064c3a331d79ca5409f89a"},
+    {file = "onyx_client-7.2.1-py3-none-any.whl", hash = "sha256:7a3b0810508b8a73a1c8e36392ff41479ab830afb8925acf85145a338cfd5f1f"},
+    {file = "onyx_client-7.2.1.tar.gz", hash = "sha256:6070f54cf91c0f24909b469867bf0d6d72200c95429613aec8fd7c1aaf3d9c63"},
 ]
 
 [package.dependencies]
-aiohttp = ">=3.8.4,<4.0.0"
+aiohttp = ">=3.8.5,<4.0.0"
 
 [[package]]
 name = "orjson"
