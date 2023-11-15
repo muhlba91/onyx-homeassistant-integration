@@ -9,7 +9,7 @@ from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
 from custom_components.hella_onyx import DOMAIN
-from custom_components.hella_onyx.onyx_entity import OnyxEntity
+from custom_components.hella_onyx.sensors.onyx_entity import OnyxEntity
 
 
 class TestOnyxEntity:
@@ -28,7 +28,7 @@ class TestOnyxEntity:
         )
 
     def test_icon(self, entity):
-        assert entity.icon == "mdi:window-shutter"
+        assert entity.icon == "mdi:help"
 
     def test_device_info(self, entity):
         assert entity.device_info == {

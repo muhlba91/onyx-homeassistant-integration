@@ -4,11 +4,13 @@
 [![](https://img.shields.io/github/actions/workflow/status/muhlba91/onyx-homeassistant-integration/release.yml?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/actions/workflows/release.yml)
 [![](https://img.shields.io/coveralls/github/muhlba91/onyx-homeassistant-integration?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
-[![Known Vulnerabilities](https://snyk.io/test/github/muhlba91/onyx-homeassistant-integration/badge.svg)](https://snyk.io/test/github/muhlba91/onyx-homeassistant-integration/)
+[![Known Vulnerabilities](https://snyk.io/test/github/muhlba91/onyx-homeassistant-integration/badge.svg)](https://snyk.io/test/github/muhlba91/onyx-homeassistant-integration)
 <a href="https://www.buymeacoffee.com/muhlba91" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="28" width="150"></a>
 
-This component creates an integration that provides **raffstore/shutter entities** to control
-[Hella's ONYX.CENTER](https://www.hella.info/) via Home Assistant.
+This component creates an integration that provides the following entities to control [Hella's ONYX.CENTER](https://www.hella.info/) via Home Assistant:
+
+- **raffstore/shutter** entities
+- **weather station** sensor entities
 
 ---
 
@@ -71,7 +73,13 @@ Once configured, the integration **creates entities** for:
 | Entity               | Description                                                                                                      |
 |----------------------|------------------------------------------------------------------------------------------------------------------|
 | Cover                | Manage the shutter. ([API Reference](https://developers.home-assistant.io/docs/core/entity/cover/))              |
-| Sensor (Device Type) | The device type of the shutter. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Sensor (Device Type) | The device type of the ONYX device. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Sensor (Weather Humidity) | The humidity of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Sensor (Weather Temperature) | The temperature of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Sensor (Weather Air Pressure) | The air pressure of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Sensor (Weather Wind Peak) | The wind peak of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Sensor (Weather Sun Brightness Peak) | The sun brightness peak of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Sensor (Weather Sun Brightness Sink) | The sun brightness sink of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 
 ---
 
@@ -124,26 +132,6 @@ poetry run flakehell lint
 
 This project follows [Conventional Commits](https://www.conventionalcommits.org/), and your commit message must also
 adhere to the additional rules outlined in `.conform.yaml`.
-
----
-
-## Release
-
-To draft a release, use [standard-version](https://github.com/conventional-changelog/standard-version):
-
-```bash
-standard-version
-# alternatively
-npx standard-version
-```
-
-Finally, push with tags:
-
-```bash
-git push --follow-tags
-```
-
-**Note:** releasing is automated through the `master` branch!
 
 ---
 
