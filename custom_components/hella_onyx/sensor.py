@@ -6,9 +6,19 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import DiscoveryInfoType
 
+from onyx_client.enum.device_type import DeviceType
+
 from . import ONYX_API, ONYX_COORDINATOR, ONYX_TIMEZONE
 from .const import DOMAIN
-from .onyx_entity import OnyxEntity
+from custom_components.hella_onyx.sensors.device_type import OnyxSensorDeviceType
+from custom_components.hella_onyx.sensors.weather import (
+    OnyxSensorWeatherHumidity,
+    OnyxSensorWeatherTemperature,
+    OnyxSensorWeatherAirPressure,
+    OnyxSensorWeatherWindPeak,
+    OnyxSensorWeatherSunBrightnessPeak,
+    OnyxSensorWeatherSunBrightnessSink,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,46 +29,53 @@ async def async_setup_entry(
     async_add_entities: Callable,
     discovery_info: Optional[DiscoveryInfoType] = None,
 ):
-    """Set up the ONYX shutter platform."""
+    """Set up the ONYX platform."""
     data = hass.data[DOMAIN][entry.entry_id]
     api = data[ONYX_API]
     timezone = data[ONYX_TIMEZONE]
     coordinator = data[ONYX_COORDINATOR]
 
+    # all device type sensors
     sensors = [
         [
             OnyxSensorDeviceType(
                 api, timezone, coordinator, device.name, device.device_type, device_id
             ),
         ]
+        # we only support shutters or weather stations
         for device_id, device in filter(
-            lambda item: item[1].device_type.is_shutter(), api.devices.items()
+            lambda item: item[1].device_type.is_shutter()
+            or item[1].device_type == DeviceType.WEATHER,
+            api.devices.items(),
+        )
+    ]
+    # all weather stations
+    sensors = sensors + [
+        [
+            OnyxSensorWeatherHumidity(
+                api, timezone, coordinator, device.name, device.device_type, device_id
+            ),
+            OnyxSensorWeatherTemperature(
+                api, timezone, coordinator, device.name, device.device_type, device_id
+            ),
+            OnyxSensorWeatherAirPressure(
+                api, timezone, coordinator, device.name, device.device_type, device_id
+            ),
+            OnyxSensorWeatherWindPeak(
+                api, timezone, coordinator, device.name, device.device_type, device_id
+            ),
+            OnyxSensorWeatherSunBrightnessPeak(
+                api, timezone, coordinator, device.name, device.device_type, device_id
+            ),
+            OnyxSensorWeatherSunBrightnessSink(
+                api, timezone, coordinator, device.name, device.device_type, device_id
+            ),
+        ]
+        for device_id, device in filter(
+            lambda item: item[1].device_type == DeviceType.WEATHER, api.devices.items()
         )
     ]
     sensors = [item for sublist in sensors for item in sublist]
-    _LOGGER.info("adding %s hella_onyx shutter sensor entities", len(sensors))
+
+    _LOGGER.info("adding %s hella_onyx sensor entities", len(sensors))
     async_add_entities(sensors, True)
-
-
-class OnyxSensorDeviceType(OnyxEntity):
-    """ONYX Device Type Sensor."""
-
-    @property
-    def name(self) -> str:
-        """Return the display name of the sensor."""
-        return f"{self._name} Device Type"
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique id of the sensor."""
-        return f"{self._uuid}/DeviceType"
-
-    @property
-    def icon(self):
-        """Icon to use in the frontend, if any."""
-        return "mdi:cellphone-link"
-
-    @property
-    def state(self):
-        """Return the current value."""
-        return self._device.device_type.string()

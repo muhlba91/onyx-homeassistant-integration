@@ -6,8 +6,8 @@ from homeassistant.helpers.update_coordinator import (
 )
 from onyx_client.enum.device_type import DeviceType
 
-from .api_connector import APIConnector
-from .const import DOMAIN
+from custom_components.hella_onyx.api_connector import APIConnector
+from custom_components.hella_onyx.const import DOMAIN
 
 
 class OnyxEntity(CoordinatorEntity):
@@ -33,7 +33,7 @@ class OnyxEntity(CoordinatorEntity):
     @property
     def icon(self):
         """Icon to use in the frontend, if any."""
-        return "mdi:window-shutter"
+        return "mdi:help"
 
     @property
     def device_info(self):

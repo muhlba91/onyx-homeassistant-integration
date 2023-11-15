@@ -430,3 +430,5 @@ dmypy.json
 .prof
 
 # End of https://www.toptal.com/developers/gitignore/api/intellij,intellij+all,pycharm,pycharm+all,python
+
+.flakeheaven_cache/
