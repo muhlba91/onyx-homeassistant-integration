@@ -1,6 +1,47 @@
 # Changelog
 
 
+## [7.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v6.0.1...v7.0.0) (2023-11-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* weather sensors are untested due to lack of device
+
+### Features
+
+* implement support for weather sensors; related to [#72](https://github.com/muhlba91/onyx-homeassistant-integration/issues/72) ([0830d24](https://github.com/muhlba91/onyx-homeassistant-integration/commit/0830d247009eb414de85b7e6d380a5039b4d0eec))
+
+
+### Bug Fixes
+
+* add suggested decimal precision to weather sensors ([cf0d23c](https://github.com/muhlba91/onyx-homeassistant-integration/commit/cf0d23c5f63542d4bdeafca33e833293efc0e803))
+* **ci:** fix snyk ([6b41652](https://github.com/muhlba91/onyx-homeassistant-integration/commit/6b4165276e6a487af19277b3c7c6a6f7e980affc))
+* fix setup routine ([e214f47](https://github.com/muhlba91/onyx-homeassistant-integration/commit/e214f475674d7970ce400490ee3558d3fb238688))
+
+
+### Miscellaneous Chores
+
+* **deps:** update actions/checkout action to v4 ([9d28693](https://github.com/muhlba91/onyx-homeassistant-integration/commit/9d28693e483ba3241c7f7d2eb85ff4a8e9485d96))
+* **deps:** update dependency aioresponses to v0.7.5 ([f988e53](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f988e53e35015401282da10adaf7fdd38106c7d2))
+* **deps:** update dependency black to v23.10.0 ([52e17de](https://github.com/muhlba91/onyx-homeassistant-integration/commit/52e17de59d1828674cfa5f9173f1457ba667e7ac))
+* **deps:** update dependency black to v23.10.1 ([3cf3767](https://github.com/muhlba91/onyx-homeassistant-integration/commit/3cf3767e45cdaa9b31d59b113f9eda79a4d3bffb))
+* **deps:** update dependency black to v23.11.0 ([49c22c1](https://github.com/muhlba91/onyx-homeassistant-integration/commit/49c22c1e162e35a4796149d50859a042096a82fb))
+* **deps:** update dependency black to v23.9.0 ([21770ff](https://github.com/muhlba91/onyx-homeassistant-integration/commit/21770ff82ba002f33e4afb907675e2cfea9472cb))
+* **deps:** update dependency black to v23.9.1 ([417335c](https://github.com/muhlba91/onyx-homeassistant-integration/commit/417335c4f1be3dc5cf41a8598fd3fee0c8d3de22))
+* **deps:** update dependency coverage to v7.3.1 ([783d627](https://github.com/muhlba91/onyx-homeassistant-integration/commit/783d627b543a2f5d90ac0efb46b0f2c16bfd8aa3))
+* **deps:** update dependency coverage to v7.3.2 ([3b15811](https://github.com/muhlba91/onyx-homeassistant-integration/commit/3b15811a28f006729c9e084cd7a3c090c60580c7))
+* **deps:** update dependency homeassistant to v2023.10.0 ([747d9b7](https://github.com/muhlba91/onyx-homeassistant-integration/commit/747d9b7cde112094902b7660b48210b5bb2b2795))
+* **deps:** update dependency homeassistant to v2023.11.0 ([21c2b58](https://github.com/muhlba91/onyx-homeassistant-integration/commit/21c2b58de931164f5edfe7e4ccf6cb4de213b005))
+* **deps:** update dependency homeassistant to v2023.9.0 ([5e0bf16](https://github.com/muhlba91/onyx-homeassistant-integration/commit/5e0bf16f92c88f8553acc798c62b17ab1e18e3ec))
+* **deps:** update dependency pre-commit to v3.4.0 ([76fb680](https://github.com/muhlba91/onyx-homeassistant-integration/commit/76fb680ae1be92a705858932d5515919c99db313))
+* **deps:** update dependency pre-commit to v3.5.0 ([1a3295e](https://github.com/muhlba91/onyx-homeassistant-integration/commit/1a3295ec5988d0d2dac892dd54d72e65006e1cb8))
+* **deps:** update dependency pytest to v7.4.1 ([7b5b77b](https://github.com/muhlba91/onyx-homeassistant-integration/commit/7b5b77b883f798fc71fed3f45157bfe7c6c95c64))
+* **deps:** update dependency pytest to v7.4.2 ([78a2730](https://github.com/muhlba91/onyx-homeassistant-integration/commit/78a273098f58d54b3da5a547b70e1cb86a031a7f))
+* **deps:** update dependency pytest to v7.4.3 ([dead328](https://github.com/muhlba91/onyx-homeassistant-integration/commit/dead328051b0401a10e9414454814a2a73fcd2c2))
+* **deps:** update dependency pytest-asyncio to ^0.22.0 ([bac5f94](https://github.com/muhlba91/onyx-homeassistant-integration/commit/bac5f948903a7af92494510e758e8b11fac08eaf))
+* **release:** prepare v7.0.0-beta.0 release ([f731ab0](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f731ab0add26227961af5710ab1bb239db982caa))
+
 ## [6.0.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v6.0.0...v6.0.1) (2023-08-29)
 
 
