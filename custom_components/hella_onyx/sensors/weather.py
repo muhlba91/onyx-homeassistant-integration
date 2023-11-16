@@ -40,6 +40,11 @@ class OnyxSensorWeatherHumidity(OnyxEntity, SensorEntity):
         return SensorDeviceClass.HUMIDITY
 
     @property
+    def suggested_display_precision(self) -> int:
+        """Return the native number of decimal digits for display."""
+        return 0
+
+    @property
     def native_unit_of_measurement(self) -> Optional[str]:
         """Return the native unit of this measurement."""
         return PERCENTAGE
@@ -72,6 +77,11 @@ class OnyxSensorWeatherTemperature(OnyxEntity, SensorEntity):
     def device_class(self) -> Optional[str]:
         """Return the class of this device, from component device class."""
         return SensorDeviceClass.TEMPERATURE
+
+    @property
+    def suggested_display_precision(self) -> int:
+        """Return the native number of decimal digits for display."""
+        return 1
 
     @property
     def native_unit_of_measurement(self) -> Optional[str]:
@@ -108,6 +118,11 @@ class OnyxSensorWeatherAirPressure(OnyxEntity, SensorEntity):
         return SensorDeviceClass.ATMOSPHERIC_PRESSURE
 
     @property
+    def suggested_display_precision(self) -> int:
+        """Return the native number of decimal digits for display."""
+        return 1
+
+    @property
     def native_unit_of_measurement(self) -> Optional[str]:
         """Return the native unit of this measurement."""
         return UnitOfPressure.HPA
@@ -140,6 +155,11 @@ class OnyxSensorWeatherWindPeak(OnyxEntity, SensorEntity):
     def device_class(self) -> Optional[str]:
         """Return the class of this device, from component device class."""
         return SensorDeviceClass.WIND_SPEED
+
+    @property
+    def suggested_display_precision(self) -> int:
+        """Return the native number of decimal digits for display."""
+        return 1
 
     @property
     def native_unit_of_measurement(self) -> Optional[str]:
@@ -176,6 +196,11 @@ class OnyxSensorWeatherSunBrightnessPeak(OnyxEntity, SensorEntity):
         return SensorDeviceClass.ILLUMINANCE
 
     @property
+    def suggested_display_precision(self) -> int:
+        """Return the native number of decimal digits for display."""
+        return 0
+
+    @property
     def native_unit_of_measurement(self) -> Optional[str]:
         """Return the native unit of this measurement."""
         return LIGHT_LUX
@@ -208,6 +233,11 @@ class OnyxSensorWeatherSunBrightnessSink(OnyxEntity, SensorEntity):
     def device_class(self) -> Optional[str]:
         """Return the class of this device, from component device class."""
         return SensorDeviceClass.ILLUMINANCE
+
+    @property
+    def suggested_display_precision(self) -> int:
+        """Return the native number of decimal digits for display."""
+        return 0
 
     @property
     def native_unit_of_measurement(self) -> Optional[str]:

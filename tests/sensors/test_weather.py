@@ -77,6 +77,9 @@ class TestOnyxSensorWeatherHumidity:
     def test_device_class(self, entity):
         assert entity.device_class == SensorDeviceClass.HUMIDITY
 
+    def test_suggested_display_precision(self, entity):
+        assert entity.suggested_display_precision == 0
+
     def test_unit_of_measurement(self, entity):
         assert entity.unit_of_measurement == PERCENTAGE
 
@@ -134,6 +137,9 @@ class TestOnyxSensorWeatherTemperature:
 
     def test_device_class(self, entity):
         assert entity.device_class == SensorDeviceClass.TEMPERATURE
+
+    def test_suggested_display_precision(self, entity):
+        assert entity.suggested_display_precision == 1
 
     def test_unit_of_measurement(self, entity, hass):
         hass.config.units.temperature_unit = UnitOfTemperature.CELSIUS
@@ -196,6 +202,9 @@ class TestOnyxSensorWeatherAirPressure:
     def test_device_class(self, entity):
         assert entity.device_class == SensorDeviceClass.ATMOSPHERIC_PRESSURE
 
+    def test_suggested_display_precision(self, entity):
+        assert entity.suggested_display_precision == 1
+
     def test_unit_of_measurement(self, entity):
         assert entity.unit_of_measurement == UnitOfPressure.HPA
 
@@ -253,6 +262,9 @@ class TestOnyxSensorWeatherWindPeak:
 
     def test_device_class(self, entity):
         assert entity.device_class == SensorDeviceClass.WIND_SPEED
+
+    def test_suggested_display_precision(self, entity):
+        assert entity.suggested_display_precision == 1
 
     def test_unit_of_measurement(self, entity):
         assert entity.unit_of_measurement == UnitOfSpeed.METERS_PER_SECOND
@@ -312,6 +324,9 @@ class TestOnyxSensorWeatherSunBrightnessPeak:
     def test_device_class(self, entity):
         assert entity.device_class == SensorDeviceClass.ILLUMINANCE
 
+    def test_suggested_display_precision(self, entity):
+        assert entity.suggested_display_precision == 0
+
     def test_unit_of_measurement(self, entity):
         assert entity.unit_of_measurement == LIGHT_LUX
 
@@ -369,6 +384,9 @@ class TestOnyxSensorWeatherSunBrightnessSink:
 
     def test_device_class(self, entity):
         assert entity.device_class == SensorDeviceClass.ILLUMINANCE
+
+    def test_suggested_display_precision(self, entity):
+        assert entity.suggested_display_precision == 0
 
     def test_unit_of_measurement(self, entity):
         assert entity.unit_of_measurement == LIGHT_LUX
