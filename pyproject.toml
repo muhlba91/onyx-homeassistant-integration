@@ -6,7 +6,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "onyx-homeassistant-integration"
-version = "7.0.0-beta.0"
+version = "7.0.0"
 description = "Home Assistant Integration for Hella's ONYX.CENTER API."
 license = "MIT"
 authors = [
