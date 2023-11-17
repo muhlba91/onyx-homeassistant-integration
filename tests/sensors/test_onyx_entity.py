@@ -30,6 +30,12 @@ class TestOnyxEntity:
     def test_icon(self, entity):
         assert entity.icon == "mdi:help"
 
+    def test_entity_id(self, entity):
+        assert entity.entity_id == "uuid/Device"
+
+    def test_unique_id(self, entity):
+        assert entity.unique_id == "uuid/Device"
+
     def test_device_info(self, entity):
         assert entity.device_info == {
             "identifiers": {(DOMAIN, "uuid")},

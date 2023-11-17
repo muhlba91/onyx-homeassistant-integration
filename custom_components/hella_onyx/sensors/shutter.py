@@ -291,6 +291,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                     self._uuid,
                 )
 
+        self.async_write_ha_state()
+
     def _calculate_and_set_state(self, actual: int, new_value: int):
         """Calculate and set the new moving state."""
         new_state = self._calculate_state(actual, new_value)

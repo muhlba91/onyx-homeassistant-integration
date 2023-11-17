@@ -46,6 +46,16 @@ class OnyxEntity(CoordinatorEntity):
         }
 
     @property
+    def entity_id(self):
+        """Return the entity id of the sensor."""
+        return self.unique_id
+
+    @property
+    def unique_id(self):
+        """Return the unique id of the sensor."""
+        return f"{self._uuid}/Device"
+
+    @property
     def _device(self):
         """Get the underlying device."""
         return self.api.device(self._uuid)

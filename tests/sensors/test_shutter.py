@@ -341,8 +341,12 @@ class TestOnyxShutter:
             time.time() - 1000, 10, [AnimationKeyframe("linear", 0, 100, 90)]
         )
         with patch.object(entity, "stop_cover") as mock_stop_cover:
-            entity._end_moving_device()
-            assert mock_stop_cover.called
+            with patch.object(
+                entity, "async_write_ha_state"
+            ) as mock_async_write_ha_state:
+                entity._end_moving_device()
+                assert mock_stop_cover.called
+                assert mock_async_write_ha_state.called
 
     def test__end_moving_device_within_time(self, entity):
         entity._moving_state = MovingState.CLOSING
@@ -353,8 +357,12 @@ class TestOnyxShutter:
             time.time(), 10, [AnimationKeyframe("linear", 0, 10000, 90)]
         )
         with patch.object(entity, "stop_cover") as mock_stop_cover:
-            entity._end_moving_device()
-            assert not mock_stop_cover.called
+            with patch.object(
+                entity, "async_write_ha_state"
+            ) as mock_async_write_ha_state:
+                entity._end_moving_device()
+                assert not mock_stop_cover.called
+                assert mock_async_write_ha_state.called
 
     def test__end_moving_device_within_time_using_delay(self, entity):
         entity._moving_state = MovingState.CLOSING
@@ -362,13 +370,21 @@ class TestOnyxShutter:
             time.time() - 100, 10, [AnimationKeyframe("linear", 100000, 10, 90)]
         )
         with patch.object(entity, "stop_cover") as mock_stop_cover:
-            entity._end_moving_device()
-            assert not mock_stop_cover.called
+            with patch.object(
+                entity, "async_write_ha_state"
+            ) as mock_async_write_ha_state:
+                entity._end_moving_device()
+                assert not mock_stop_cover.called
+                assert mock_async_write_ha_state.called
 
     def test__end_moving_device_still(self, entity):
         with patch.object(entity, "stop_cover") as mock_stop_cover:
-            entity._end_moving_device()
-            assert not mock_stop_cover.called
+            with patch.object(
+                entity, "async_write_ha_state"
+            ) as mock_async_write_ha_state:
+                entity._end_moving_device()
+                assert not mock_stop_cover.called
+                assert mock_async_write_ha_state.called
 
     def test__calculate_and_set_state_CLOSING(self, entity, device, api):
         device.drivetime_down = NumericValue(
