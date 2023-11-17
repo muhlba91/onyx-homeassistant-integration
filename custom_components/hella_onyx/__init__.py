@@ -85,8 +85,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         request_refresh_debouncer=Debouncer(hass, _LOGGER, cooldown=0, immediate=True),
     )
 
+    def updated_device(device):
+        onyx_api.updated_device(device)
+        coordinator.async_set_updated_data(device)
+
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, onyx_api.stop)
-    onyx_api.set_event_callback(coordinator.async_set_updated_data)
+    onyx_api.set_event_callback(updated_device)
     onyx_api.start(force_update)
 
     hass.data[DOMAIN][entry.entry_id] = {

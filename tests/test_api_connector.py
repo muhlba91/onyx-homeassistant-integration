@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from onyx_client.client import OnyxClient
+from onyx_client.data.numeric_value import NumericValue
 from onyx_client.data.date_information import DateInformation
 from onyx_client.data.device_command import DeviceCommand
 from onyx_client.data.device_mode import DeviceMode
@@ -69,6 +70,33 @@ class TestAPIConnector:
             await api.update_device("id")
             assert len(api.devices) == 1
             assert client.is_called
+
+    @pytest.mark.asyncio
+    async def test_updated_device(self, api, client):
+        api.devices = {
+            "id": Shutter(
+                "id",
+                "name",
+                DeviceType.RAFFSTORE_90,
+                DeviceMode(DeviceType.RAFFSTORE_90),
+                list(Action),
+                actual_angle=NumericValue(0, 0, 0, False),
+                actual_position=NumericValue(0, 0, 0, False),
+            )
+        }
+        assert len(api.devices) == 1
+        actual_angle = NumericValue(1, 1, 1, False)
+        api.updated_device(
+            Shutter(
+                "id",
+                "name",
+                DeviceType.RAFFSTORE_90,
+                DeviceMode(DeviceType.RAFFSTORE_90),
+                list(Action),
+                actual_angle=actual_angle,
+            )
+        )
+        assert api.devices["id"].actual_angle == actual_angle
 
     @pytest.mark.asyncio
     async def test_send_device_command_action(self, api, client):

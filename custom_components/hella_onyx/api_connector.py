@@ -59,6 +59,11 @@ class APIConnector:
         self.devices[device.identifier] = device
         return device
 
+    def updated_device(self, device):
+        """Update the given device."""
+        _LOGGER.debug("Received device update %s (%s)", device.identifier, device)
+        self.devices[device.identifier].update_with(device)
+
     async def send_device_command_action(self, uuid: str, action: Action):
         _LOGGER.info("executing %s for device %s", action.string(), uuid)
         success = await self._client().send_command(uuid, DeviceCommand(action=action))
