@@ -277,6 +277,19 @@ files = [
 ]
 
 [[package]]
+name = "asyncio"
+version = "3.4.3"
+description = "reference implementation of PEP 3156"
+optional = false
+python-versions = "*"
+files = [
+    {file = "asyncio-3.4.3-cp33-none-win32.whl", hash = "sha256:b62c9157d36187eca799c378e572c969f0da87cd5fc42ca372d92cdb06e7e1de"},
+    {file = "asyncio-3.4.3-cp33-none-win_amd64.whl", hash = "sha256:c46a87b48213d7464f22d9a497b9eef8c1928b68320a2fa94240f969f6fec08c"},
+    {file = "asyncio-3.4.3-py3-none-any.whl", hash = "sha256:c4d18b22701821de07bd6aea8b53d21449ec0ec5680645e5317062ea21817d2d"},
+    {file = "asyncio-3.4.3.tar.gz", hash = "sha256:83360ff8bc97980e4ff25c964c7bd3923d333d177aa4f7fb736b019f26c7cb41"},
+]
+
+[[package]]
 name = "atomicwrites-homeassistant"
 version = "1.4.1"
 description = "Atomic file writes."
@@ -1366,17 +1379,18 @@ setuptools = "*"
 
 [[package]]
 name = "onyx-client"
-version = "7.2.1"
+version = "8.0.0"
 description = "HTTP Client for Hella's ONYX.CENTER API."
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "onyx_client-7.2.1-py3-none-any.whl", hash = "sha256:7a3b0810508b8a73a1c8e36392ff41479ab830afb8925acf85145a338cfd5f1f"},
-    {file = "onyx_client-7.2.1.tar.gz", hash = "sha256:6070f54cf91c0f24909b469867bf0d6d72200c95429613aec8fd7c1aaf3d9c63"},
+    {file = "onyx_client-8.0.0-py3-none-any.whl", hash = "sha256:c7f711c027e7be3dd0926ece2119d22e1285ca0a7e21270a4cb4e80f840a0730"},
+    {file = "onyx_client-8.0.0.tar.gz", hash = "sha256:a34a4cd79cf1a465d2fcde65072ef9b049691be559399de47e04457c5cc8ed9a"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.5,<4.0.0"
+asyncio = ">=3.4.0,<4.0.0"
 
 [[package]]
 name = "orjson"
@@ -2010,4 +2024,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "4fe603588e30acd129fa433ed4b23086cf347aba6b690731bdfd01aac8283541"
+content-hash = "259340869fb86b8f155d67942b63fbcd29d45604c9fb08085bed54834b1b8409"
