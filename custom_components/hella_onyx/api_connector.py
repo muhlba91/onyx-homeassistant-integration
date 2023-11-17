@@ -1,6 +1,8 @@
 """API connector for the ONYX integration."""
 import logging
 
+from typing import Any
+
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from onyx_client.client import create
 from onyx_client.data.device_command import DeviceCommand
@@ -87,7 +89,7 @@ class APIConnector:
         """Set the event callback."""
         self._client().set_event_callback(callback)
 
-    def stop(self):
+    def stop(self, **kwargs: Any):
         """Stop the event loop."""
         _LOGGER.info("Shutting down ONYX")
         self._client().stop()
