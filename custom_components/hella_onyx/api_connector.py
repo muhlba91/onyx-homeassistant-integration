@@ -1,11 +1,12 @@
 """API connector for the ONYX integration."""
 import logging
 
-from aiohttp import ClientSession, ClientTimeout
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from onyx_client.client import create
 from onyx_client.data.device_command import DeviceCommand
 from onyx_client.enum.action import Action
+
+from custom_components.hella_onyx.const import MAX_BACKOFF_TIME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,20 +21,20 @@ class APIConnector:
         self.token = token
         self.devices = {}
         self.groups = {}
+        self.__client = None
 
-    def _client(self, session=None):
-        return create(
-            fingerprint=self.fingerprint,
-            access_token=self.token,
-            client_session=session
-            if session is not None
-            else async_get_clientsession(self.hass),
-        )
+    def _client(self):
+        if self.__client is None:
+            self.__client = create(
+                fingerprint=self.fingerprint,
+                access_token=self.token,
+                client_session=async_get_clientsession(self.hass),
+            )
+        return self.__client
 
     async def get_timezone(self):
         """Gets the ONYX.CENTER timezone."""
-        client = self._client()
-        date_information = await client.date_information()
+        date_information = await self._client().date_information()
         if date_information is not None:
             return date_information.timezone
         else:
@@ -41,10 +42,9 @@ class APIConnector:
 
     async def update(self):
         """Update all entities."""
-        client = self._client()
-        devices = await client.devices(include_details=True)
+        devices = await self._client().devices(include_details=True)
         self.devices = {device.identifier: device for device in devices}
-        groups = await client.groups()
+        groups = await self._client().groups()
         self.groups = {group.identifier: group for group in groups}
 
     def device(self, uuid: str):
@@ -55,8 +55,7 @@ class APIConnector:
 
     async def update_device(self, uuid: str):
         """Update the given entity."""
-        client = self._client()
-        device = await client.device(uuid)
+        device = await self._client().device(uuid)
         self.devices[device.identifier] = device
         return device
 
@@ -74,17 +73,19 @@ class APIConnector:
         if not success:
             raise CommandException("ONYX_ACTION_ERROR", uuid)
 
-    async def listen_events(self, force_update: bool = False):
-        """Listen for events."""
-        async with ClientSession(
-            timeout=ClientTimeout(
-                total=None, connect=None, sock_connect=None, sock_read=None
-            )
-        ) as session:
-            client = self._client(session)
-            async for device in client.events(force_update):
-                _LOGGER.debug("received device data for %s", device.identifier)
-                yield device
+    def start(self, include_details):
+        """Start the event loop."""
+        _LOGGER.info("Starting ONYX")
+        self._client().start(include_details, MAX_BACKOFF_TIME)
+
+    def set_event_callback(self, callback):
+        """Set the event callback."""
+        self._client().set_event_callback(callback)
+
+    def stop(self):
+        """Stop the event loop."""
+        _LOGGER.info("Shutting down ONYX")
+        self._client().stop()
 
 
 class CommandException(Exception):

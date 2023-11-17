@@ -19,6 +19,7 @@ from custom_components.hella_onyx.api_connector import (
     CommandException,
     UnknownStateException,
 )
+from custom_components.hella_onyx.const import MAX_BACKOFF_TIME
 
 
 class TestAPIConnector:
@@ -96,25 +97,29 @@ class TestAPIConnector:
             assert client.is_called
 
     @pytest.mark.asyncio
-    async def test_listen_events(self, api, client):
-        with patch.object(api, "_client", new=client.make):
-            async for device in api.listen_events():
-                assert device is not None
-            assert client.is_called
-            assert not client.is_force_update
-
-    @pytest.mark.asyncio
-    async def test_listen_events_force_update(self, api, client):
-        with patch.object(api, "_client", new=client.make):
-            async for device in api.listen_events(True):
-                assert device is not None
-            assert client.is_called
-            assert client.is_force_update
-
-    def test__client(self, api):
-        client = api._client(session=MagicMock())
+    async def test__client(self, api):
+        api.hass = MagicMock()
+        client = api._client()
         assert client is not None
         assert isinstance(client, OnyxClient)
+
+    @pytest.mark.asyncio
+    async def test_start(self, api, client):
+        with patch.object(api, "_client", new=client.make):
+            api.start(True)
+            assert client.is_called
+
+    @pytest.mark.asyncio
+    async def test_stop(self, api, client):
+        with patch.object(api, "_client", new=client.make):
+            api.stop()
+            assert client.is_called
+
+    @pytest.mark.asyncio
+    async def test_set_event_callback(self, api, client):
+        with patch.object(api, "_client", new=client.make):
+            api.set_event_callback(None)
+            assert client.is_called
 
 
 class MockClient:
@@ -170,16 +175,15 @@ class MockClient:
             command.properties is not None and "fail" not in command.properties
         )
 
-    async def events(self, force_update: bool):
+    def start(self, include_details, backoff_time):
         self.called = True
-        self.force_update = force_update
-        yield Shutter(
-            "id",
-            "other",
-            DeviceType.RAFFSTORE_90,
-            DeviceMode(DeviceType.RAFFSTORE_90),
-            list(Action),
-        )
+        assert backoff_time == MAX_BACKOFF_TIME
+
+    def stop(self):
+        self.called = True
+
+    def set_event_callback(self, callback):
+        self.called = True
 
     async def date_information(self):
         self.called = True
