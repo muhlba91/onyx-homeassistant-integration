@@ -20,7 +20,7 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: ["3.11"]
-        poetry-version: [1.7.0]
+        poetry-version: [1.7.1]
 
     steps:
       - name: Checkout repository
@@ -64,7 +64,7 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: ["3.11"]
-        poetry-version: [1.7.0]
+        poetry-version: [1.7.1]
 
     steps:
       - name: Checkout repository
@@ -89,8 +89,7 @@ jobs:
       - name: Lint files
         run: |
           poetry check
-          poetry run flakeheaven lint
-          poetry run black --check .
+          poetry run ruff check .
 
       - name: Run tests
         run: |

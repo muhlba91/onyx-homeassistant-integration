@@ -105,9 +105,7 @@ pytest
 
 ### Linting and Code Style
 
-The project uses [flakehell](https://github.com/life4/flakehell) as a wrapper for flake8,
-and [black](https://github.com/psf/black) for automated code style fixing, also
-using [pre-commit](https://pre-commit.com/).
+The project uses [ruff](https://github.com/astral-sh/ruff) for automated code linting and fixing, also using [pre-commit](https://pre-commit.com/).
 
 1) Install all dependencies as shown above.
 2) (Optional) Install pre-commit hooks:
@@ -116,16 +114,11 @@ using [pre-commit](https://pre-commit.com/).
 poetry run pre-commit install
 ```
 
-3) Run black:
+3) Run ruff:
 
 ```bash
-poetry run black .
-```
-
-4) Run flakehell:
-
-```bash
-poetry run flakehell lint
+poetry run ruff check .
+# poetry run ruff format .
 ```
 
 ### Commit Message

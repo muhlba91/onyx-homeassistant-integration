@@ -1,15 +1,11 @@
 ---
 repos:
-  - repo: https://github.com/psf/black
-    rev: 23.3.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.6
     hooks:
-      - id: black
-        language_version: python3
-  - repo: https://github.com/life4/flakehell.git
-    rev: v.0.8.0
-    hooks:
-      - id: flakehell
-        language_version: python3
+      - id: ruff
+        args: [ --fix ]
+      - id: ruff-format
   - repo: https://github.com/talos-systems/conform
     rev: v0.1.0-alpha.27
     hooks:
@@ -17,7 +13,7 @@ repos:
         stages:
           - commit-msg
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-json
       - id: check-merge-conflict
