@@ -73,6 +73,7 @@ Once configured, the integration **creates entities** for:
 | Entity               | Description                                                                                                      |
 |----------------------|------------------------------------------------------------------------------------------------------------------|
 | Cover                | Manage the shutter. ([API Reference](https://developers.home-assistant.io/docs/core/entity/cover/))              |
+| Light                | Manage the (dimmable) light. ([API Reference](https://developers.home-assistant.io/docs/core/entity/light/))              |
 | Sensor (Device Type) | The device type of the ONYX device. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Humidity) | The humidity of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Temperature) | The temperature of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |

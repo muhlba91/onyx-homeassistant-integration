@@ -94,7 +94,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         """
         position = self._device.actual_position
         _LOGGER.debug(
-            "received position fo device %s: %s (%s/%s)",
+            "received position for device %s: %s (%s/%s)",
             self._uuid,
             position.value,
             position.minimum,
@@ -112,7 +112,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         """
         position = self._device.actual_angle
         _LOGGER.debug(
-            "received tilt position fo device %s: %s (%s/%s)",
+            "received tilt position for device %s: %s (%s/%s)",
             self._uuid,
             position.value,
             position.minimum,
