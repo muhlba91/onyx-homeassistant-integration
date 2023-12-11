@@ -30,7 +30,9 @@ async def async_setup_entry(
             api, timezone, coordinator, device.name, device.device_type, device_id
         )
         for device_id, device in filter(
-            lambda item: item[1].device_type.is_shutter(), api.devices.items()
+            lambda item: item[1].device_type is not None
+            and item[1].device_type.is_shutter(),
+            api.devices.items(),
         )
     ]
     _LOGGER.info("adding %s hella_onyx shutter entities", len(shutters))

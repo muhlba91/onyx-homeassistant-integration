@@ -767,13 +767,13 @@ files = [
 
 [[package]]
 name = "homeassistant"
-version = "2023.12.0"
+version = "2023.12.1"
 description = "Open-source home automation platform running on Python 3."
 optional = false
 python-versions = ">=3.11.0"
 files = [
-    {file = "homeassistant-2023.12.0-py3-none-any.whl", hash = "sha256:f1e9a564e2521b5f79426b5d30507626b5619b66487f10ab328d653150ae47d7"},
-    {file = "homeassistant-2023.12.0.tar.gz", hash = "sha256:4eca63a97f7c69d8ba7187bfada575141e57cb9f45e23589ba4c35a64b8ff92c"},
+    {file = "homeassistant-2023.12.1-py3-none-any.whl", hash = "sha256:25d25885c37ae5f17784b181a03229de76c12386fcf41e852d102283140a9d7b"},
+    {file = "homeassistant-2023.12.1.tar.gz", hash = "sha256:7bd3ad52c96e62534156643cbbbd5d17443ec03755f26be660574df2cca5e6b2"},
 ]
 
 [package.dependencies]
@@ -854,13 +854,13 @@ socks = ["socksio (==1.*)"]
 
 [[package]]
 name = "identify"
-version = "2.5.32"
+version = "2.5.33"
 description = "File identification library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "identify-2.5.32-py2.py3-none-any.whl", hash = "sha256:0b7656ef6cba81664b783352c73f8c24b39cf82f926f78f4550eda928e5e0545"},
-    {file = "identify-2.5.32.tar.gz", hash = "sha256:5d9979348ec1a21c768ae07e0a652924538e8bce67313a73cb0f681cf08ba407"},
+    {file = "identify-2.5.33-py2.py3-none-any.whl", hash = "sha256:d40ce5fcd762817627670da8a7d8d8e65f24342d14539c59488dc603bf662e34"},
+    {file = "identify-2.5.33.tar.gz", hash = "sha256:161558f9fe4559e1557e1bff323e8631f6a0e4837f7497767c1782832f16b62d"},
 ]
 
 [package.extras]
@@ -1178,13 +1178,13 @@ setuptools = "*"
 
 [[package]]
 name = "onyx-client"
-version = "8.0.2"
+version = "8.1.0"
 description = "HTTP Client for Hella's ONYX.CENTER API."
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "onyx_client-8.0.2-py3-none-any.whl", hash = "sha256:5a03ce9dfbc894c00802de9c7350297cf2e37da40301c1d9f1aca648f9ad9ce7"},
-    {file = "onyx_client-8.0.2.tar.gz", hash = "sha256:852b7deba6af71971b12e785db4a9362425221772cf78e9d9720806ecc638578"},
+    {file = "onyx_client-8.1.0-py3-none-any.whl", hash = "sha256:49055e5c4c547384f58385fc57c3bee928367e4c20bd978082ef67eb7baa16b8"},
+    {file = "onyx_client-8.1.0.tar.gz", hash = "sha256:8751c755abf5972d6e71d89118bccd210a10b6839e17d5e87fee566640be887e"},
 ]
 
 [package.dependencies]
@@ -1274,13 +1274,13 @@ files = [
 
 [[package]]
 name = "platformdirs"
-version = "4.0.0"
+version = "4.1.0"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "platformdirs-4.0.0-py3-none-any.whl", hash = "sha256:118c954d7e949b35437270383a3f2531e99dd93cf7ce4dc8340d3356d30f173b"},
-    {file = "platformdirs-4.0.0.tar.gz", hash = "sha256:cb633b2bcf10c51af60beb0ab06d2f1d69064b43abf4c185ca6b28865f3f9731"},
+    {file = "platformdirs-4.1.0-py3-none-any.whl", hash = "sha256:11c8f37bcca40db96d8144522d925583bdb7a31f7b0e37e3ed4318400a8e2380"},
+    {file = "platformdirs-4.1.0.tar.gz", hash = "sha256:906d548203468492d432bcb294d4bc2fff751bf84971fbb2c10918cc206ee420"},
 ]
 
 [package.extras]
@@ -1595,13 +1595,13 @@ files = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.8.0"
+version = "4.9.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "typing_extensions-4.8.0-py3-none-any.whl", hash = "sha256:8f92fc8806f9a6b641eaa5318da32b44d401efaac0f6678c9bc448ba3605faa0"},
-    {file = "typing_extensions-4.8.0.tar.gz", hash = "sha256:df8e4339e9cb77357558cbdbceca33c303714cf861d1eef15e1070055ae8b7ef"},
+    {file = "typing_extensions-4.9.0-py3-none-any.whl", hash = "sha256:af72aea155e91adfc61c3ae9e0e342dbc0cba726d6cba4b6c72c1f34e47291cd"},
+    {file = "typing_extensions-4.9.0.tar.gz", hash = "sha256:23478f88c37f27d76ac8aee6c905017a143b0b1b886c3c9f66bc2fd94f9f5783"},
 ]
 
 [[package]]
@@ -1658,13 +1658,13 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "virtualenv"
-version = "20.24.7"
+version = "20.25.0"
 description = "Virtual Python Environment builder"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "virtualenv-20.24.7-py3-none-any.whl", hash = "sha256:a18b3fd0314ca59a2e9f4b556819ed07183b3e9a3702ecfe213f593d44f7b3fd"},
-    {file = "virtualenv-20.24.7.tar.gz", hash = "sha256:69050ffb42419c91f6c1284a7b24e0475d793447e35929b488bf6a0aade39353"},
+    {file = "virtualenv-20.25.0-py3-none-any.whl", hash = "sha256:4238949c5ffe6876362d9c0180fc6c3a824a7b12b80604eeb8085f2ed7460de3"},
+    {file = "virtualenv-20.25.0.tar.gz", hash = "sha256:bf51c0d9c7dd63ea8e44086fa1e4fb1093a31e963b86959257378aef020e1f1b"},
 ]
 
 [package.dependencies]
@@ -1843,4 +1843,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "7093be4fc0664590188992e2c438377d75e57623387d4b8a12000fcb6452b16d"
+content-hash = "2be3dad53a2da9ad0c4760113cd9bb4b2600020c37288f4b57b0d1f8cff33220"

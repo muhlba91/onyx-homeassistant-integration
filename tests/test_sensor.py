@@ -46,6 +46,13 @@ async def test_async_setup_entry(mock_hass):
             DeviceMode(DeviceType.WEATHER),
             list(),
         ),
+        "none": Shutter(
+            "none",
+            "name",
+            None,
+            None,
+            list(),
+        ),
     }
     async_add_entries = AsyncAddEntries()
     mock_hass.data = {

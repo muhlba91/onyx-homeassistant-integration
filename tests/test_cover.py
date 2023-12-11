@@ -37,6 +37,13 @@ async def test_async_setup_entry(mock_hass):
             DeviceMode(DeviceType.BASIC_LIGHT),
             list(),
         ),
+        "none": Shutter(
+            "none",
+            "name",
+            None,
+            None,
+            list(),
+        ),
     }
     async_add_entries = AsyncAddEntries()
     mock_hass.data = {
