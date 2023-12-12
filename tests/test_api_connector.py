@@ -131,17 +131,21 @@ class TestAPIConnector:
         assert client is not None
         assert isinstance(client, OnyxClient)
 
+    @patch("asyncio.set_event_loop")
     @pytest.mark.asyncio
-    async def test_start(self, api, client):
+    async def test_start(self, mock_set_event_loop, api, client):
         with patch.object(api, "_client", new=client.make):
-            api.start(True)
-            assert client.is_called
+            with patch.object(api, "_loop"):
+                api.start(True)
+                assert client.is_called
+                assert mock_set_event_loop.called
 
     @pytest.mark.asyncio
     async def test_stop(self, api, client):
         with patch.object(api, "_client", new=client.make):
-            api.stop()
-            assert client.is_called
+            with patch.object(api, "_loop"):
+                api.stop()
+                assert client.is_called
 
     @pytest.mark.asyncio
     async def test_set_event_callback(self, api, client):

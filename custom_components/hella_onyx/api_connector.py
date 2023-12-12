@@ -24,15 +24,17 @@ class APIConnector:
         self.token = token
         self.devices = {}
         self.groups = {}
+        self._loop = None
         self.__client = None
 
     def _client(self):
         if self.__client is None:
+            self._loop = asyncio.new_event_loop()
             self.__client = create(
                 fingerprint=self.fingerprint,
                 access_token=self.token,
                 client_session=async_get_clientsession(self.hass),
-                event_loop=asyncio.new_event_loop(),
+                event_loop=self._loop,
             )
         return self.__client
 
@@ -85,6 +87,8 @@ class APIConnector:
     def start(self, include_details):
         """Start the event loop."""
         _LOGGER.info("Starting ONYX")
+        asyncio.set_event_loop(self._loop)
+        self._loop.run_forever()
         self._client().start(include_details, MAX_BACKOFF_TIME)
 
     def set_event_callback(self, callback):
@@ -95,6 +99,9 @@ class APIConnector:
         """Stop the event loop."""
         _LOGGER.info("Shutting down ONYX")
         self._client().stop()
+        self._loop.stop()
+        self.__client = None
+        self._loop = None
 
 
 class CommandException(Exception):
