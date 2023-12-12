@@ -39,10 +39,14 @@ suggested is anywhere between 30-180 minutes.
 
 This integration uses API `v3`.
 
+---
+
 > [!WARNING]
 > The streaming API uses a HTTP GET request which, unfortunately, is timing out and ending the connection every ~10 minutes.
 > Currently, the client is reconnecting after a short backoff time.
+> 
 > Hence, errors in your Home Assistant log like `[onyx_client.client] Unexpected exception: ClientPayloadError('Response payload is not completed'). Retrying with backoff Xs.` are to be expected.
+> 
 > The issue is tracked here: <https://github.com/muhlba91/onyx-homeassistant-integration/issues/30>.
 
 ## Installation
