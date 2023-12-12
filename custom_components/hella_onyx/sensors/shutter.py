@@ -247,13 +247,10 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         )
 
         if moving:
-            asyncio.run_coroutine_threadsafe(
-                track_point_in_utc_time(
-                    self.hass,
-                    self._end_moving_device,
-                    utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
-                ),
-                self.hass.loop,
+            track_point_in_utc_time(
+                self.hass,
+                self._end_moving_device,
+                utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
             )
         else:
             _LOGGER.debug("end moving device %s due to too old data", self._uuid)

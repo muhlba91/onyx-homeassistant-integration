@@ -173,13 +173,10 @@ class OnyxLight(OnyxEntity, LightEntity):
         )
 
         if updating:
-            asyncio.run_coroutine_threadsafe(
-                track_point_in_utc_time(
-                    self.hass,
-                    self._end_update_device,
-                    utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
-                ),
-                self.hass.loop,
+            track_point_in_utc_time(
+                self.hass,
+                self._end_update_device,
+                utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
             )
         else:
             _LOGGER.debug("end update device %s due to too old data", self._uuid)
