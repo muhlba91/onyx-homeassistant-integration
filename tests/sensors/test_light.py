@@ -150,3 +150,25 @@ class TestOnyxLight:
         api.device.return_value = device
         assert entity._get_dim_duration(100) == 500
         assert api.device.called
+
+    def test__get_dim_duration_invalid_value(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=None, maximum=100, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+        assert entity._get_dim_duration(90) == 500
+        assert api.device.called
+
+    def test__get_dim_duration_invalid_maximum(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=10, maximum=None, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+        assert entity._get_dim_duration(90) == 500
+        assert api.device.called
+
+    def test__get_dim_duration_invalid_brightness(self, api, entity, device):
+        device.actual_brightness = None
+        api.device.return_value = device
+        assert entity._get_dim_duration(90) == 500
+        assert api.device.called

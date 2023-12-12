@@ -130,6 +130,13 @@ class OnyxLight(OnyxEntity, LightEntity):
     def _get_dim_duration(self, target) -> int:
         """Get the dim duration."""
         brightness = self._device.actual_brightness
+        if brightness is None or brightness.value is None or brightness.maximum is None:
+            _LOGGER.warning(
+                "received light %s without a valid brightness value: %s",
+                self._uuid,
+                brightness,
+            )
+            return MIN_USED_DIM_DURATION
         return abs(
             int(
                 (target - brightness.value)
