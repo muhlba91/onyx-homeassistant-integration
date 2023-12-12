@@ -20,7 +20,6 @@ from custom_components.hella_onyx.api_connector import (
     CommandException,
     UnknownStateException,
 )
-from custom_components.hella_onyx.const import MAX_BACKOFF_TIME
 
 
 class TestAPIConnector:
@@ -131,27 +130,21 @@ class TestAPIConnector:
         assert client is not None
         assert isinstance(client, OnyxClient)
 
-    @patch("asyncio.set_event_loop")
     @pytest.mark.asyncio
-    async def test_start(self, mock_set_event_loop, api, client):
+    async def test_events(self, api, client):
         with patch.object(api, "_client", new=client.make):
-            with patch.object(api, "_loop"):
-                api.start(True)
-                assert client.is_called
-                assert mock_set_event_loop.called
-
-    @pytest.mark.asyncio
-    async def test_stop(self, api, client):
-        with patch.object(api, "_client", new=client.make):
-            with patch.object(api, "_loop"):
-                api.stop()
-                assert client.is_called
-
-    @pytest.mark.asyncio
-    async def test_set_event_callback(self, api, client):
-        with patch.object(api, "_client", new=client.make):
-            api.set_event_callback(None)
+            async for device in api.events():
+                assert device is not None
             assert client.is_called
+            assert not client.is_force_update
+
+    @pytest.mark.asyncio
+    async def test_events_force_update(self, api, client):
+        with patch.object(api, "_client", new=client.make):
+            async for device in api.events(True):
+                assert device is not None
+            assert client.is_called
+            assert client.is_force_update
 
 
 class MockClient:
@@ -201,21 +194,22 @@ class MockClient:
             list(Action),
         )
 
+    async def events(self, force_update: bool):
+        self.called = True
+        self.force_update = force_update
+        yield Shutter(
+            "id",
+            "other",
+            DeviceType.RAFFSTORE_90,
+            DeviceMode(DeviceType.RAFFSTORE_90),
+            list(Action),
+        )
+
     async def send_command(self, uuid: str, command: DeviceCommand):
         self.called = True
         return command.action == Action.STOP or (
             command.properties is not None and "fail" not in command.properties
         )
-
-    def start(self, include_details, backoff_time):
-        self.called = True
-        assert backoff_time == MAX_BACKOFF_TIME
-
-    def stop(self):
-        self.called = True
-
-    def set_event_callback(self, callback):
-        self.called = True
 
     async def date_information(self):
         self.called = True

@@ -1,15 +1,10 @@
 """API connector for the ONYX integration."""
 import logging
 
-import asyncio
-from typing import Any
-
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from onyx_client.client import create
 from onyx_client.data.device_command import DeviceCommand
 from onyx_client.enum.action import Action
-
-from custom_components.hella_onyx.const import MAX_BACKOFF_TIME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,17 +19,14 @@ class APIConnector:
         self.token = token
         self.devices = {}
         self.groups = {}
-        self._loop = None
         self.__client = None
 
     def _client(self):
         if self.__client is None:
-            self._loop = asyncio.new_event_loop()
             self.__client = create(
                 fingerprint=self.fingerprint,
                 access_token=self.token,
                 client_session=async_get_clientsession(self.hass),
-                event_loop=self._loop,
             )
         return self.__client
 
@@ -84,24 +76,10 @@ class APIConnector:
         if not success:
             raise CommandException("ONYX_ACTION_ERROR", uuid)
 
-    def start(self, include_details):
-        """Start the event loop."""
-        _LOGGER.info("Starting ONYX")
-        asyncio.set_event_loop(self._loop)
-        self._loop.run_forever()
-        self._client().start(include_details, MAX_BACKOFF_TIME)
-
-    def set_event_callback(self, callback):
-        """Set the event callback."""
-        self._client().set_event_callback(callback)
-
-    def stop(self, **kwargs: Any):
-        """Stop the event loop."""
-        _LOGGER.info("Shutting down ONYX")
-        self._client().stop()
-        self._loop.stop()
-        self.__client = None
-        self._loop = None
+    async def events(self, force_update: bool = False):
+        """Listen for events."""
+        async for device in self._client().events(force_update):
+            yield device
 
 
 class CommandException(Exception):

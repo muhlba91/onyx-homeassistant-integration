@@ -9,7 +9,6 @@ from homeassistant.const import (
     CONF_ACCESS_TOKEN,
     CONF_SCAN_INTERVAL,
     CONF_FORCE_UPDATE,
-    EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
@@ -23,7 +22,9 @@ from .const import (
     ONYX_API,
     ONYX_COORDINATOR,
     ONYX_TIMEZONE,
+    ONYX_THREAD,
 )
+from .event_thread import EventThread
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -86,19 +87,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         request_refresh_debouncer=Debouncer(hass, _LOGGER, cooldown=0, immediate=True),
     )
 
-    def updated_device(device):
-        onyx_api.updated_device(device)
-        coordinator.async_set_updated_data(device)
-
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, onyx_api.stop)
-    onyx_api.set_event_callback(updated_device)
-    onyx_api.start(force_update)
+    thread = EventThread(onyx_api, coordinator, force_update)
 
     hass.data[DOMAIN][entry.entry_id] = {
         ONYX_API: onyx_api,
         ONYX_TIMEZONE: onyx_timezone,
         ONYX_COORDINATOR: coordinator,
+        ONYX_THREAD: thread,
     }
+    thread.start()
 
     for platform in PLATFORMS:
         hass.async_create_task(
