@@ -103,7 +103,7 @@ class TestOnyxLight:
             current_value=0,
             keyframes=[
                 AnimationKeyframe(
-                    interpolation="linear", duration=10, delay=0, value=10
+                    interpolation="linear", duration=10, delay=0, value=20
                 )
             ],
         )
@@ -118,6 +118,29 @@ class TestOnyxLight:
         with patch.object(entity, "_start_update_device") as mock_start_update_device:
             assert entity.brightness == 25.5
             mock_start_update_device.assert_called_with(animation)
+            assert api.device.called
+
+    def test_brightness_with_old_animation(self, api, entity, device):
+        animation = AnimationValue(
+            start=0,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", duration=10, delay=0, value=10
+                )
+            ],
+        )
+        device.actual_brightness = NumericValue(
+            value=10,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=animation,
+        )
+        api.device.return_value = device
+        with patch.object(entity, "_start_update_device") as mock_start_update_device:
+            assert entity.brightness == 25.5
+            mock_start_update_device.assert_not_called
             assert api.device.called
 
     def test_is_on(self, api, entity, device):

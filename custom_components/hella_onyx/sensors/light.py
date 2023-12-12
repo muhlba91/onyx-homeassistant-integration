@@ -90,7 +90,14 @@ class OnyxLight(OnyxEntity, LightEntity):
             self._uuid,
             brightness,
         )
-        if brightness.animation is not None and len(brightness.animation.keyframes) > 0:
+        if (
+            brightness.animation is not None
+            and len(brightness.animation.keyframes) > 0
+            and brightness.animation.keyframes[
+                len(brightness.animation.keyframes) - 1
+            ].value
+            != brightness.value
+        ):
             self._start_update_device(brightness.animation)
         return brightness.value / brightness.maximum * 255
 
@@ -166,10 +173,12 @@ class OnyxLight(OnyxEntity, LightEntity):
         )
 
         if updating:
-            track_point_in_utc_time(
-                self.hass,
-                self._end_update_device,
-                utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
+            asyncio.run_coroutine_threadsafe(
+                track_point_in_utc_time(
+                    self.hass,
+                    self._end_update_device,
+                    utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
+                )
             )
         else:
             _LOGGER.debug("end update device %s due to too old data", self._uuid)

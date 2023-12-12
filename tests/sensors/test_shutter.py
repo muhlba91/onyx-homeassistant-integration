@@ -105,7 +105,7 @@ class TestOnyxShutter:
             current_value=0,
             keyframes=[
                 AnimationKeyframe(
-                    interpolation="linear", duration=10, delay=0, value=10
+                    interpolation="linear", duration=10, delay=0, value=20
                 )
             ],
         )
@@ -116,6 +116,25 @@ class TestOnyxShutter:
         with patch.object(entity, "_start_moving_device") as mock_start_moving_device:
             assert entity.current_cover_position == 90
             mock_start_moving_device.assert_called_with(animation)
+        assert api.device.called
+
+    def test_current_cover_position_with_old_animation(self, api, entity, device):
+        animation = AnimationValue(
+            start=0,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", duration=10, delay=0, value=10
+                )
+            ],
+        )
+        device.actual_position = NumericValue(
+            value=10, minimum=0, maximum=100, read_only=False, animation=animation
+        )
+        api.device.return_value = device
+        with patch.object(entity, "_start_moving_device") as mock_start_moving_device:
+            assert entity.current_cover_position == 90
+            mock_start_moving_device.assert_not_called
         assert api.device.called
 
     def test_current_cover_tilt_position(self, api, entity, device):
@@ -132,7 +151,7 @@ class TestOnyxShutter:
             current_value=0,
             keyframes=[
                 AnimationKeyframe(
-                    interpolation="linear", duration=10, delay=0, value=10
+                    interpolation="linear", duration=10, delay=0, value=20
                 )
             ],
         )
@@ -143,6 +162,25 @@ class TestOnyxShutter:
         with patch.object(entity, "_start_moving_device") as mock_start_moving_device:
             assert entity.current_cover_tilt_position == 11
             mock_start_moving_device.assert_called_with(animation)
+        assert api.device.called
+
+    def test_current_cover_tilt_position_with_old_animation(self, api, entity, device):
+        animation = AnimationValue(
+            start=0,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", duration=10, delay=0, value=10
+                )
+            ],
+        )
+        device.actual_angle = NumericValue(
+            value=10, minimum=0, maximum=100, read_only=False, animation=animation
+        )
+        api.device.return_value = device
+        with patch.object(entity, "_start_moving_device") as mock_start_moving_device:
+            assert entity.current_cover_tilt_position == 11
+            mock_start_moving_device.assert_not_called
         assert api.device.called
 
     def test_is_not_opening(self, entity):
