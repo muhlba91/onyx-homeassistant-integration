@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import time
-from math import ceil
 import pytz
 from datetime import datetime
 from homeassistant.components.light import (
