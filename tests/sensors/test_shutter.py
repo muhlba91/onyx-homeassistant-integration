@@ -348,34 +348,151 @@ class TestOnyxShutter:
                 assert mock_stop_cover.called
                 assert mock_async_write_ha_state.called
 
-    def test__end_moving_device_within_time(self, entity):
+    def test__end_moving_device_within_time(self, entity, api, device):
+        device.actual_angle = NumericValue(
+            value=0,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+            animation=AnimationValue(
+                time.time(), 0, [AnimationKeyframe("linear", 0, 20000, 50)]
+            ),
+        )
+        device.target_angle = NumericValue(
+            value=50,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+        )
+        device.actual_position = NumericValue(
+            value=0,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+            animation=AnimationValue(
+                time.time(), 0, [AnimationKeyframe("linear", 0, 10000, 50)]
+            ),
+        )
+        device.target_position = NumericValue(
+            value=50,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+        )
+        api.device.return_value = device
         entity._moving_state = MovingState.CLOSING
-        entity._device.actual_angle.animation = AnimationValue(
-            time.time(), 10, [AnimationKeyframe("linear", 0, 20000, 90)]
-        )
-        entity._device.actual_position.animation = AnimationValue(
-            time.time(), 10, [AnimationKeyframe("linear", 0, 10000, 90)]
-        )
         with patch.object(entity, "stop_cover") as mock_stop_cover:
             with patch.object(
                 entity, "async_write_ha_state"
             ) as mock_async_write_ha_state:
                 entity._end_moving_device()
+                assert api.device.called
                 assert not mock_stop_cover.called
                 assert mock_async_write_ha_state.called
+                assert entity._device.actual_angle.value == 1
+                assert entity._device.actual_position.value == 1
 
-    def test__end_moving_device_within_time_using_delay(self, entity):
-        entity._moving_state = MovingState.CLOSING
-        entity._device.actual_position.animation = AnimationValue(
-            time.time() - 100, 10, [AnimationKeyframe("linear", 100000, 10, 90)]
+    def test__end_moving_device_within_time_using_delay(self, entity, api, device):
+        device.actual_position = NumericValue(
+            value=0,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+            animation=AnimationValue(
+                time.time() - 100, 10, [AnimationKeyframe("linear", 100000, 10, 50)]
+            ),
         )
+        device.target_position = NumericValue(
+            value=50,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+        )
+        device.actual_angle = NumericValue(
+            value=0,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+        )
+        api.device.return_value = device
+        entity._moving_state = MovingState.CLOSING
         with patch.object(entity, "stop_cover") as mock_stop_cover:
             with patch.object(
                 entity, "async_write_ha_state"
             ) as mock_async_write_ha_state:
                 entity._end_moving_device()
+                assert api.device.called
                 assert not mock_stop_cover.called
                 assert mock_async_write_ha_state.called
+                assert entity._device.actual_position.value == 0
+
+    def test__end_moving_device_only_position(self, entity, api, device):
+        device.actual_position = NumericValue(
+            value=0,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+            animation=AnimationValue(
+                time.time() - 100, 10, [AnimationKeyframe("linear", 100000, 10, 50)]
+            ),
+        )
+        device.target_position = NumericValue(
+            value=50,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+        )
+        device.actual_angle = NumericValue(
+            value=0,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+        )
+        api.device.return_value = device
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "stop_cover") as mock_stop_cover:
+            with patch.object(
+                entity, "async_write_ha_state"
+            ) as mock_async_write_ha_state:
+                entity._end_moving_device()
+                assert api.device.called
+                assert not mock_stop_cover.called
+                assert mock_async_write_ha_state.called
+                assert entity._device.actual_position.value == 0
+
+    def test__end_moving_device_only_angle(self, entity, api, device):
+        device.actual_angle = NumericValue(
+            value=0,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+            animation=AnimationValue(
+                time.time() - 100, 10, [AnimationKeyframe("linear", 100000, 10, 50)]
+            ),
+        )
+        device.target_angle = NumericValue(
+            value=50,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+        )
+        device.actual_position = NumericValue(
+            value=0,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+        )
+        api.device.return_value = device
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "stop_cover") as mock_stop_cover:
+            with patch.object(
+                entity, "async_write_ha_state"
+            ) as mock_async_write_ha_state:
+                entity._end_moving_device()
+                assert api.device.called
+                assert not mock_stop_cover.called
+                assert mock_async_write_ha_state.called
+                assert entity._device.actual_angle.value == 0
 
     def test__end_moving_device_still(self, entity):
         with patch.object(entity, "stop_cover") as mock_stop_cover:

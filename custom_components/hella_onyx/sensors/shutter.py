@@ -250,13 +250,14 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             if position_animation is not None and len(position_animation.keyframes) > 0
             else None
         )
+        position_start_time = (
+            (position_animation.start + position_keyframe.delay)
+            if position_keyframe is not None and position_animation is not None
+            else None
+        )
         position_end_time = (
-            (
-                position_animation.start
-                + position_keyframe.duration
-                + position_keyframe.delay
-            )
-            if position_keyframe is not None
+            (position_start_time + position_keyframe.duration)
+            if position_keyframe is not None and position_start_time is not None
             else None
         )
 
@@ -266,9 +267,14 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             if angle_animation is not None and len(angle_animation.keyframes) > 0
             else None
         )
+        angle_start_time = (
+            (angle_animation.start + angle_keyframe.delay)
+            if angle_keyframe is not None and angle_animation is not None
+            else None
+        )
         angle_end_time = (
-            (angle_animation.start + angle_keyframe.duration + angle_keyframe.delay)
-            if angle_keyframe is not None
+            (angle_start_time + angle_keyframe.duration)
+            if angle_keyframe is not None and angle_start_time is not None
             else None
         )
 
@@ -278,14 +284,50 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             if (
                 (angle_end_time is None and current_time > position_end_time)
                 or (position_end_time is None and current_time > angle_end_time)
-                or (current_time > position_end_time and current_time > angle_end_time)
+                or (
+                    position_end_time is not None
+                    and current_time > position_end_time
+                    and angle_end_time is not None
+                    and current_time > angle_end_time
+                )
             ):
                 self.stop_cover()
-            else:
-                _LOGGER.debug(
-                    "not ending moving device %s. overlapping angle and positioning",
-                    self._uuid,
-                )
+            elif (
+                position_start_time is not None and current_time > position_start_time
+            ) or (angle_start_time is not None and current_time > angle_start_time):
+                if position_animation is not None:
+                    delta = current_time - (
+                        position_animation.start + position_keyframe.delay
+                    )
+                    delta_per_unit = (
+                        self._device.target_position.value
+                        - position_animation.current_value
+                    ) / position_keyframe.duration
+                    update = ceil(
+                        position_animation.current_value + delta_per_unit * delta
+                    )
+                    _LOGGER.debug(
+                        "interpolating actual_position update for device %s: %d",
+                        self._uuid,
+                        update,
+                    )
+                    self._device.actual_position.value = update
+                if angle_animation is not None:
+                    delta = current_time - (
+                        angle_animation.start + angle_keyframe.delay
+                    )
+                    delta_per_unit = (
+                        self._device.target_angle.value - angle_animation.current_value
+                    ) / angle_keyframe.duration
+                    update = ceil(
+                        angle_animation.current_value + delta_per_unit * delta
+                    )
+                    _LOGGER.debug(
+                        "interpolating actual_angle update for device %s: %d",
+                        self._uuid,
+                        update,
+                    )
+                    self._device.actual_angle.value = update
 
         self.async_write_ha_state()
 

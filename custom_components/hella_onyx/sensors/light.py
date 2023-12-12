@@ -82,7 +82,7 @@ class OnyxLight(OnyxEntity, LightEntity):
         return [self.color_mode]
 
     @property
-    def brightness(self) -> int | None:
+    def brightness(self) -> int:
         """Return the brightness of this light between 0..255."""
         brightness = self._actual_brightness
         _LOGGER.debug(
@@ -155,17 +155,17 @@ class OnyxLight(OnyxEntity, LightEntity):
         current_time = time.time()
         end_time = animation.start + keyframe.duration + keyframe.delay
         delta = end_time - current_time
-        moving = current_time < end_time
+        updating = current_time < end_time
 
         _LOGGER.debug(
             "updating device %s with current_time %s and end_time %s: %s",
             self._uuid,
             current_time,
             end_time,
-            moving,
+            updating,
         )
 
-        if moving:
+        if updating:
             track_point_in_utc_time(
                 self.hass,
                 self._end_update_device,
@@ -183,11 +183,10 @@ class OnyxLight(OnyxEntity, LightEntity):
             if animation is not None and len(animation.keyframes) > 0
             else None
         )
-        end_time = (
-            (animation.start + keyframe.duration + keyframe.delay)
-            if keyframe is not None
-            else None
+        start_time = (
+            (animation.start + keyframe.delay) if keyframe is not None else None
         )
+        end_time = (start_time + keyframe.duration) if keyframe is not None else None
 
         current_time = time.time()
 
@@ -203,10 +202,22 @@ class OnyxLight(OnyxEntity, LightEntity):
                 ),
                 self.hass.loop,
             )
-        self.async_write_ha_state()
+        elif current_time > start_time:
+            delta = current_time - (animation.start + keyframe.delay)
+            delta_per_unit = (
+                self._device.target_brightness.value - animation.current_value
+            ) / keyframe.duration
+            update = ceil(animation.current_value + delta_per_unit * delta)
+            _LOGGER.debug(
+                "interpolating brightness update for device %s: %d",
+                self._uuid,
+                update,
+            )
+            self._device.actual_brightness.value = update
+            self.async_write_ha_state()
 
     @property
-    def _actual_brightness(self) -> int:
+    def _actual_brightness(self) -> NumericValue:
         """Get the actual brightness."""
         brightness = self._device.actual_brightness
         return NumericValue(

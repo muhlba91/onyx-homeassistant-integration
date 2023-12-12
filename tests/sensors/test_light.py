@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import time
+from math import ceil
 import pytz
 from datetime import datetime
 from homeassistant.components.light import (
@@ -189,10 +190,10 @@ class TestOnyxLight:
 
     def test__get_dim_duration(self, api, entity, device):
         device.actual_brightness = NumericValue(
-            value=100, maximum=100, minimum=0, read_only=False
+            value=14645, maximum=65535, minimum=0, read_only=False
         )
         api.device.return_value = device
-        assert entity._get_dim_duration(90) == 50
+        assert entity._get_dim_duration(31) == 726
         assert api.device.called
 
     def test__actual_brightness_no_value(self, api, entity, device):
@@ -247,36 +248,75 @@ class TestOnyxLight:
             mock_end_update_device.assert_called()
 
     @patch("asyncio.run_coroutine_threadsafe")
-    def test__end_update_device(self, mock_run_coroutine_threadsafe, api, entity):
-        entity._device.actual_brightness.animation = AnimationValue(
-            time.time() - 1000, 10, [AnimationKeyframe("linear", 0, 100, 90)]
+    def test__end_update_device(
+        self, mock_run_coroutine_threadsafe, api, entity, device
+    ):
+        device.actual_brightness = NumericValue(
+            value=None,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+            animation=AnimationValue(
+                time.time() - 1000, 10, [AnimationKeyframe("linear", 0, 100, 90)]
+            ),
         )
+        api.device.return_value = device
         with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
             entity._end_update_device()
-            assert mock_async_write_ha_state.called
+            assert api.device.called
+            assert not mock_async_write_ha_state.called
             assert mock_run_coroutine_threadsafe.called
             api.send_device_command_action.assert_called_with("uuid", Action.STOP)
 
     @patch("asyncio.run_coroutine_threadsafe")
     def test__end_update_device_within_time(
-        self, mock_run_coroutine_threadsafe, api, entity
+        self, mock_run_coroutine_threadsafe, api, entity, device
     ):
-        entity._device.actual_brightness.animation = AnimationValue(
-            time.time(), 10, [AnimationKeyframe("linear", 0, 20000, 90)]
+        device.actual_brightness = NumericValue(
+            value=0,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+            animation=AnimationValue(
+                time.time(), 0, [AnimationKeyframe("linear", 0, 20000, 50)]
+            ),
         )
+        device.target_brightness = NumericValue(
+            value=50,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+        )
+        api.device.return_value = device
         with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
             entity._end_update_device()
+            assert api.device.called
             assert mock_async_write_ha_state.called
             assert not mock_run_coroutine_threadsafe.called
+            assert entity._device.actual_brightness.value == 1
 
     @patch("asyncio.run_coroutine_threadsafe")
     def test__end_update_device_within_time_using_delay(
-        self, mock_run_coroutine_threadsafe, api, entity
+        self, mock_run_coroutine_threadsafe, api, entity, device
     ):
-        entity._device.actual_brightness.animation = AnimationValue(
-            time.time() - 100, 10, [AnimationKeyframe("linear", 100000, 10, 90)]
+        device.actual_brightness = NumericValue(
+            value=0,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+            animation=AnimationValue(
+                time.time() - 100, 0, [AnimationKeyframe("linear", 100000, 10, 50)]
+            ),
         )
+        device.target_brightness = NumericValue(
+            value=50,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+        )
+        api.device.return_value = device
         with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
             entity._end_update_device()
-            assert mock_async_write_ha_state.called
+            assert api.device.called
+            assert not mock_async_write_ha_state.called
             assert not mock_run_coroutine_threadsafe.called
