@@ -92,6 +92,30 @@ class TestOnyxLight:
         assert entity.brightness == 25.5
         assert api.device.called
 
+    def test_is_on(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=10, minimum=0, maximum=100, read_only=False
+        )
+        api.device.return_value = device
+        assert entity.is_on
+        assert api.device.called
+
+    def test_is_on_off(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False
+        )
+        api.device.return_value = device
+        assert not entity.is_on
+        assert api.device.called
+
+    def test_is_on_none(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=None, minimum=0, maximum=100, read_only=False
+        )
+        api.device.return_value = device
+        assert not entity.is_on
+        assert api.device.called
+
     @patch("asyncio.run_coroutine_threadsafe")
     def test_turn_off(self, mock_run_coroutine_threadsafe, api, entity, device):
         device.actual_brightness = NumericValue(
@@ -143,6 +167,22 @@ class TestOnyxLight:
         assert entity._get_dim_duration(90) == 50
         assert api.device.called
 
+    def test__actual_brightness_no_value(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=None, maximum=100, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+        assert entity._actual_brightness == NumericValue(0, 0, 100, False)
+        assert api.device.called
+
+    def test__actual_brightness(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=1, maximum=100, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+        assert entity._actual_brightness == NumericValue(1, 0, 100, False)
+        assert api.device.called
+
     def test__get_dim_duration_same(self, api, entity, device):
         device.actual_brightness = NumericValue(
             value=100, maximum=100, minimum=0, read_only=False
@@ -156,19 +196,5 @@ class TestOnyxLight:
             value=None, maximum=100, minimum=0, read_only=False
         )
         api.device.return_value = device
-        assert entity._get_dim_duration(90) == 500
-        assert api.device.called
-
-    def test__get_dim_duration_invalid_maximum(self, api, entity, device):
-        device.actual_brightness = NumericValue(
-            value=10, maximum=None, minimum=0, read_only=False
-        )
-        api.device.return_value = device
-        assert entity._get_dim_duration(90) == 500
-        assert api.device.called
-
-    def test__get_dim_duration_invalid_brightness(self, api, entity, device):
-        device.actual_brightness = None
-        api.device.return_value = device
-        assert entity._get_dim_duration(90) == 500
+        assert entity._get_dim_duration(90) == 5450
         assert api.device.called

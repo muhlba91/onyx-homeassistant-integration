@@ -13,6 +13,7 @@ from homeassistant.components.light import (
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
+from onyx_client.data.numeric_value import NumericValue
 
 from custom_components.hella_onyx.api_connector import APIConnector
 from custom_components.hella_onyx.sensors.onyx_entity import OnyxEntity
@@ -75,7 +76,7 @@ class OnyxLight(OnyxEntity, LightEntity):
     @property
     def brightness(self) -> int | None:
         """Return the brightness of this light between 0..255."""
-        brightness = self._device.actual_brightness
+        brightness = self._actual_brightness
         _LOGGER.debug(
             "received brightness for light %s: %s",
             self._uuid,
@@ -83,10 +84,19 @@ class OnyxLight(OnyxEntity, LightEntity):
         )
         return brightness.value / brightness.maximum * 255
 
+    @property
+    def is_on(self) -> bool | None:
+        """Return whether the light is turned on."""
+        return self._actual_brightness.value > 0
+
     def turn_on(self, **kwargs: Any) -> None:
         """Turns the light on."""
         brightness_attribute = kwargs.pop(ATTR_BRIGHTNESS, None)
         if brightness_attribute is None:
+            _LOGGER.debug(
+                "turning light %s on",
+                self._uuid,
+            )
             asyncio.run_coroutine_threadsafe(
                 self.api.send_device_command_action(
                     self._uuid,
@@ -127,16 +137,20 @@ class OnyxLight(OnyxEntity, LightEntity):
             self.hass.loop,
         )
 
+    @property
+    def _actual_brightness(self) -> int:
+        """Get the actual brightness."""
+        brightness = self._device.actual_brightness
+        return NumericValue(
+            0 if brightness.value is None else brightness.value,
+            brightness.minimum,
+            brightness.maximum,
+            brightness.read_only,
+        )
+
     def _get_dim_duration(self, target) -> int:
         """Get the dim duration."""
-        brightness = self._device.actual_brightness
-        if brightness is None or brightness.value is None or brightness.maximum is None:
-            _LOGGER.warning(
-                "received light %s without a valid brightness value: %s",
-                self._uuid,
-                brightness,
-            )
-            return MIN_USED_DIM_DURATION
+        brightness = self._actual_brightness
         return abs(
             int(
                 (target - brightness.value)
