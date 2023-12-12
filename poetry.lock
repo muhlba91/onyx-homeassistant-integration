@@ -1178,13 +1178,13 @@ setuptools = "*"
 
 [[package]]
 name = "onyx-client"
-version = "8.1.3"
+version = "8.2.0"
 description = "HTTP Client for Hella's ONYX.CENTER API."
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "onyx_client-8.1.3-py3-none-any.whl", hash = "sha256:cf452fd3539daf255cbb396be397646c640a35a0a8ed7a4a2ce80d85a6860953"},
-    {file = "onyx_client-8.1.3.tar.gz", hash = "sha256:2d6f5fcf2d0dad05f7fc001750c82c1094c5d417a607b0336fa3bfd3415b0ca9"},
+    {file = "onyx_client-8.2.0-py3-none-any.whl", hash = "sha256:954ea6345f0a507f0a03c2981162d9089cb76c2b0090e84f6d184edc0822008f"},
+    {file = "onyx_client-8.2.0.tar.gz", hash = "sha256:1f57c5528c36ba2db7794d59489f93e9af5b64452b78af485046efc872474baa"},
 ]
 
 [package.dependencies]
@@ -1843,4 +1843,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "f3ab5007bf36ce847bd6d13093bde4d536e3bc42c3c7b6cdf768bb2cdf8f733d"
+content-hash = "1ca52039e07ba064b6e1895f49ce7552e97159692bd40739ec8a9d5dda90e670"

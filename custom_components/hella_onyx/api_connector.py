@@ -31,6 +31,7 @@ class APIConnector:
                 fingerprint=self.fingerprint,
                 access_token=self.token,
                 client_session=async_get_clientsession(self.hass),
+                event_loop=self.hass.loop,
             )
         return self.__client
 
