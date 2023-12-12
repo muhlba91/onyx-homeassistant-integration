@@ -17,7 +17,6 @@ repository = "https://github.com/muhlba91/onyx-homeassistant-integration"
 keywords = [
     "hella",
     "onxy",
-    "raspberrypi",
     "homeassistant"
 ]
 classifiers = [
@@ -28,7 +27,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-onyx-client = "^8.1.1"
+onyx-client = "^8.1.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.3.1"

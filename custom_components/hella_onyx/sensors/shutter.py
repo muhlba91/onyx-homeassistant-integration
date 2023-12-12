@@ -94,11 +94,9 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         """
         position = self._device.actual_position
         _LOGGER.debug(
-            "received position for device %s: %s (%s/%s)",
+            "received position for device %s: %s",
             self._uuid,
-            position.value,
-            position.minimum,
-            position.maximum,
+            position,
         )
         if position.animation is not None and len(position.animation.keyframes) > 0:
             self._start_moving_device(position.animation)
@@ -112,11 +110,9 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         """
         position = self._device.actual_angle
         _LOGGER.debug(
-            "received tilt position for device %s: %s (%s/%s)",
+            "received tilt position for device %s: %s",
             self._uuid,
-            position.value,
-            position.minimum,
-            position.maximum,
+            position,
         )
         if position.animation is not None and len(position.animation.keyframes) > 0:
             self._start_moving_device(position.animation)

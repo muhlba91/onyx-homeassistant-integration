@@ -76,11 +76,9 @@ class OnyxLight(OnyxEntity, LightEntity):
         """Return the brightness of this light between 0..255."""
         brightness = self._device.actual_brightness
         _LOGGER.debug(
-            "received brightness for device %s: %s (%s/%s)",
+            "received brightness for light %s: %s",
             self._uuid,
-            brightness.value,
-            brightness.minimum,
-            brightness.maximum,
+            brightness,
         )
         return brightness.value / brightness.maximum * 255
 
@@ -91,7 +89,7 @@ class OnyxLight(OnyxEntity, LightEntity):
         )
         dim_duration = self._get_dim_duration(hella_brightness)
         _LOGGER.debug(
-            "setting brightness for device %s: %s (%s)",
+            "setting brightness for light %s: %s (%s ms)",
             self._uuid,
             hella_brightness,
             dim_duration,
@@ -110,7 +108,7 @@ class OnyxLight(OnyxEntity, LightEntity):
     def turn_off(self, **kwargs: Any) -> None:
         """Turns the light off."""
         _LOGGER.debug(
-            "turning light off %s",
+            "turning light %s off",
             self._uuid,
         )
         asyncio.run_coroutine_threadsafe(
@@ -120,10 +118,11 @@ class OnyxLight(OnyxEntity, LightEntity):
 
     def _get_dim_duration(self, target) -> int:
         """Get the dim duration."""
+        brightness = self._device.actual_brightness
         return abs(
             int(
-                (target - self._device.actual_brightness.value)
-                / self._device.actual_brightness.maximum
+                (target - brightness.value)
+                / brightness.maximum
                 * (MAX_USED_DIM_DURATION - MIN_USED_DIM_DURATION)
                 + MIN_USED_DIM_DURATION
             )

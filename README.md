@@ -82,6 +82,11 @@ Once configured, the integration **creates entities** for:
 | Sensor (Weather Sun Brightness Peak) | The sun brightness peak of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Sun Brightness Sink) | The sun brightness sink of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 
+The **following ONYX devices** are **untested** due to the lack of a testing device:
+
+- Light
+- Weather Station
+
 ---
 
 ## Development
