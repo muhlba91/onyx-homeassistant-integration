@@ -47,6 +47,7 @@ async def async_setup_entry(
             lambda item: item[1].device_type is not None
             and (
                 item[1].device_type.is_shutter()
+                or item[1].device_type.is_light()
                 or item[1].device_type == DeviceType.WEATHER
             ),
             api.devices.items(),
