@@ -98,14 +98,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             self._uuid,
             position,
         )
-        if (
-            position.animation is not None
-            and len(position.animation.keyframes) > 0
-            and position.animation.keyframes[
-                len(position.animation.keyframes) - 1
-            ].value
-            != position.value
-        ):
+        if position.animation is not None and len(position.animation.keyframes) > 0:
             self._start_moving_device(position.animation)
         return 100 - int(position.value / position.maximum * 100)
 
@@ -121,14 +114,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             self._uuid,
             position,
         )
-        if (
-            position.animation is not None
-            and len(position.animation.keyframes) > 0
-            and position.animation.keyframes[
-                len(position.animation.keyframes) - 1
-            ].value
-            != position.value
-        ):
+        if position.animation is not None and len(position.animation.keyframes) > 0:
             self._start_moving_device(position.animation)
         return int(position.value / self._max_angle * 100)
 

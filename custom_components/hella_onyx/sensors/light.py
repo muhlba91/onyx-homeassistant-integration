@@ -90,14 +90,7 @@ class OnyxLight(OnyxEntity, LightEntity):
             self._uuid,
             brightness,
         )
-        if (
-            brightness.animation is not None
-            and len(brightness.animation.keyframes) > 0
-            and brightness.animation.keyframes[
-                len(brightness.animation.keyframes) - 1
-            ].value
-            != brightness.value
-        ):
+        if brightness.animation is not None and len(brightness.animation.keyframes) > 0:
             self._start_update_device(brightness.animation)
         return brightness.value / brightness.maximum * 255
 

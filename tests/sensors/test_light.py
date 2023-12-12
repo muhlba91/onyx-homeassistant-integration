@@ -251,7 +251,7 @@ class TestOnyxLight:
         assert api.device.called
 
     @patch("asyncio.run_coroutine_threadsafe")
-    def test_start_update_device_end(self, api, entity, device):
+    def test_start_update_device_end(self, entity):
         current_time = time.mktime(datetime.now(pytz.timezone("UTC")).timetuple())
         animation = AnimationValue(
             start=current_time - 100,

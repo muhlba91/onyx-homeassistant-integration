@@ -213,7 +213,7 @@ class TestOnyxShutter:
         assert entity.is_closed
         assert api.device.called
 
-    def test_start_moving_device_end(self, api, entity, device):
+    def test_start_moving_device_end(self, entity):
         current_time = time.mktime(datetime.now(pytz.timezone("UTC")).timetuple())
         animation = AnimationValue(
             start=current_time - 100,
