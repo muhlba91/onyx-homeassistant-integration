@@ -252,7 +252,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                     self.hass,
                     self._end_moving_device,
                     utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
-                )
+                ),
+                self.hass.loop,
             )
         else:
             _LOGGER.debug("end moving device %s due to too old data", self._uuid)
@@ -311,10 +312,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             elif (
                 position_start_time is not None and current_time > position_start_time
             ) or (angle_start_time is not None and current_time > angle_start_time):
-                if position_animation is not None:
-                    delta = current_time - (
-                        position_animation.start + position_keyframe.delay
-                    )
+                if position_animation is not None and position_keyframe.duration > 0:
+                    delta = current_time - position_start_time
                     delta_per_unit = (
                         self._device.target_position.value
                         - position_animation.current_value
@@ -328,10 +327,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                         update,
                     )
                     self._device.actual_position.value = update
-                if angle_animation is not None:
-                    delta = current_time - (
-                        angle_animation.start + angle_keyframe.delay
-                    )
+                if angle_animation is not None and angle_keyframe.duration > 0:
+                    delta = current_time - angle_start_time
                     delta_per_unit = (
                         self._device.target_angle.value - angle_animation.current_value
                     ) / angle_keyframe.duration

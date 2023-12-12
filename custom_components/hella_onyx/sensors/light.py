@@ -178,7 +178,8 @@ class OnyxLight(OnyxEntity, LightEntity):
                     self.hass,
                     self._end_update_device,
                     utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
-                )
+                ),
+                self.hass.loop,
             )
         else:
             _LOGGER.debug("end update device %s due to too old data", self._uuid)
@@ -212,7 +213,7 @@ class OnyxLight(OnyxEntity, LightEntity):
                 self.hass.loop,
             )
         elif current_time > start_time:
-            delta = current_time - (animation.start + keyframe.delay)
+            delta = current_time - start_time
             delta_per_unit = (
                 self._device.target_brightness.value - animation.current_value
             ) / keyframe.duration
