@@ -178,9 +178,6 @@ class OnyxLight(OnyxEntity, LightEntity):
                 self._end_update_device,
                 utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
             )
-        else:
-            _LOGGER.debug("end update device %s due to too old data", self._uuid)
-            self._end_update_device()
 
     def _end_update_device(self, *args: Any):
         """Call STOP to update the device values on ONYX."""

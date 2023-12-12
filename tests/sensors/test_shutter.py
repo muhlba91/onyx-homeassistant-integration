@@ -230,7 +230,7 @@ class TestOnyxShutter:
         entity._moving_state = MovingState.CLOSING
         with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
             entity._start_moving_device(animation)
-            mock_end_moving_device.assert_called()
+            mock_end_moving_device.assert_not_called()
 
     def test_start_moving_device_still(self, api, entity, device):
         current_time = time.mktime(datetime.now(pytz.timezone("UTC")).timetuple())

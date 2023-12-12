@@ -267,7 +267,7 @@ class TestOnyxLight:
         )
         with patch.object(entity, "_end_update_device") as mock_end_update_device:
             entity._start_update_device(animation)
-            mock_end_update_device.assert_called()
+            mock_end_update_device.assert_not_called()
 
     @patch("asyncio.run_coroutine_threadsafe")
     def test__end_update_device(

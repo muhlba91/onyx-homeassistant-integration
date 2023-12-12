@@ -252,9 +252,6 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                 self._end_moving_device,
                 utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
             )
-        else:
-            _LOGGER.debug("end moving device %s due to too old data", self._uuid)
-            self._end_moving_device()
 
     def _end_moving_device(self, *args: Any):
         """Call STOP to update the device values on ONYX."""
