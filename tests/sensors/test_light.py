@@ -2,12 +2,17 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+import time
+import pytz
+from datetime import datetime
 from homeassistant.components.light import (
     ColorMode,
     brightness_supported,
 )
 from homeassistant.core import HomeAssistant
 from onyx_client.data.numeric_value import NumericValue
+from onyx_client.data.animation_value import AnimationValue
+from onyx_client.data.animation_keyframe import AnimationKeyframe
 from onyx_client.device.light import Light
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
@@ -91,6 +96,29 @@ class TestOnyxLight:
         api.device.return_value = device
         assert entity.brightness == 25.5
         assert api.device.called
+
+    def test_brightness_with_animation(self, api, entity, device):
+        animation = AnimationValue(
+            start=0,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", duration=10, delay=0, value=10
+                )
+            ],
+        )
+        device.actual_brightness = NumericValue(
+            value=10,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=animation,
+        )
+        api.device.return_value = device
+        with patch.object(entity, "_start_update_device") as mock_start_update_device:
+            assert entity.brightness == 25.5
+            mock_start_update_device.assert_called_with(animation)
+            assert api.device.called
 
     def test_is_on(self, api, entity, device):
         device.actual_brightness = NumericValue(
@@ -198,3 +226,57 @@ class TestOnyxLight:
         api.device.return_value = device
         assert entity._get_dim_duration(90) == 5450
         assert api.device.called
+
+    @patch("asyncio.run_coroutine_threadsafe")
+    def test_start_update_device_end(self, api, entity, device):
+        current_time = time.mktime(datetime.now(pytz.timezone("UTC")).timetuple())
+        animation = AnimationValue(
+            start=current_time - 100,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=10,
+                    delay=0,
+                )
+            ],
+        )
+        with patch.object(entity, "_end_update_device") as mock_end_update_device:
+            entity._start_update_device(animation)
+            mock_end_update_device.assert_called()
+
+    @patch("asyncio.run_coroutine_threadsafe")
+    def test__end_update_device(self, mock_run_coroutine_threadsafe, api, entity):
+        entity._device.actual_brightness.animation = AnimationValue(
+            time.time() - 1000, 10, [AnimationKeyframe("linear", 0, 100, 90)]
+        )
+        with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
+            entity._end_update_device()
+            assert mock_async_write_ha_state.called
+            assert mock_run_coroutine_threadsafe.called
+            api.send_device_command_action.assert_called_with("uuid", Action.STOP)
+
+    @patch("asyncio.run_coroutine_threadsafe")
+    def test__end_update_device_within_time(
+        self, mock_run_coroutine_threadsafe, api, entity
+    ):
+        entity._device.actual_brightness.animation = AnimationValue(
+            time.time(), 10, [AnimationKeyframe("linear", 0, 20000, 90)]
+        )
+        with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
+            entity._end_update_device()
+            assert mock_async_write_ha_state.called
+            assert not mock_run_coroutine_threadsafe.called
+
+    @patch("asyncio.run_coroutine_threadsafe")
+    def test__end_update_device_within_time_using_delay(
+        self, mock_run_coroutine_threadsafe, api, entity
+    ):
+        entity._device.actual_brightness.animation = AnimationValue(
+            time.time() - 100, 10, [AnimationKeyframe("linear", 100000, 10, 90)]
+        )
+        with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
+            entity._end_update_device()
+            assert mock_async_write_ha_state.called
+            assert not mock_run_coroutine_threadsafe.called

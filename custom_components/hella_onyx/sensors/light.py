@@ -1,6 +1,8 @@
 """The ONYX light entity."""
 import asyncio
 import logging
+import time
+from datetime import timedelta
 from math import ceil
 from typing import Any
 
@@ -10,12 +12,18 @@ from homeassistant.components.light import (
     LightEntityFeature,
     ATTR_BRIGHTNESS,
 )
+from homeassistant.helpers.event import (
+    track_point_in_utc_time,
+)
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.util import utcnow
+from onyx_client.data.animation_value import AnimationValue
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 from onyx_client.data.numeric_value import NumericValue
 
 from custom_components.hella_onyx.api_connector import APIConnector
+from custom_components.hella_onyx.const import INCREASED_INTERVAL_DELTA
 from custom_components.hella_onyx.sensors.onyx_entity import OnyxEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -82,6 +90,8 @@ class OnyxLight(OnyxEntity, LightEntity):
             self._uuid,
             brightness,
         )
+        if brightness.animation is not None and len(brightness.animation.keyframes) > 0:
+            self._start_update_device(brightness.animation)
         return brightness.value / brightness.maximum * 255
 
     @property
@@ -137,6 +147,64 @@ class OnyxLight(OnyxEntity, LightEntity):
             self.hass.loop,
         )
 
+    def _start_update_device(self, animation: AnimationValue):
+        """Start the update loop."""
+        keyframes = len(animation.keyframes)
+        keyframe = animation.keyframes[keyframes - 1]
+
+        current_time = time.time()
+        end_time = animation.start + keyframe.duration + keyframe.delay
+        delta = end_time - current_time
+        moving = current_time < end_time
+
+        _LOGGER.debug(
+            "updating device %s with current_time %s and end_time %s: %s",
+            self._uuid,
+            current_time,
+            end_time,
+            moving,
+        )
+
+        if moving:
+            track_point_in_utc_time(
+                self.hass,
+                self._end_update_device,
+                utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
+            )
+        else:
+            _LOGGER.debug("end update device %s due to too old data", self._uuid)
+            self._end_update_device()
+
+    def _end_update_device(self, *args: Any):
+        """Call STOP to update the device values on ONYX."""
+        animation = self._actual_brightness.animation
+        keyframe = (
+            animation.keyframes[len(animation.keyframes) - 1]
+            if animation is not None and len(animation.keyframes) > 0
+            else None
+        )
+        end_time = (
+            (animation.start + keyframe.duration + keyframe.delay)
+            if keyframe is not None
+            else None
+        )
+
+        current_time = time.time()
+
+        if current_time > end_time:
+            _LOGGER.debug(
+                "calling stop to force update device %s",
+                self._uuid,
+            )
+            asyncio.run_coroutine_threadsafe(
+                self.api.send_device_command_action(
+                    self._uuid,
+                    Action.STOP,
+                ),
+                self.hass.loop,
+            )
+        self.async_write_ha_state()
+
     @property
     def _actual_brightness(self) -> int:
         """Get the actual brightness."""
@@ -146,6 +214,7 @@ class OnyxLight(OnyxEntity, LightEntity):
             brightness.minimum,
             brightness.maximum,
             brightness.read_only,
+            brightness.animation,
         )
 
     def _get_dim_duration(self, target) -> int:
