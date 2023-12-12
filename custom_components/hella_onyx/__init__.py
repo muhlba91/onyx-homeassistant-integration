@@ -46,6 +46,7 @@ CONFIG_SCHEMA = vol.Schema(
 PLATFORMS = [
     "cover",
     "sensor",
+    "light",
 ]
 
 
