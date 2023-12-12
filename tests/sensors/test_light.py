@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from homeassistant.components.light import (
     ColorMode,
+    brightness_supported,
 )
 from homeassistant.core import HomeAssistant
 from onyx_client.data.numeric_value import NumericValue
@@ -65,21 +66,23 @@ class TestOnyxLight:
     def test_supported_features(self, entity):
         assert entity.supported_features == 0
 
-    def test_color_mode(self, api, entity, device):
+    def test_color_mode_basic_light(self, api, entity, device):
         device.device_type = DeviceType.BASIC_LIGHT
         api.device.return_value = device
         assert entity.color_mode == ColorMode.ONOFF
         assert len(entity.supported_color_modes) == 1
         assert entity.supported_color_modes[0] == ColorMode.ONOFF
         assert api.device.called
+        assert brightness_supported(entity.supported_color_modes) is False
 
-    def test_color_mode_brightness(self, api, dimmable_entity, device):
+    def test_color_mode_dimmable_light(self, api, dimmable_entity, device):
         device.device_type = DeviceType.DIMMABLE_LIGHT
         api.device.return_value = device
         assert dimmable_entity.color_mode == ColorMode.BRIGHTNESS
         assert len(dimmable_entity.supported_color_modes) == 1
         assert dimmable_entity.supported_color_modes[0] == ColorMode.BRIGHTNESS
         assert api.device.called
+        assert brightness_supported(dimmable_entity.supported_color_modes) is True
 
     def test_brightness(self, api, entity, device):
         device.actual_brightness = NumericValue(
@@ -115,6 +118,22 @@ class TestOnyxLight:
         )
         assert mock_run_coroutine_threadsafe.called
         assert api.device.called
+
+    @patch("asyncio.run_coroutine_threadsafe")
+    def test_turn_on_no_brightness(
+        self, mock_run_coroutine_threadsafe, api, entity, device
+    ):
+        device.actual_brightness = NumericValue(
+            value=100, maximum=100, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+        entity.turn_on()
+        api.send_device_command_action.assert_called_with(
+            "uuid",
+            Action.LIGHT_ON,
+        )
+        assert mock_run_coroutine_threadsafe.called
+        assert not api.device.called
 
     def test__get_dim_duration(self, api, entity, device):
         device.actual_brightness = NumericValue(

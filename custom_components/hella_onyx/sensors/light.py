@@ -85,26 +85,36 @@ class OnyxLight(OnyxEntity, LightEntity):
 
     def turn_on(self, **kwargs: Any) -> None:
         """Turns the light on."""
-        hella_brightness = ceil(
-            kwargs[ATTR_BRIGHTNESS] / 255 * self._device.actual_brightness.maximum
-        )
-        dim_duration = self._get_dim_duration(hella_brightness)
-        _LOGGER.debug(
-            "setting brightness for light %s: %s (%s ms)",
-            self._uuid,
-            hella_brightness,
-            dim_duration,
-        )
-        asyncio.run_coroutine_threadsafe(
-            self.api.send_device_command_properties(
+        brightness_attribute = kwargs.pop(ATTR_BRIGHTNESS, None)
+        if brightness_attribute is None:
+            asyncio.run_coroutine_threadsafe(
+                self.api.send_device_command_action(
+                    self._uuid,
+                    Action.LIGHT_ON,
+                ),
+                self.hass.loop,
+            )
+        else:
+            hella_brightness = ceil(
+                brightness_attribute / 255 * self._device.actual_brightness.maximum
+            )
+            dim_duration = self._get_dim_duration(hella_brightness)
+            _LOGGER.debug(
+                "setting brightness for light %s: %s (%s ms)",
                 self._uuid,
-                {
-                    "target_brightness": hella_brightness,
-                    "dim_duration": dim_duration,
-                },
-            ),
-            self.hass.loop,
-        )
+                hella_brightness,
+                dim_duration,
+            )
+            asyncio.run_coroutine_threadsafe(
+                self.api.send_device_command_properties(
+                    self._uuid,
+                    {
+                        "target_brightness": hella_brightness,
+                        "dim_duration": dim_duration,
+                    },
+                ),
+                self.hass.loop,
+            )
 
     def turn_off(self, **kwargs: Any) -> None:
         """Turns the light off."""
