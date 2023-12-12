@@ -1,6 +1,7 @@
 """API connector for the ONYX integration."""
 import logging
 
+import asyncio
 from typing import Any
 
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -31,7 +32,7 @@ class APIConnector:
                 fingerprint=self.fingerprint,
                 access_token=self.token,
                 client_session=async_get_clientsession(self.hass),
-                event_loop=self.hass.loop,
+                event_loop=asyncio.new_event_loop(),
             )
         return self.__client
 
