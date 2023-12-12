@@ -63,7 +63,7 @@ class TestOnyxLight:
         assert entity.unique_id == "uuid/Light"
 
     def test_supported_features(self, entity):
-        assert len(entity.supported_features) == 0
+        assert entity.supported_features == 0
 
     def test_color_mode(self, api, entity, device):
         device.device_type = DeviceType.BASIC_LIGHT

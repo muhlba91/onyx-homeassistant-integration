@@ -7,6 +7,7 @@ from typing import Any
 from homeassistant.components.light import (
     LightEntity,
     ColorMode,
+    LightEntityFeature,
     ATTR_BRIGHTNESS,
 )
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -55,7 +56,7 @@ class OnyxLight(OnyxEntity, LightEntity):
     @property
     def supported_features(self):
         """Flag supported features."""
-        return []
+        return LightEntityFeature(0)
 
     @property
     def color_mode(self) -> ColorMode | str | None:
