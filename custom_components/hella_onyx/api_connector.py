@@ -89,8 +89,8 @@ class APIConnector:
             )
         ) as session:
             client = self._new_client(session)
-        async for device in client.events(force_update):
-            yield device
+            async for device in client.events(force_update):
+                yield device
 
 
 class CommandException(Exception):
