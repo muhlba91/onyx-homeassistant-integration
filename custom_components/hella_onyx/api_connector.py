@@ -1,6 +1,8 @@
 """API connector for the ONYX integration."""
 import logging
 
+from aiohttp import ClientSession, ClientTimeout
+
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from onyx_client.client import create
 from onyx_client.data.device_command import DeviceCommand
@@ -23,12 +25,15 @@ class APIConnector:
 
     def _client(self):
         if self.__client is None:
-            self.__client = create(
-                fingerprint=self.fingerprint,
-                access_token=self.token,
-                client_session=async_get_clientsession(self.hass),
-            )
+            self.__client = self._new_client(async_get_clientsession(self.hass))
         return self.__client
+
+    def _new_client(self, session):
+        return create(
+            fingerprint=self.fingerprint,
+            access_token=self.token,
+            client_session=session,
+        )
 
     async def get_timezone(self):
         """Gets the ONYX.CENTER timezone."""
@@ -78,7 +83,13 @@ class APIConnector:
 
     async def events(self, force_update: bool = False):
         """Listen for events."""
-        async for device in self._client().events(force_update):
+        async with ClientSession(
+            timeout=ClientTimeout(
+                total=None, connect=None, sock_connect=None, sock_read=None
+            )
+        ) as session:
+            client = self._new_client(session)
+        async for device in client.events(force_update):
             yield device
 
 

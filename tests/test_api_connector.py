@@ -132,7 +132,7 @@ class TestAPIConnector:
 
     @pytest.mark.asyncio
     async def test_events(self, api, client):
-        with patch.object(api, "_client", new=client.make):
+        with patch.object(api, "_new_client", new=client.make):
             async for device in api.events():
                 assert device is not None
             assert client.is_called
@@ -140,7 +140,7 @@ class TestAPIConnector:
 
     @pytest.mark.asyncio
     async def test_events_force_update(self, api, client):
-        with patch.object(api, "_client", new=client.make):
+        with patch.object(api, "_new_client", new=client.make):
             async for device in api.events(True):
                 assert device is not None
             assert client.is_called
