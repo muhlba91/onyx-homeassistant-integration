@@ -35,7 +35,7 @@ class EventThread(threading.Thread):
             try:
                 async for device in self._api.events(self._force_update):
                     self._api.updated_device(device)
-                    self._coordinator.async_set_updated_data(device)
+                    self._coordinator.async_set_updated_data(None)
             except Exception as ex:
                 _LOGGER.error(
                     "connection reset: %s, restarting with backoff of %s seconds (%s)",
