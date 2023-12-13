@@ -213,7 +213,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
     def _start_moving_device(self, animation: AnimationValue):
         """Start the update loop."""
         if self._moving_state == MovingState.STILL:
-            _LOGGER.info("not moving still device %s", self._uuid)
+            _LOGGER.debug("not moving still device %s", self._uuid)
             return
 
         keyframe = animation.keyframes[len(animation.keyframes) - 1]
