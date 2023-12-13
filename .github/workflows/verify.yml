@@ -53,7 +53,7 @@ jobs:
           snyk test --package-manager=poetry --fail-on=all --severity-threshold=medium --remote-repo-url=${{ github.server_url }}/${{ github.repository }} --sarif-file-output=snyk.sarif
 
       - name: Upload to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk.sarif
 
