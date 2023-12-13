@@ -91,7 +91,7 @@ class OnyxLight(OnyxEntity, LightEntity):
             brightness,
         )
         if brightness.animation is not None and len(brightness.animation.keyframes) > 0:
-            self._start_update_device(brightness.animation)
+            self._start_dim_device(brightness.animation)
         return brightness.value / brightness.maximum * 255
 
     @property
@@ -147,32 +147,35 @@ class OnyxLight(OnyxEntity, LightEntity):
             self.hass.loop,
         )
 
-    def _start_update_device(self, animation: AnimationValue):
+    def _start_dim_device(self, animation: AnimationValue):
         """Start the update loop."""
-        keyframes = len(animation.keyframes)
-        keyframe = animation.keyframes[keyframes - 1]
+        keyframe = animation.keyframes[len(animation.keyframes) - 1]
 
         current_time = time.time()
-        end_time = animation.start + keyframe.duration + keyframe.delay
-        delta = end_time - current_time
-        updating = current_time < end_time
+        end_time = (
+            animation.start
+            + keyframe.duration
+            + keyframe.delay
+            + INCREASED_INTERVAL_DELTA
+        )
+        is_dimming = current_time < end_time
 
         _LOGGER.debug(
-            "updating device %s with current_time %s and end_time %s: %s",
+            "dimming device %s with current_time %s < end_time %s: %s",
             self._uuid,
             current_time,
             end_time,
-            updating,
+            is_dimming,
         )
 
-        if updating:
+        if is_dimming:
             track_point_in_utc_time(
                 self.hass,
-                self._end_update_device,
-                utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
+                self._end_dim_device,
+                utcnow() + timedelta(seconds=end_time - current_time),
             )
 
-    def _end_update_device(self, *args: Any):
+    def _end_dim_device(self, *args: Any):
         """Call STOP to update the device values on ONYX."""
         animation = self._actual_brightness.animation
         keyframe = (
@@ -181,17 +184,19 @@ class OnyxLight(OnyxEntity, LightEntity):
             else None
         )
         start_time = (
-            (animation.start + keyframe.delay) if keyframe is not None else None
+            (animation.start + keyframe.delay)
+            if animation is not None and keyframe is not None
+            else None
         )
-        end_time = (start_time + keyframe.duration) if keyframe is not None else None
+        end_time = (
+            (start_time + keyframe.duration)
+            if animation is not None and keyframe is not None
+            else None
+        )
 
         current_time = time.time()
 
-        if current_time > end_time:
-            _LOGGER.debug(
-                "calling stop to force update device %s",
-                self._uuid,
-            )
+        if end_time is not None and current_time > end_time:
             asyncio.run_coroutine_threadsafe(
                 self.api.send_device_command_action(
                     self._uuid,
@@ -199,14 +204,18 @@ class OnyxLight(OnyxEntity, LightEntity):
                 ),
                 self.hass.loop,
             )
-        elif current_time > start_time:
+        elif (
+            start_time is not None
+            and current_time > start_time
+            and keyframe.duration > 0
+        ):
             delta = current_time - start_time
             delta_per_unit = (
                 self._device.target_brightness.value - animation.current_value
             ) / keyframe.duration
             update = ceil(animation.current_value + delta_per_unit * delta)
             _LOGGER.debug(
-                "interpolating brightness update for device %s: %d",
+                "interpolating actual_brightness update for device %s: %d",
                 self._uuid,
                 update,
             )

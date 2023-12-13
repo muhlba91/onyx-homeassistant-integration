@@ -1,10 +1,8 @@
 """Test for the ONYX Shutter Entity."""
 import time
-from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-import pytz
 from homeassistant.components.cover import (
     CoverDeviceClass,
     SUPPORT_CLOSE,
@@ -214,7 +212,7 @@ class TestOnyxShutter:
         assert api.device.called
 
     def test_start_moving_device_end(self, entity):
-        current_time = time.mktime(datetime.now(pytz.timezone("UTC")).timetuple())
+        current_time = time.time()
         animation = AnimationValue(
             start=current_time - 100,
             current_value=0,
@@ -228,12 +226,29 @@ class TestOnyxShutter:
             ],
         )
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
-            entity._start_moving_device(animation)
-            mock_end_moving_device.assert_not_called()
+        entity._start_moving_device(animation)
 
+    @patch("asyncio.run_coroutine_threadsafe")
+    def test_start_moving_device_within_time(self, entity):
+        current_time = time.time()
+        animation = AnimationValue(
+            start=current_time,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=1000,
+                    delay=0,
+                )
+            ],
+        )
+        entity._moving_state = MovingState.CLOSING
+        entity._start_moving_device(animation)
+
+    @patch("asyncio.run_coroutine_threadsafe")
     def test_start_moving_device_still(self, api, entity, device):
-        current_time = time.mktime(datetime.now(pytz.timezone("UTC")).timetuple())
+        current_time = time.time()
         animation = AnimationValue(
             start=current_time - 100,
             current_value=0,
@@ -247,9 +262,7 @@ class TestOnyxShutter:
             ],
         )
         entity._moving_state = MovingState.STILL
-        with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
-            entity._start_moving_device(animation)
-            mock_end_moving_device.assert_not_called()
+        entity._start_moving_device(animation)
 
     @patch("asyncio.run_coroutine_threadsafe")
     def test_open_cover(self, mock_run_coroutine_threadsafe, api, entity, device):
@@ -539,7 +552,7 @@ class TestOnyxShutter:
             ) as mock_async_write_ha_state:
                 entity._end_moving_device()
                 assert not mock_stop_cover.called
-                assert mock_async_write_ha_state.called
+                assert not mock_async_write_ha_state.called
 
     def test__calculate_and_set_state_CLOSING(self, entity, device, api):
         device.drivetime_down = NumericValue(

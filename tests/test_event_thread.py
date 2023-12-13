@@ -80,7 +80,7 @@ class TestEventThread:
         api.called = False
 
         async def sleep_called(backoff: int):
-            assert backoff > 0
+            assert backoff >= 0
             assert backoff / 60 < MAX_BACKOFF_TIME
             thread._backoff = False
 

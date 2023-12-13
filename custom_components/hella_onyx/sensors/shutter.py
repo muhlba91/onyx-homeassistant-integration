@@ -213,30 +213,33 @@ class OnyxShutter(OnyxEntity, CoverEntity):
     def _start_moving_device(self, animation: AnimationValue):
         """Start the update loop."""
         if self._moving_state == MovingState.STILL:
-            _LOGGER.debug("not moving still device %s", self._uuid)
+            _LOGGER.info("not moving still device %s", self._uuid)
             return
 
-        keyframes = len(animation.keyframes)
-        keyframe = animation.keyframes[keyframes - 1]
+        keyframe = animation.keyframes[len(animation.keyframes) - 1]
 
         current_time = time.time()
-        end_time = animation.start + keyframe.duration + keyframe.delay
-        delta = end_time - current_time
-        moving = current_time < end_time
+        end_time = (
+            animation.start
+            + keyframe.duration
+            + keyframe.delay
+            + INCREASED_INTERVAL_DELTA
+        )
+        is_moving = current_time < end_time
 
         _LOGGER.debug(
-            "moving device %s with current_time %s and end_time %s: %s",
+            "moving device %s with current_time %s < end_time %s: %s",
             self._uuid,
             current_time,
             end_time,
-            moving,
+            is_moving,
         )
 
-        if moving:
+        if is_moving:
             track_point_in_utc_time(
                 self.hass,
                 self._end_moving_device,
-                utcnow() + timedelta(seconds=delta + INCREASED_INTERVAL_DELTA),
+                utcnow() + timedelta(seconds=end_time - current_time),
             )
 
     def _end_moving_device(self, *args: Any):
@@ -283,8 +286,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                 or (position_end_time is None and current_time > angle_end_time)
                 or (
                     position_end_time is not None
-                    and current_time > position_end_time
                     and angle_end_time is not None
+                    and current_time > position_end_time
                     and current_time > angle_end_time
                 )
             ):
@@ -322,7 +325,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                     )
                     self._device.actual_angle.value = update
 
-        self.async_write_ha_state()
+            self.async_write_ha_state()
 
     def _calculate_and_set_state(self, actual: int, new_value: int):
         """Calculate and set the new moving state."""
