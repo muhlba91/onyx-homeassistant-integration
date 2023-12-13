@@ -186,7 +186,7 @@ class TestOnyxLight:
             "uuid",
             {
                 "target_brightness": 4,
-                "dim_duration": 4780,
+                "dim_duration": 5780,
             },
         )
         assert mock_run_coroutine_threadsafe.called
@@ -208,14 +208,6 @@ class TestOnyxLight:
         assert mock_run_coroutine_threadsafe.called
         assert not api.device.called
 
-    def test__get_dim_duration(self, api, entity, device):
-        device.actual_brightness = NumericValue(
-            value=14645, maximum=65535, minimum=0, read_only=False
-        )
-        api.device.return_value = device
-        assert entity._get_dim_duration(31) == 726
-        assert api.device.called
-
     def test__actual_brightness_no_value(self, api, entity, device):
         device.actual_brightness = NumericValue(
             value=None, maximum=100, minimum=0, read_only=False
@@ -232,6 +224,14 @@ class TestOnyxLight:
         assert entity._actual_brightness == NumericValue(1, 0, 100, False)
         assert api.device.called
 
+    def test__get_dim_duration(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=14645, maximum=65535, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+        assert entity._get_dim_duration(31) == 1726
+        assert api.device.called
+
     def test__get_dim_duration_same(self, api, entity, device):
         device.actual_brightness = NumericValue(
             value=100, maximum=100, minimum=0, read_only=False
@@ -246,6 +246,22 @@ class TestOnyxLight:
         )
         api.device.return_value = device
         assert entity._get_dim_duration(90) == 5450
+        assert api.device.called
+
+    def test__get_dim_duration_actual_lower_than_new(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=0, maximum=65535, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+        assert entity._get_dim_duration(65535) == 6000
+        assert api.device.called
+
+    def test__get_dim_duration_new_lower_than_actual(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=65535, maximum=65535, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+        assert entity._get_dim_duration(0) == 6000
         assert api.device.called
 
     @patch("asyncio.run_coroutine_threadsafe")

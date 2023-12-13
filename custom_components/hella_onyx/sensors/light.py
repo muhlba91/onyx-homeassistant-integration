@@ -239,7 +239,7 @@ class OnyxLight(OnyxEntity, LightEntity):
         brightness = self._actual_brightness
         return abs(
             int(
-                (target - brightness.value)
+                abs(target - brightness.value)
                 / brightness.maximum
                 * (MAX_USED_DIM_DURATION - MIN_USED_DIM_DURATION)
                 + MIN_USED_DIM_DURATION
