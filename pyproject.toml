@@ -27,7 +27,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-onyx-client = "^8.2.0"
+onyx-client = "^8.3.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.3.1"
