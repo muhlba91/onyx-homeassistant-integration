@@ -24,6 +24,7 @@ class APIConnector(DataUpdateCoordinator):
 
     def __init__(self, hass, scan_interval, fingerprint, token):
         """Initialize the connector."""
+        # TODO: always_update = False?
         super().__init__(
             hass,
             _LOGGER,
@@ -38,6 +39,7 @@ class APIConnector(DataUpdateCoordinator):
         self.token = token
         self.data = {}
         self.groups = {}
+        self._backoff = True
         self.__client = None
 
     def _client(self):
@@ -55,7 +57,9 @@ class APIConnector(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
         async with async_timeout.timeout(10):
-            return await self.update()
+            await self.update()
+            # TODO: optimize?
+            return self.data
 
     async def get_timezone(self):
         """Gets the ONYX.CENTER timezone."""
@@ -115,7 +119,7 @@ class APIConnector(DataUpdateCoordinator):
                     )
                 ) as session:
                     client = self._new_client(session)
-                    async for device in client.events(force_update):
+                    async for device in self._client.events(force_update):
                         self.updated_device(device)
                         self.async_set_updated_data(self.data)
             except Exception as ex:
