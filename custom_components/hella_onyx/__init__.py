@@ -77,7 +77,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         ONYX_API: onyx_api,
         ONYX_TIMEZONE: onyx_timezone,
     }
-    hass.async_create_background_task(onyx_api.events(force_update))
+    hass.async_create_background_task(onyx_api.events(force_update), name=DOMAIN)
 
     for platform in PLATFORMS:
         hass.async_create_task(
