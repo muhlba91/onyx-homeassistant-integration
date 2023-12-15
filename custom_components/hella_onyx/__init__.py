@@ -19,6 +19,9 @@ from .const import (
     CONF_FINGERPRINT,
     CONF_MIN_DIM_DURATION,
     CONF_MAX_DIM_DURATION,
+    DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_MAX_DIM_DURATION,
+    DEFAULT_INTERVAL,
     DOMAIN,
     ONYX_API,
     ONYX_CONFIG,
@@ -64,9 +67,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     fingerprint = entry.data[CONF_FINGERPRINT]
     token = entry.data[CONF_ACCESS_TOKEN]
-    scan_interval = entry.data[CONF_SCAN_INTERVAL]
-    min_dim_duration = entry.data[CONF_MIN_DIM_DURATION]
-    max_dim_duration = entry.data[CONF_MAX_DIM_DURATION]
+    scan_interval = entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_INTERVAL)
+    min_dim_duration = entry.data.get(CONF_MIN_DIM_DURATION, DEFAULT_MIN_DIM_DURATION)
+    max_dim_duration = entry.data.get(CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION)
     force_update = entry.data.get(CONF_FORCE_UPDATE, False)
 
     _LOGGER.debug("setting up %s integration with fingerprint %s", DOMAIN, fingerprint)
