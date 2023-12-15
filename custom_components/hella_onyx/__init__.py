@@ -14,10 +14,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 
 from .api_connector import APIConnector
+from .configuration import Configuration
 from .const import (
     CONF_FINGERPRINT,
+    CONF_MIN_DIM_DURATION,
+    CONF_MAX_DIM_DURATION,
     DOMAIN,
     ONYX_API,
+    ONYX_CONFIG,
     ONYX_TIMEZONE,
 )
 
@@ -29,6 +33,8 @@ ONYX_SCHEMA = vol.Schema(
             vol.Required(CONF_FINGERPRINT): cv.string,
             vol.Required(CONF_ACCESS_TOKEN): cv.string,
             vol.Required(CONF_SCAN_INTERVAL): cv.positive_int,
+            vol.Required(CONF_MIN_DIM_DURATION): cv.positive_int,
+            vol.Required(CONF_MAX_DIM_DURATION): cv.positive_int,
             vol.Required(CONF_FORCE_UPDATE, default=False): cv.boolean,
         },
     )
@@ -59,6 +65,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     fingerprint = entry.data[CONF_FINGERPRINT]
     token = entry.data[CONF_ACCESS_TOKEN]
     scan_interval = entry.data[CONF_SCAN_INTERVAL]
+    min_dim_duration = entry.data[CONF_MIN_DIM_DURATION]
+    max_dim_duration = entry.data[CONF_MAX_DIM_DURATION]
     force_update = entry.data.get(CONF_FORCE_UPDATE, False)
 
     _LOGGER.debug("setting up %s integration with fingerprint %s", DOMAIN, fingerprint)
@@ -69,12 +77,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             "and performance impacts. It is advised to not enable this option."
         )
 
-    onyx_api = APIConnector(hass, scan_interval, fingerprint, token)
+    onyx_config = Configuration(
+        scan_interval,
+        min_dim_duration,
+        max_dim_duration,
+        force_update,
+        fingerprint,
+        token,
+    )
+    onyx_api = APIConnector(hass, onyx_config)
     await onyx_api.async_config_entry_first_refresh()
     onyx_timezone = await onyx_api.get_timezone()
 
     hass.data[DOMAIN][entry.entry_id] = {
         ONYX_API: onyx_api,
+        ONYX_CONFIG: onyx_config,
         ONYX_TIMEZONE: onyx_timezone,
     }
     hass.async_create_background_task(onyx_api.events(force_update), name=DOMAIN)

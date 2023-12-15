@@ -9,7 +9,11 @@ from homeassistant.const import (
     CONF_FORCE_UPDATE,
 )
 
-from custom_components.hella_onyx import CONF_FINGERPRINT
+from custom_components.hella_onyx.const import (
+    CONF_FINGERPRINT,
+    CONF_MIN_DIM_DURATION,
+    CONF_MAX_DIM_DURATION,
+)
 from custom_components.hella_onyx.config_flow import OnyxFlowHandler
 
 
@@ -36,6 +40,8 @@ class TestOnyxFlowHandler:
                 CONF_FINGERPRINT: "finger",
                 CONF_ACCESS_TOKEN: "token",
                 CONF_SCAN_INTERVAL: 10,
+                CONF_MIN_DIM_DURATION: 0,
+                CONF_MAX_DIM_DURATION: 100,
                 CONF_FORCE_UPDATE: False,
             }
         )
@@ -68,6 +74,8 @@ class TestOnyxFlowHandler:
                 CONF_FINGERPRINT: "finger",
                 CONF_ACCESS_TOKEN: "token",
                 CONF_SCAN_INTERVAL: 10,
+                CONF_MIN_DIM_DURATION: 0,
+                CONF_MAX_DIM_DURATION: 100,
                 CONF_FORCE_UPDATE: False,
             }
         )
@@ -101,6 +109,8 @@ class TestOnyxFlowHandler:
                 CONF_FINGERPRINT: "finger",
                 CONF_ACCESS_TOKEN: "token",
                 CONF_SCAN_INTERVAL: 10,
+                CONF_MIN_DIM_DURATION: 0,
+                CONF_MAX_DIM_DURATION: 100,
                 CONF_FORCE_UPDATE: False,
             }
         )

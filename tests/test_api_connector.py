@@ -14,6 +14,11 @@ from onyx_client.enum.device_type import DeviceType
 from onyx_client.group.group import Group
 
 from custom_components.hella_onyx import APIConnector
+from custom_components.hella_onyx.const import (
+    DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_MAX_DIM_DURATION,
+)
+from custom_components.hella_onyx.configuration import Configuration
 from custom_components.hella_onyx.api_connector import (
     CommandException,
     UnknownStateException,
@@ -28,7 +33,15 @@ class TestAPIConnector:
 
     @pytest.fixture
     def api(self):
-        yield APIConnector(None, 100000000, "finger", "token")
+        config = Configuration(
+            100000000,
+            DEFAULT_MIN_DIM_DURATION,
+            DEFAULT_MAX_DIM_DURATION,
+            False,
+            "finger",
+            "token",
+        )
+        yield APIConnector(None, config)
 
     @pytest.mark.asyncio
     async def test_update(self, api, client):

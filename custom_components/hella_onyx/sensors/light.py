@@ -30,9 +30,6 @@ from ..sensors.onyx_entity import OnyxEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-MIN_USED_DIM_DURATION = 500
-MAX_USED_DIM_DURATION = 6000
-
 
 class OnyxLight(OnyxEntity, LightEntity):
     """A light entity."""
@@ -257,11 +254,11 @@ class OnyxLight(OnyxEntity, LightEntity):
             int(
                 abs(target - brightness.value)
                 / brightness.maximum
-                * (MAX_USED_DIM_DURATION - MIN_USED_DIM_DURATION)
-                + MIN_USED_DIM_DURATION
+                * (self.api.config.max_dim_duration - self.api.config.min_dim_duration)
+                + self.api.config.min_dim_duration
             )
         )
-        if duration > MAX_USED_DIM_DURATION:
-            return MAX_USED_DIM_DURATION
+        if duration > self.api.config.max_dim_duration:
+            return self.api.config.max_dim_duration
         else:
             return duration

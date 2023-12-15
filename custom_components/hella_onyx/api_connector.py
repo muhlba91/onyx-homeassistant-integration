@@ -13,6 +13,7 @@ from onyx_client.client import create
 from onyx_client.data.device_command import DeviceCommand
 from onyx_client.enum.action import Action
 
+from .configuration import Configuration
 from .const import DOMAIN, MAX_BACKOFF_TIME
 
 _LOGGER = logging.getLogger(__name__)
@@ -21,20 +22,19 @@ _LOGGER = logging.getLogger(__name__)
 class APIConnector(DataUpdateCoordinator):
     """API connector for an ONYX.CENTER."""
 
-    def __init__(self, hass, scan_interval, fingerprint, token):
+    def __init__(self, hass, config: Configuration):
         """Initialize the connector."""
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(minutes=scan_interval),
+            update_interval=timedelta(minutes=config.scan_interval),
             request_refresh_debouncer=Debouncer(
                 hass, _LOGGER, cooldown=0, immediate=True
             ),
         )
         self.hass = hass
-        self.fingerprint = fingerprint
-        self.token = token
+        self.config = config
         self.data = {
             "devices": {},
             "groups": {},
@@ -45,8 +45,8 @@ class APIConnector(DataUpdateCoordinator):
     def _client(self):
         if self.__client is None:
             self.__client = create(
-                fingerprint=self.fingerprint,
-                access_token=self.token,
+                fingerprint=self.config.fingerprint,
+                access_token=self.config.token,
                 client_session=async_get_clientsession(self.hass),
             )
         return self.__client

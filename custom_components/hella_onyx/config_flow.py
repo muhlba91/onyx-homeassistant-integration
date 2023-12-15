@@ -12,13 +12,27 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from onyx_client.client import create
 
-from .const import CONF_FINGERPRINT, DEFAULT_INTERVAL, DOMAIN
+from .const import (
+    CONF_FINGERPRINT,
+    CONF_MIN_DIM_DURATION,
+    CONF_MAX_DIM_DURATION,
+    DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_MAX_DIM_DURATION,
+    DEFAULT_INTERVAL,
+    DOMAIN,
+)
 
 AUTH_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_FINGERPRINT): cv.string,
         vol.Required(CONF_ACCESS_TOKEN): cv.string,
         vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_INTERVAL): cv.positive_int,
+        vol.Required(
+            CONF_MIN_DIM_DURATION, default=DEFAULT_MIN_DIM_DURATION
+        ): cv.positive_int,
+        vol.Required(
+            CONF_MAX_DIM_DURATION, default=DEFAULT_MAX_DIM_DURATION
+        ): cv.positive_int,
         vol.Required(CONF_FORCE_UPDATE, default=False): cv.boolean,
     }
 )
@@ -44,6 +58,8 @@ class OnyxFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             fingerprint = user_input[CONF_FINGERPRINT]
             token = user_input[CONF_ACCESS_TOKEN]
             scan_interval = user_input[CONF_SCAN_INTERVAL]
+            min_dim_duration = user_input[CONF_MIN_DIM_DURATION]
+            max_dim_duration = user_input[CONF_MAX_DIM_DURATION]
             force_update = user_input[CONF_FORCE_UPDATE]
 
             if await self._async_exists(fingerprint):
@@ -58,6 +74,8 @@ class OnyxFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_FINGERPRINT: fingerprint,
                     CONF_ACCESS_TOKEN: token,
                     CONF_SCAN_INTERVAL: scan_interval,
+                    CONF_MIN_DIM_DURATION: min_dim_duration,
+                    CONF_MAX_DIM_DURATION: max_dim_duration,
                     CONF_FORCE_UPDATE: force_update,
                 },
             )

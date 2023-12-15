@@ -17,13 +17,32 @@ from onyx_client.device.light import Light
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
+from custom_components.hella_onyx.const import (
+    DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_MAX_DIM_DURATION,
+    DEFAULT_INTERVAL,
+)
+from custom_components.hella_onyx.configuration import Configuration
 from custom_components.hella_onyx.light import OnyxLight
 
 
 class TestOnyxLight:
     @pytest.fixture
-    def api(self):
-        yield MagicMock()
+    def config(self):
+        yield Configuration(
+            DEFAULT_INTERVAL,
+            DEFAULT_MIN_DIM_DURATION,
+            DEFAULT_MAX_DIM_DURATION,
+            False,
+            "",
+            "",
+        )
+
+    @pytest.fixture
+    def api(self, config):
+        mock = MagicMock()
+        mock.config = config
+        yield mock
 
     @pytest.fixture
     def hass(self):
@@ -200,12 +219,30 @@ class TestOnyxLight:
         assert entity._get_dim_duration(31) == 1726
         assert api.device.called
 
+    def test__get_dim_duration_custom_max(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=14645, maximum=65535, minimum=0, read_only=False
+        )
+        api.config.max_dim_duration = 2000
+        api.device.return_value = device
+        assert entity._get_dim_duration(31) == 834
+        assert api.device.called
+
+    def test__get_dim_duration_custom_min(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=14645, maximum=65535, minimum=0, read_only=False
+        )
+        api.config.min_dim_duration = 2000
+        api.device.return_value = device
+        assert entity._get_dim_duration(31) == 2891
+        assert api.device.called
+
     def test__get_dim_duration_same(self, api, entity, device):
         device.actual_brightness = NumericValue(
             value=100, maximum=100, minimum=0, read_only=False
         )
         api.device.return_value = device
-        assert entity._get_dim_duration(100) == 500
+        assert entity._get_dim_duration(100) == DEFAULT_MIN_DIM_DURATION
         assert api.device.called
 
     def test__get_dim_duration_invalid_value(self, api, entity, device):
@@ -221,7 +258,7 @@ class TestOnyxLight:
             value=0, maximum=65535, minimum=0, read_only=False
         )
         api.device.return_value = device
-        assert entity._get_dim_duration(65535) == 6000
+        assert entity._get_dim_duration(65535) == DEFAULT_MAX_DIM_DURATION
         assert api.device.called
 
     def test__get_dim_duration_new_lower_than_actual(self, api, entity, device):
@@ -229,7 +266,7 @@ class TestOnyxLight:
             value=65535, maximum=65535, minimum=0, read_only=False
         )
         api.device.return_value = device
-        assert entity._get_dim_duration(0) == 6000
+        assert entity._get_dim_duration(0) == DEFAULT_MAX_DIM_DURATION
         assert api.device.called
 
     def test__get_dim_duration_force_higher_than_max(self, api, entity, device):
@@ -237,7 +274,7 @@ class TestOnyxLight:
             value=65535, maximum=100, minimum=0, read_only=False
         )
         api.device.return_value = device
-        assert entity._get_dim_duration(0) == 6000
+        assert entity._get_dim_duration(0) == DEFAULT_MAX_DIM_DURATION
         assert api.device.called
 
     def test_handle_coordinator_update(self, entity, device, api):
