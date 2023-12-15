@@ -99,9 +99,9 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(
         config_entry: ConfigEntry,
-    ) -> "OptionsFlowHandler":
+    ) -> "OnyxOptionsFlowHandler":
         """Get the options flow for this handler."""
-        return OptionsFlowHandler(config_entry)
+        return OnyxOptionsFlowHandler(config_entry)
 
     async def _async_exists(self, fingerprint):
         """Check if the endpoint exists already."""
@@ -120,7 +120,7 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
         ).verify()
 
 
-class OptionsFlowHandler(OptionsFlow):
+class OnyxOptionsFlowHandler(OptionsFlow):
     """Handle a option flow for ONYX."""
 
     def __init__(self, config_entry: ConfigEntry) -> None:
