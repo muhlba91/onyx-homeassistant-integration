@@ -232,6 +232,14 @@ class TestOnyxLight:
         assert entity._get_dim_duration(0) == 6000
         assert api.device.called
 
+    def test__get_dim_duration_force_higher_than_max(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=65535, maximum=100, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+        assert entity._get_dim_duration(0) == 6000
+        assert api.device.called
+
     def test_handle_coordinator_update(self, entity, device, api):
         animation = AnimationValue(
             start=0,

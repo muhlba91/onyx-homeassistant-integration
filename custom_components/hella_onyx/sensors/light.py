@@ -253,7 +253,7 @@ class OnyxLight(OnyxEntity, LightEntity):
     def _get_dim_duration(self, target) -> int:
         """Get the dim duration."""
         brightness = self._actual_brightness
-        return abs(
+        duration = abs(
             int(
                 abs(target - brightness.value)
                 / brightness.maximum
@@ -261,3 +261,7 @@ class OnyxLight(OnyxEntity, LightEntity):
                 + MIN_USED_DIM_DURATION
             )
         )
+        if duration > MAX_USED_DIM_DURATION:
+            return MAX_USED_DIM_DURATION
+        else:
+            return duration

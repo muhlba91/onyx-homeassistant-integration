@@ -305,8 +305,16 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
         if self._moving_state != MovingState.STILL:
             if (
-                (angle_end_time is None and current_time > position_end_time)
-                or (position_end_time is None and current_time > angle_end_time)
+                (
+                    angle_end_time is None
+                    and position_end_time is not None
+                    and current_time > position_end_time
+                )
+                or (
+                    position_end_time is None
+                    and angle_end_time is not None
+                    and current_time > angle_end_time
+                )
                 or (
                     position_end_time is not None
                     and angle_end_time is not None
