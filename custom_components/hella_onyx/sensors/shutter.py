@@ -20,6 +20,7 @@ from homeassistant.components.cover import (
 )
 from homeassistant.helpers.event import (
     track_point_in_utc_time,
+    async_track_point_in_utc_time,
 )
 from homeassistant.util import utcnow
 from onyx_client.data.animation_value import AnimationValue
@@ -259,7 +260,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         )
 
         if is_moving:
-            track_point_in_utc_time(
+            async_track_point_in_utc_time(
                 self.hass,
                 self._end_moving_device,
                 utcnow() + timedelta(seconds=end_time - current_time),
