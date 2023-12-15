@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import time
+
 from datetime import timedelta
 from math import ceil
 from typing import Any
@@ -17,14 +18,15 @@ from homeassistant.helpers.event import (
     async_track_point_in_utc_time,
 )
 from homeassistant.util import utcnow
+
 from onyx_client.data.animation_value import AnimationValue
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 from onyx_client.data.numeric_value import NumericValue
 
-from custom_components.hella_onyx.api_connector import APIConnector
-from custom_components.hella_onyx.const import INCREASED_INTERVAL_DELTA
-from custom_components.hella_onyx.sensors.onyx_entity import OnyxEntity
+from ..api_connector import APIConnector
+from ..const import INCREASED_INTERVAL_DELTA
+from ..sensors.onyx_entity import OnyxEntity
 
 _LOGGER = logging.getLogger(__name__)
 

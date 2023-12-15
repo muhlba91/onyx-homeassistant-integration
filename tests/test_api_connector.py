@@ -1,8 +1,8 @@
 """Test for the ONYX API Connector."""
+import pytest
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from onyx_client.client import OnyxClient
 from onyx_client.data.numeric_value import NumericValue
 from onyx_client.data.date_information import DateInformation

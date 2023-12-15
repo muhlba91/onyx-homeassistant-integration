@@ -1,13 +1,14 @@
 """API connector for the ONYX integration."""
 import logging
+import asyncio
+
 from datetime import timedelta
 from random import uniform
-
-import asyncio
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
 from onyx_client.client import create
 from onyx_client.data.device_command import DeviceCommand
 from onyx_client.enum.action import Action

@@ -1,14 +1,15 @@
 """The ONYX shutter entity."""
 import logging
+
 from typing import Callable, Optional
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import DiscoveryInfoType
 
-from custom_components.hella_onyx import DOMAIN, ONYX_TIMEZONE
-from custom_components.hella_onyx.const import ONYX_API
-from custom_components.hella_onyx.sensors.shutter import OnyxShutter
+from . import DOMAIN, ONYX_TIMEZONE
+from .const import ONYX_API
+from .sensors.shutter import OnyxShutter
 
 _LOGGER = logging.getLogger(__name__)
 

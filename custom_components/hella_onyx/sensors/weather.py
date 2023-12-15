@@ -1,8 +1,6 @@
 """The ONYX weather sensors."""
 from typing import Optional
 
-from custom_components.hella_onyx.sensors.onyx_entity import OnyxEntity
-
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -14,6 +12,8 @@ from homeassistant.const import (
     LIGHT_LUX,
     PERCENTAGE,
 )
+
+from ..sensors.onyx_entity import OnyxEntity
 
 
 class OnyxSensorWeatherHumidity(OnyxEntity, SensorEntity):

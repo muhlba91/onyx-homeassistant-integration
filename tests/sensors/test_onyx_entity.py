@@ -1,8 +1,8 @@
 """Test for the ONYX Entity."""
+import pytest
 
 from unittest.mock import MagicMock
 
-import pytest
 from onyx_client.data.device_mode import DeviceMode
 from onyx_client.device.shutter import Shutter
 from onyx_client.enum.action import Action

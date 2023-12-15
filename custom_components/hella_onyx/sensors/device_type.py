@@ -1,5 +1,5 @@
 """The ONYX device type sensor."""
-from custom_components.hella_onyx.sensors.onyx_entity import OnyxEntity
+from ..sensors.onyx_entity import OnyxEntity
 
 
 class OnyxSensorDeviceType(OnyxEntity):

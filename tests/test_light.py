@@ -1,8 +1,10 @@
 """Test for the ONYX Light Entity."""
+import pytest
+
 from unittest.mock import MagicMock, patch
 
-import pytest
 from homeassistant.config_entries import ConfigEntry
+
 from onyx_client.data.device_mode import DeviceMode
 from onyx_client.device.light import Light
 from onyx_client.device.shutter import Shutter

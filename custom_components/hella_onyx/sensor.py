@@ -1,5 +1,6 @@
 """The ONYX sensors."""
 import logging
+
 from typing import Callable, Optional
 
 from homeassistant.config_entries import ConfigEntry
@@ -10,8 +11,8 @@ from onyx_client.enum.device_type import DeviceType
 
 from . import ONYX_API, ONYX_TIMEZONE
 from .const import DOMAIN
-from custom_components.hella_onyx.sensors.device_type import OnyxSensorDeviceType
-from custom_components.hella_onyx.sensors.weather import (
+from .sensors.device_type import OnyxSensorDeviceType
+from .sensors.weather import (
     OnyxSensorWeatherHumidity,
     OnyxSensorWeatherTemperature,
     OnyxSensorWeatherAirPressure,

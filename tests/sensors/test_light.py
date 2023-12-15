@@ -1,13 +1,15 @@
 """Test for the ONYX Light Entity."""
-from unittest.mock import MagicMock, patch
-
 import pytest
 import time
+
+from unittest.mock import MagicMock, patch
+
 from homeassistant.components.light import (
     ColorMode,
     brightness_supported,
 )
 from homeassistant.core import HomeAssistant
+
 from onyx_client.data.numeric_value import NumericValue
 from onyx_client.data.animation_value import AnimationValue
 from onyx_client.data.animation_keyframe import AnimationKeyframe

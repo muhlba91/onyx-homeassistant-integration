@@ -1,11 +1,11 @@
 """The ONYX entity."""
-
 from homeassistant.core import callback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
 from onyx_client.enum.device_type import DeviceType
 
-from custom_components.hella_onyx.api_connector import APIConnector
-from custom_components.hella_onyx.const import DOMAIN
+from ..api_connector import APIConnector
+from ..const import DOMAIN
 
 
 class OnyxEntity(CoordinatorEntity):

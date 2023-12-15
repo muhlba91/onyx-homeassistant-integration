@@ -1,8 +1,8 @@
 """Test for the ONYX Config Flow."""
+import pytest
 
 from unittest.mock import patch
 
-import pytest
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
     CONF_SCAN_INTERVAL,

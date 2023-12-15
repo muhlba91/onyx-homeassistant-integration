@@ -1,13 +1,7 @@
 """Test for the ONYX Weather Sensors."""
+import pytest
 
 from unittest.mock import MagicMock
-
-import pytest
-from onyx_client.data.device_mode import DeviceMode
-from onyx_client.data.numeric_value import NumericValue
-from onyx_client.device.weather import Weather
-from onyx_client.enum.action import Action
-from onyx_client.enum.device_type import DeviceType
 
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import (
@@ -17,6 +11,12 @@ from homeassistant.const import (
     LIGHT_LUX,
     PERCENTAGE,
 )
+
+from onyx_client.data.device_mode import DeviceMode
+from onyx_client.data.numeric_value import NumericValue
+from onyx_client.device.weather import Weather
+from onyx_client.enum.action import Action
+from onyx_client.enum.device_type import DeviceType
 
 from custom_components.hella_onyx.sensors.weather import (
     OnyxSensorWeatherHumidity,

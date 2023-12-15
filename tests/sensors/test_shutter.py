@@ -1,8 +1,9 @@
 """Test for the ONYX Shutter Entity."""
+import pytest
 import time
+
 from unittest.mock import MagicMock, patch
 
-import pytest
 from homeassistant.components.cover import (
     CoverDeviceClass,
     SUPPORT_CLOSE,
@@ -12,6 +13,7 @@ from homeassistant.components.cover import (
     SUPPORT_STOP,
 )
 from homeassistant.core import HomeAssistant
+
 from onyx_client.data.animation_keyframe import AnimationKeyframe
 from onyx_client.data.animation_value import AnimationValue
 from onyx_client.data.device_mode import DeviceMode

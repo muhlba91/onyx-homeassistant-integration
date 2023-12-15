@@ -1,6 +1,7 @@
 """Config flow for the ONYX integration."""
-import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
+
+import homeassistant.helpers.config_validation as cv
 from homeassistant import config_entries
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
@@ -8,6 +9,7 @@ from homeassistant.const import (
     CONF_FORCE_UPDATE,
 )
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
 from onyx_client.client import create
 
 from .const import CONF_FINGERPRINT, DEFAULT_INTERVAL, DOMAIN
