@@ -3,7 +3,6 @@ import logging
 from datetime import timedelta
 from random import uniform
 
-import async_timeout
 import asyncio
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -23,7 +22,6 @@ class APIConnector(DataUpdateCoordinator):
 
     def __init__(self, hass, scan_interval, fingerprint, token):
         """Initialize the connector."""
-        # TODO: always_update = False?
         super().__init__(
             hass,
             _LOGGER,
@@ -64,7 +62,7 @@ class APIConnector(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
-        async with async_timeout.timeout(10):
+        async with asyncio.timeout(10):
             return await self.update()
 
     async def get_timezone(self):
