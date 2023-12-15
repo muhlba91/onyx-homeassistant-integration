@@ -107,6 +107,9 @@ class APIConnector(DataUpdateCoordinator):
         )
         if not success:
             raise CommandException("ONYX_ACTION_ERROR", uuid)
+    
+    async def _updater(self):
+        self.async_set_updated_data(self.data)
 
     async def events(self, force_update: bool = False):
         """Listen and process device events."""
@@ -122,7 +125,7 @@ class APIConnector(DataUpdateCoordinator):
                     async for device in self._client().events(force_update):
                         self.updated_device(device)
                         asyncio.run_coroutine_threadsafe(
-                            self.async_set_updated_data(self.data),
+                            self._updater(),
                             self.hass.loop,
                         )
             except Exception as ex:
