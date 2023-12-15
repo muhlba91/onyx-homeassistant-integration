@@ -7,10 +7,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import DiscoveryInfoType
 
 from custom_components.hella_onyx import DOMAIN, ONYX_TIMEZONE
-from custom_components.hella_onyx.const import ONYX_API, ONYX_COORDINATOR
+from custom_components.hella_onyx.const import ONYX_API
 from custom_components.hella_onyx.sensors.shutter import OnyxShutter
 
 _LOGGER = logging.getLogger(__name__)
+
+PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
@@ -23,16 +25,13 @@ async def async_setup_entry(
     data = hass.data[DOMAIN][entry.entry_id]
     api = data[ONYX_API]
     timezone = data[ONYX_TIMEZONE]
-    coordinator = data[ONYX_COORDINATOR]
 
     shutters = [
-        OnyxShutter(
-            api, timezone, coordinator, device.name, device.device_type, device_id
-        )
+        OnyxShutter(api, timezone, device.name, device.device_type, device_id)
         for device_id, device in filter(
             lambda item: item[1].device_type is not None
             and item[1].device_type.is_shutter(),
-            api.devices.items(),
+            api.data.items(),
         )
     ]
     _LOGGER.info("adding %s hella_onyx shutter entities", len(shutters))

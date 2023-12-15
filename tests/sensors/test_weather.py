@@ -34,10 +34,6 @@ class TestOnyxSensorWeatherHumidity:
         yield MagicMock()
 
     @pytest.fixture
-    def coordinator(self):
-        yield MagicMock()
-
-    @pytest.fixture
     def hass(self):
         yield MagicMock()
 
@@ -58,9 +54,9 @@ class TestOnyxSensorWeatherHumidity:
         )
 
     @pytest.fixture
-    def entity(self, api, coordinator, hass):
+    def entity(self, api, hass):
         sensor = OnyxSensorWeatherHumidity(
-            api, "UTC", coordinator, "name", DeviceType.WEATHER, "uuid"
+            api, "UTC", "name", DeviceType.WEATHER, "uuid"
         )
         sensor.hass = hass
         yield sensor
@@ -95,10 +91,6 @@ class TestOnyxSensorWeatherTemperature:
         yield MagicMock()
 
     @pytest.fixture
-    def coordinator(self):
-        yield MagicMock()
-
-    @pytest.fixture
     def hass(self):
         yield MagicMock()
 
@@ -119,9 +111,9 @@ class TestOnyxSensorWeatherTemperature:
         )
 
     @pytest.fixture
-    def entity(self, api, coordinator, hass):
+    def entity(self, api, hass):
         sensor = OnyxSensorWeatherTemperature(
-            api, "UTC", coordinator, "name", DeviceType.WEATHER, "uuid"
+            api, "UTC", "name", DeviceType.WEATHER, "uuid"
         )
         sensor.hass = hass
         yield sensor
@@ -159,10 +151,6 @@ class TestOnyxSensorWeatherAirPressure:
         yield MagicMock()
 
     @pytest.fixture
-    def coordinator(self):
-        yield MagicMock()
-
-    @pytest.fixture
     def hass(self):
         yield MagicMock()
 
@@ -183,9 +171,9 @@ class TestOnyxSensorWeatherAirPressure:
         )
 
     @pytest.fixture
-    def entity(self, api, coordinator, hass):
+    def entity(self, api, hass):
         sensor = OnyxSensorWeatherAirPressure(
-            api, "UTC", coordinator, "name", DeviceType.WEATHER, "uuid"
+            api, "UTC", "name", DeviceType.WEATHER, "uuid"
         )
         sensor.hass = hass
         yield sensor
@@ -220,10 +208,6 @@ class TestOnyxSensorWeatherWindPeak:
         yield MagicMock()
 
     @pytest.fixture
-    def coordinator(self):
-        yield MagicMock()
-
-    @pytest.fixture
     def hass(self):
         yield MagicMock()
 
@@ -244,9 +228,9 @@ class TestOnyxSensorWeatherWindPeak:
         )
 
     @pytest.fixture
-    def entity(self, api, coordinator, hass):
+    def entity(self, api, hass):
         sensor = OnyxSensorWeatherWindPeak(
-            api, "UTC", coordinator, "name", DeviceType.WEATHER, "uuid"
+            api, "UTC", "name", DeviceType.WEATHER, "uuid"
         )
         sensor.hass = hass
         yield sensor
@@ -281,10 +265,6 @@ class TestOnyxSensorWeatherSunBrightnessPeak:
         yield MagicMock()
 
     @pytest.fixture
-    def coordinator(self):
-        yield MagicMock()
-
-    @pytest.fixture
     def hass(self):
         yield MagicMock()
 
@@ -305,9 +285,9 @@ class TestOnyxSensorWeatherSunBrightnessPeak:
         )
 
     @pytest.fixture
-    def entity(self, api, coordinator, hass):
+    def entity(self, api, hass):
         sensor = OnyxSensorWeatherSunBrightnessPeak(
-            api, "UTC", coordinator, "name", DeviceType.WEATHER, "uuid"
+            api, "UTC", "name", DeviceType.WEATHER, "uuid"
         )
         sensor.hass = hass
         yield sensor
@@ -342,10 +322,6 @@ class TestOnyxSensorWeatherSunBrightnessSink:
         yield MagicMock()
 
     @pytest.fixture
-    def coordinator(self):
-        yield MagicMock()
-
-    @pytest.fixture
     def hass(self):
         yield MagicMock()
 
@@ -366,9 +342,9 @@ class TestOnyxSensorWeatherSunBrightnessSink:
         )
 
     @pytest.fixture
-    def entity(self, api, coordinator, hass):
+    def entity(self, api, hass):
         sensor = OnyxSensorWeatherSunBrightnessSink(
-            api, "UTC", coordinator, "name", DeviceType.WEATHER, "uuid"
+            api, "UTC", "name", DeviceType.WEATHER, "uuid"
         )
         sensor.hass = hass
         yield sensor

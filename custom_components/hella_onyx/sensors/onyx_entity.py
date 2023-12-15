@@ -1,9 +1,7 @@
 """The ONYX entity."""
 
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
-)
+from homeassistant.core import callback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from onyx_client.enum.device_type import DeviceType
 
 from custom_components.hella_onyx.api_connector import APIConnector
@@ -17,18 +15,21 @@ class OnyxEntity(CoordinatorEntity):
         self,
         api: APIConnector,
         timezone: str,
-        coordinator: DataUpdateCoordinator,
         name: str,
         device_type: DeviceType,
         uuid: str,
     ):
         """Initialize a ONYX entity."""
-        super().__init__(coordinator)
+        super().__init__(api)
         self.api = api
         self.timezone = timezone
         self._name = name
         self._type = device_type
         self._uuid = uuid
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self.async_write_ha_state()
 
     @property
     def icon(self):

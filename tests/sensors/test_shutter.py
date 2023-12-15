@@ -30,28 +30,20 @@ class TestOnyxShutter:
         yield MagicMock()
 
     @pytest.fixture
-    def coordinator(self):
-        yield MagicMock()
-
-    @pytest.fixture
     def hass(self):
         hass = MagicMock(spec=HomeAssistant)
         hass.loop = MagicMock()
         yield hass
 
     @pytest.fixture
-    def entity(self, api, coordinator, hass):
-        shutter = OnyxShutter(
-            api, "UTC", coordinator, "name", DeviceType.RAFFSTORE_90, "uuid"
-        )
+    def entity(self, api, hass):
+        shutter = OnyxShutter(api, "UTC", "name", DeviceType.RAFFSTORE_90, "uuid")
         shutter.hass = hass
         yield shutter
 
     @pytest.fixture
-    def rollershutter_entity(self, api, coordinator):
-        yield OnyxShutter(
-            api, "UTC", coordinator, "name", DeviceType.ROLLERSHUTTER, "uuid"
-        )
+    def rollershutter_entity(self, api):
+        yield OnyxShutter(api, "UTC", "name", DeviceType.ROLLERSHUTTER, "uuid")
 
     @pytest.fixture
     def device(self):
@@ -111,28 +103,7 @@ class TestOnyxShutter:
             value=10, minimum=0, maximum=100, read_only=False, animation=animation
         )
         api.device.return_value = device
-        with patch.object(entity, "_start_moving_device") as mock_start_moving_device:
-            assert entity.current_cover_position == 90
-            mock_start_moving_device.assert_called_with(animation)
-        assert api.device.called
-
-    def test_current_cover_position_with_old_animation(self, api, entity, device):
-        animation = AnimationValue(
-            start=0,
-            current_value=0,
-            keyframes=[
-                AnimationKeyframe(
-                    interpolation="linear", duration=10, delay=0, value=10
-                )
-            ],
-        )
-        device.actual_position = NumericValue(
-            value=10, minimum=0, maximum=100, read_only=False, animation=animation
-        )
-        api.device.return_value = device
-        with patch.object(entity, "_start_moving_device") as mock_start_moving_device:
-            assert entity.current_cover_position == 90
-            mock_start_moving_device.assert_not_called
+        assert entity.current_cover_position == 90
         assert api.device.called
 
     def test_current_cover_tilt_position(self, api, entity, device):
@@ -157,12 +128,10 @@ class TestOnyxShutter:
             value=10, minimum=0, maximum=100, read_only=False, animation=animation
         )
         api.device.return_value = device
-        with patch.object(entity, "_start_moving_device") as mock_start_moving_device:
-            assert entity.current_cover_tilt_position == 11
-            mock_start_moving_device.assert_called_with(animation)
+        assert entity.current_cover_tilt_position == 11
         assert api.device.called
 
-    def test_current_cover_tilt_position_with_old_animation(self, api, entity, device):
+    def test_handle_coordinator_update_position(self, entity, device, api):
         animation = AnimationValue(
             start=0,
             current_value=0,
@@ -172,14 +141,89 @@ class TestOnyxShutter:
                 )
             ],
         )
+        device.actual_position = NumericValue(
+            value=10,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=animation,
+        )
         device.actual_angle = NumericValue(
-            value=10, minimum=0, maximum=100, read_only=False, animation=animation
+            value=10,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=None,
         )
         api.device.return_value = device
-        with patch.object(entity, "_start_moving_device") as mock_start_moving_device:
-            assert entity.current_cover_tilt_position == 11
-            mock_start_moving_device.assert_not_called
-        assert api.device.called
+        with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
+            with patch.object(
+                entity, "_start_moving_device"
+            ) as mock_start_moving_device:
+                entity._handle_coordinator_update()
+                mock_start_moving_device.assert_called_with(animation)
+                assert api.device.called
+                assert mock_async_write_ha_state.called
+
+    def test_handle_coordinator_update_angle(self, entity, device, api):
+        animation = AnimationValue(
+            start=0,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", duration=10, delay=0, value=10
+                )
+            ],
+        )
+        device.actual_position = NumericValue(
+            value=10,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=None,
+        )
+        device.actual_angle = NumericValue(
+            value=10,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=animation,
+        )
+        api.device.return_value = device
+        with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
+            with patch.object(
+                entity, "_start_moving_device"
+            ) as mock_start_moving_device:
+                entity._handle_coordinator_update()
+                mock_start_moving_device.assert_called_with(animation)
+                assert api.device.called
+                assert mock_async_write_ha_state.called
+
+    def test_handle_coordinator_update_no_animation(self, entity, device, api):
+        animation = None
+        device.actual_position = NumericValue(
+            value=10,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=animation,
+        )
+        device.actual_angle = NumericValue(
+            value=10,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=None,
+        )
+        api.device.return_value = device
+        with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
+            with patch.object(
+                entity, "_start_moving_device"
+            ) as mock_start_moving_device:
+                entity._handle_coordinator_update()
+                mock_start_moving_device.assert_not_called
+                assert api.device.called
+                assert mock_async_write_ha_state.called
 
     def test_is_not_opening(self, entity):
         assert not entity.is_opening
@@ -211,6 +255,7 @@ class TestOnyxShutter:
         assert entity.is_closed
         assert api.device.called
 
+    @patch("asyncio.run_coroutine_threadsafe")
     def test_start_moving_device_end(self, entity):
         current_time = time.time()
         animation = AnimationValue(
@@ -226,7 +271,10 @@ class TestOnyxShutter:
             ],
         )
         entity._moving_state = MovingState.CLOSING
-        entity._start_moving_device(animation)
+        # TODO: why does the method not get called?
+        with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            entity._start_moving_device(animation)
+            # assert mock_end_moving_device.called
 
     @patch("asyncio.run_coroutine_threadsafe")
     def test_start_moving_device_within_time(self, entity):
@@ -244,10 +292,13 @@ class TestOnyxShutter:
             ],
         )
         entity._moving_state = MovingState.CLOSING
-        entity._start_moving_device(animation)
+        # TODO: why does the method not get called?
+        with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            entity._start_moving_device(animation)
+            assert not mock_end_moving_device.called
 
     @patch("asyncio.run_coroutine_threadsafe")
-    def test_start_moving_device_still(self, api, entity, device):
+    def test_start_moving_device_still(self, entity):
         current_time = time.time()
         animation = AnimationValue(
             start=current_time - 100,
@@ -262,7 +313,10 @@ class TestOnyxShutter:
             ],
         )
         entity._moving_state = MovingState.STILL
-        entity._start_moving_device(animation)
+        # TODO: why does the method not get called?
+        with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            entity._start_moving_device(animation)
+            assert not mock_end_moving_device.called
 
     @patch("asyncio.run_coroutine_threadsafe")
     def test_open_cover(self, mock_run_coroutine_threadsafe, api, entity, device):

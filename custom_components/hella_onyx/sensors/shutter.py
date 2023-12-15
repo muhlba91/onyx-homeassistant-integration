@@ -6,6 +6,7 @@ from datetime import timedelta
 from math import ceil
 from typing import Any, Optional
 
+from homeassistant.core import callback
 from homeassistant.components.cover import (
     ATTR_POSITION,
     ATTR_TILT_POSITION,
@@ -20,7 +21,6 @@ from homeassistant.components.cover import (
 from homeassistant.helpers.event import (
     track_point_in_utc_time,
 )
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import utcnow
 from onyx_client.data.animation_value import AnimationValue
 from onyx_client.enum.action import Action
@@ -41,14 +41,35 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         self,
         api: APIConnector,
         timezone: str,
-        coordinator: DataUpdateCoordinator,
         name: str,
         device_type: DeviceType,
         uuid: str,
     ):
         """Initialize a shutter entity."""
-        super().__init__(api, timezone, coordinator, name, device_type, uuid)
+        super().__init__(api, timezone, name, device_type, uuid)
         self._moving_state = MovingState.STILL
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        position_animation = self._device.actual_position.animation
+        if position_animation is not None and len(position_animation.keyframes) > 0:
+            _LOGGER.debug(
+                "received position_animation for shutter %s: %s",
+                self._uuid,
+                position_animation,
+            )
+            self._start_moving_device(position_animation)
+
+        angle_animation = self._device.actual_angle.animation
+        if angle_animation is not None and len(angle_animation.keyframes) > 0:
+            _LOGGER.debug(
+                "received angle_animation for shutter %s: %s",
+                self._uuid,
+                angle_animation,
+            )
+            self._start_moving_device(angle_animation)
+
+        super()._handle_coordinator_update()
 
     @property
     def icon(self) -> str:
@@ -98,8 +119,6 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             self._uuid,
             position,
         )
-        if position.animation is not None and len(position.animation.keyframes) > 0:
-            self._start_moving_device(position.animation)
         return 100 - int(position.value / position.maximum * 100)
 
     @property
@@ -114,8 +133,6 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             self._uuid,
             position,
         )
-        if position.animation is not None and len(position.animation.keyframes) > 0:
-            self._start_moving_device(position.animation)
         return int(position.value / self._max_angle * 100)
 
     @property
@@ -241,6 +258,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                 self._end_moving_device,
                 utcnow() + timedelta(seconds=end_time - current_time),
             )
+        else:
+            self._end_moving_device()
 
     def _end_moving_device(self, *args: Any):
         """Call STOP to update the device values on ONYX."""

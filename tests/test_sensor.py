@@ -14,7 +14,6 @@ from onyx_client.enum.device_type import DeviceType
 from custom_components.hella_onyx import (
     DOMAIN,
     ONYX_API,
-    ONYX_COORDINATOR,
     ONYX_TIMEZONE,
 )
 from custom_components.hella_onyx.sensor import async_setup_entry
@@ -25,7 +24,7 @@ from custom_components.hella_onyx.sensor import async_setup_entry
 async def test_async_setup_entry(mock_hass):
     config_entry = ConfigEntry(1, DOMAIN, "entry", {}, "source", "POLL", {})
     api = MagicMock()
-    api.devices = {
+    api.data = {
         "shutter": Shutter(
             "shutter",
             "name",
@@ -60,7 +59,6 @@ async def test_async_setup_entry(mock_hass):
         DOMAIN: {
             config_entry.entry_id: {
                 ONYX_API: api,
-                ONYX_COORDINATOR: None,
                 ONYX_TIMEZONE: "UTC",
             }
         }
@@ -94,7 +92,7 @@ async def test_async_setup_entry(mock_hass):
 async def test_async_setup_entry_filter_all(mock_hass):
     config_entry = ConfigEntry(1, DOMAIN, "entry", {}, "source", "POLL", {})
     api = MagicMock()
-    api.devices = {
+    api.data = {
         "click": Device(
             "click",
             "name",
@@ -108,7 +106,6 @@ async def test_async_setup_entry_filter_all(mock_hass):
         DOMAIN: {
             config_entry.entry_id: {
                 ONYX_API: api,
-                ONYX_COORDINATOR: None,
                 ONYX_TIMEZONE: "UTC",
             }
         }

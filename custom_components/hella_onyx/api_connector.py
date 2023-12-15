@@ -1,25 +1,42 @@
 """API connector for the ONYX integration."""
 import logging
+from datetime import timedelta
+from random import uniform
 
 from aiohttp import ClientSession, ClientTimeout
+import async_timeout
+import asyncio
 
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from onyx_client.client import create
 from onyx_client.data.device_command import DeviceCommand
 from onyx_client.enum.action import Action
 
+from .const import DOMAIN, MAX_BACKOFF_TIME
+
 _LOGGER = logging.getLogger(__name__)
 
 
-class APIConnector:
+class APIConnector(DataUpdateCoordinator):
     """API connector for an ONYX.CENTER."""
 
-    def __init__(self, hass, fingerprint, token):
+    def __init__(self, hass, scan_interval, fingerprint, token):
         """Initialize the connector."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=timedelta(minutes=scan_interval),
+            request_refresh_debouncer=Debouncer(
+                hass, _LOGGER, cooldown=0, immediate=True
+            ),
+        )
         self.hass = hass
         self.fingerprint = fingerprint
         self.token = token
-        self.devices = {}
+        self.data = {}
         self.groups = {}
         self.__client = None
 
@@ -35,6 +52,11 @@ class APIConnector:
             client_session=session,
         )
 
+    async def _async_update_data(self):
+        """Fetch data from API endpoint."""
+        async with async_timeout.timeout(10):
+            return await self.update()
+
     async def get_timezone(self):
         """Gets the ONYX.CENTER timezone."""
         date_information = await self._client().date_information()
@@ -46,26 +68,27 @@ class APIConnector:
     async def update(self):
         """Update all entities."""
         devices = await self._client().devices(include_details=True)
-        self.devices = {device.identifier: device for device in devices}
+        self.data = {device.identifier: device for device in devices}
         groups = await self._client().groups()
         self.groups = {group.identifier: group for group in groups}
 
     def device(self, uuid: str):
         """Get the Device associated with the provided UUID."""
-        if uuid in self.devices:
-            return self.devices[uuid]
+        if uuid in self.data:
+            return self.data[uuid]
         raise UnknownStateException("UNKNOWN_DEVICE")
 
     async def update_device(self, uuid: str):
         """Update the given entity."""
         device = await self._client().device(uuid)
-        self.devices[device.identifier] = device
+        self.data[device.identifier] = device
         return device
 
     def updated_device(self, device):
         """Update the given device."""
-        _LOGGER.debug("Received device update %s (%s)", device.identifier, device)
-        self.devices[device.identifier].update_with(device)
+        _LOGGER.debug("received device update %s (%s)", device.identifier, device)
+        if device.identifier in self.data:
+            self.data[device.identifier].update_with(device)
 
     async def send_device_command_action(self, uuid: str, action: Action):
         _LOGGER.info("executing %s for device %s", action.string(), uuid)
@@ -82,15 +105,30 @@ class APIConnector:
             raise CommandException("ONYX_ACTION_ERROR", uuid)
 
     async def events(self, force_update: bool = False):
-        """Listen for events."""
-        async with ClientSession(
-            timeout=ClientTimeout(
-                total=None, connect=None, sock_connect=None, sock_read=None
-            )
-        ) as session:
-            client = self._new_client(session)
-            async for device in client.events(force_update):
-                yield device
+        """Listen and process device events."""
+        while True:
+            backoff = int(uniform(0, MAX_BACKOFF_TIME) * 60)
+            try:
+                async with ClientSession(
+                    timeout=ClientTimeout(
+                        total=None, connect=None, sock_connect=None, sock_read=None
+                    )
+                ) as session:
+                    client = self._new_client(session)
+                    async for device in client.events(force_update):
+                        self.updated_device(device)
+                        self.async_set_updated_data(self.data)
+            except Exception as ex:
+                _LOGGER.error(
+                    "connection reset: %s, restarting with backoff of %s seconds (%s)",
+                    ex,
+                    backoff,
+                    self._backoff,
+                )
+            if self._backoff:
+                await asyncio.sleep(backoff)
+            else:
+                break
 
 
 class CommandException(Exception):

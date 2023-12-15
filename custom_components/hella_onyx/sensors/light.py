@@ -6,6 +6,7 @@ from datetime import timedelta
 from math import ceil
 from typing import Any
 
+from homeassistant.core import callback
 from homeassistant.components.light import (
     LightEntity,
     ColorMode,
@@ -15,7 +16,6 @@ from homeassistant.components.light import (
 from homeassistant.helpers.event import (
     track_point_in_utc_time,
 )
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import utcnow
 from onyx_client.data.animation_value import AnimationValue
 from onyx_client.enum.action import Action
@@ -39,13 +39,24 @@ class OnyxLight(OnyxEntity, LightEntity):
         self,
         api: APIConnector,
         timezone: str,
-        coordinator: DataUpdateCoordinator,
         name: str,
         device_type: DeviceType,
         uuid: str,
     ):
         """Initialize a light entity."""
-        super().__init__(api, timezone, coordinator, name, device_type, uuid)
+        super().__init__(api, timezone, name, device_type, uuid)
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        animation = self._device.actual_brightness.animation
+        if animation is not None and len(animation.keyframes) > 0:
+            _LOGGER.debug(
+                "received animation for light %s: %s",
+                self._uuid,
+                animation,
+            )
+            self._start_dim_device(animation)
+        super()._handle_coordinator_update()
 
     @property
     def icon(self) -> str:
@@ -90,8 +101,6 @@ class OnyxLight(OnyxEntity, LightEntity):
             self._uuid,
             brightness,
         )
-        if brightness.animation is not None and len(brightness.animation.keyframes) > 0:
-            self._start_dim_device(brightness.animation)
         return brightness.value / brightness.maximum * 255
 
     @property
@@ -174,6 +183,8 @@ class OnyxLight(OnyxEntity, LightEntity):
                 self._end_dim_device,
                 utcnow() + timedelta(seconds=end_time - current_time),
             )
+        else:
+            self._end_dim_device()
 
     def _end_dim_device(self, *args: Any):
         """Call STOP to update the device values on ONYX."""

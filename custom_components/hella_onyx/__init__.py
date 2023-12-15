@@ -1,7 +1,6 @@
 """The ONYX.CENTER integration."""
 import asyncio
 import logging
-from datetime import timedelta
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
@@ -12,19 +11,15 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.debounce import Debouncer
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+
 
 from .api_connector import APIConnector
 from .const import (
     CONF_FINGERPRINT,
     DOMAIN,
     ONYX_API,
-    ONYX_COORDINATOR,
     ONYX_TIMEZONE,
-    ONYX_THREAD,
 )
-from .event_thread import EventThread
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -74,28 +69,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             "and performance impacts. It is advised to not enable this option."
         )
 
-    onyx_api = APIConnector(hass, fingerprint, token)
-    await onyx_api.update()
+    onyx_api = APIConnector(hass, scan_interval, fingerprint, token)
+    await onyx_api.async_config_entry_first_refresh()
     onyx_timezone = await onyx_api.get_timezone()
-
-    coordinator = DataUpdateCoordinator(
-        hass,
-        _LOGGER,
-        name="ONYX",
-        update_method=onyx_api.update,
-        update_interval=timedelta(minutes=scan_interval),
-        request_refresh_debouncer=Debouncer(hass, _LOGGER, cooldown=0, immediate=True),
-    )
-
-    thread = EventThread(onyx_api, coordinator, force_update)
 
     hass.data[DOMAIN][entry.entry_id] = {
         ONYX_API: onyx_api,
         ONYX_TIMEZONE: onyx_timezone,
-        ONYX_COORDINATOR: coordinator,
-        ONYX_THREAD: thread,
     }
-    thread.start()
+    hass.async_create_task(onyx_api.events(force_update))
 
     for platform in PLATFORMS:
         hass.async_create_task(

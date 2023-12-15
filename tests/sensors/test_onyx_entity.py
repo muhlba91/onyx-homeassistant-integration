@@ -18,14 +18,8 @@ class TestOnyxEntity:
         yield MagicMock()
 
     @pytest.fixture
-    def coordinator(self):
-        yield MagicMock()
-
-    @pytest.fixture
-    def entity(self, api, coordinator):
-        yield OnyxEntity(
-            api, "UTC", coordinator, "name", DeviceType.RAFFSTORE_90, "uuid"
-        )
+    def entity(self, api):
+        yield OnyxEntity(api, "UTC", "name", DeviceType.RAFFSTORE_90, "uuid")
 
     def test_icon(self, entity):
         assert entity.icon == "mdi:help"

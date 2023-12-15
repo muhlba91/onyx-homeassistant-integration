@@ -9,7 +9,7 @@ from onyx_client.device.shutter import Shutter
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
-from custom_components.hella_onyx import (
+from custom_components.hella_onyx.event_thread import (
     EventThread,
 )
 from custom_components.hella_onyx.api_connector import (

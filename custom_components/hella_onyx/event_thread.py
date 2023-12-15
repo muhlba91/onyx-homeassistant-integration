@@ -12,6 +12,8 @@ from .const import MAX_BACKOFF_TIME
 _LOGGER = logging.getLogger(__name__)
 
 
+# TODO: could we use hass.async_create_task(async_say_hello(hass, target)) instead of a thread?
+# https://developers.home-assistant.io/docs/integration_fetching_data
 class EventThread(threading.Thread):
     """The event thread for asynchronous updates."""
 
@@ -35,7 +37,9 @@ class EventThread(threading.Thread):
             try:
                 async for device in self._api.events(self._force_update):
                     self._api.updated_device(device)
-                    self._coordinator.async_set_updated_data(None)
+                    # TODO: do we need this? it cancels our regular refresh interval. is it not enough to call all listeners?
+                    # self._coordinator.async_update_listeners()
+                    self._coordinator.async_set_updated_data(self._coordinator.data)
             except Exception as ex:
                 _LOGGER.error(
                     "connection reset: %s, restarting with backoff of %s seconds (%s)",

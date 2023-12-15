@@ -17,10 +17,6 @@ class TestOnyxSensorDeviceType:
         yield MagicMock()
 
     @pytest.fixture
-    def coordinator(self):
-        yield MagicMock()
-
-    @pytest.fixture
     def device(self):
         yield Shutter(
             "id",
@@ -31,10 +27,8 @@ class TestOnyxSensorDeviceType:
         )
 
     @pytest.fixture
-    def entity(self, api, coordinator):
-        yield OnyxSensorDeviceType(
-            api, "UTC", coordinator, "name", DeviceType.RAFFSTORE_90, "uuid"
-        )
+    def entity(self, api):
+        yield OnyxSensorDeviceType(api, "UTC", "name", DeviceType.RAFFSTORE_90, "uuid")
 
     def test_icon(self, entity):
         assert entity.icon == "mdi:cellphone-link"

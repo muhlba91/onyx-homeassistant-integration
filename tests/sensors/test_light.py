@@ -24,28 +24,20 @@ class TestOnyxLight:
         yield MagicMock()
 
     @pytest.fixture
-    def coordinator(self):
-        yield MagicMock()
-
-    @pytest.fixture
     def hass(self):
         hass = MagicMock(spec=HomeAssistant)
         hass.loop = MagicMock()
         yield hass
 
     @pytest.fixture
-    def entity(self, api, coordinator, hass):
-        shutter = OnyxLight(
-            api, "UTC", coordinator, "name", DeviceType.BASIC_LIGHT, "uuid"
-        )
+    def entity(self, api, hass):
+        shutter = OnyxLight(api, "UTC", "name", DeviceType.BASIC_LIGHT, "uuid")
         shutter.hass = hass
         yield shutter
 
     @pytest.fixture
-    def dimmable_entity(self, api, coordinator):
-        yield OnyxLight(
-            api, "UTC", coordinator, "name", DeviceType.DIMMABLE_LIGHT, "uuid"
-        )
+    def dimmable_entity(self, api):
+        yield OnyxLight(api, "UTC", "name", DeviceType.DIMMABLE_LIGHT, "uuid")
 
     @pytest.fixture
     def device(self):
@@ -113,33 +105,7 @@ class TestOnyxLight:
             animation=animation,
         )
         api.device.return_value = device
-        with patch.object(entity, "_start_dim_device") as mock_start_dim_device:
-            assert entity.brightness == 25.5
-            mock_start_dim_device.assert_called_with(animation)
-            assert api.device.called
-
-    def test_brightness_with_old_animation(self, api, entity, device):
-        animation = AnimationValue(
-            start=0,
-            current_value=0,
-            keyframes=[
-                AnimationKeyframe(
-                    interpolation="linear", duration=10, delay=0, value=10
-                )
-            ],
-        )
-        device.actual_brightness = NumericValue(
-            value=10,
-            minimum=0,
-            maximum=100,
-            read_only=False,
-            animation=animation,
-        )
-        api.device.return_value = device
-        with patch.object(entity, "_start_dim_device") as mock_start_dim_device:
-            assert entity.brightness == 25.5
-            mock_start_dim_device.assert_not_called
-            assert api.device.called
+        assert entity.brightness == 25.5
 
     def test_is_on(self, api, entity, device):
         device.actual_brightness = NumericValue(
@@ -264,6 +230,48 @@ class TestOnyxLight:
         assert entity._get_dim_duration(0) == 6000
         assert api.device.called
 
+    def test_handle_coordinator_update(self, entity, device, api):
+        animation = AnimationValue(
+            start=0,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", duration=10, delay=0, value=10
+                )
+            ],
+        )
+        device.actual_brightness = NumericValue(
+            value=10,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=animation,
+        )
+        api.device.return_value = device
+        with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
+            with patch.object(entity, "_start_dim_device") as mock_start_dim_device:
+                entity._handle_coordinator_update()
+                mock_start_dim_device.assert_called_with(animation)
+                assert api.device.called
+                assert mock_async_write_ha_state.called
+
+    def test_handle_coordinator_update_no_animation(self, entity, device, api):
+        animation = None
+        device.actual_brightness = NumericValue(
+            value=10,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=animation,
+        )
+        api.device.return_value = device
+        with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
+            with patch.object(entity, "_start_dim_device") as mock_start_dim_device:
+                entity._handle_coordinator_update()
+                mock_start_dim_device.assert_not_called
+                assert api.device.called
+                assert mock_async_write_ha_state.called
+
     @patch("asyncio.run_coroutine_threadsafe")
     def test_start_dim_device_within_time(self, entity):
         current_time = time.time()
@@ -280,7 +288,9 @@ class TestOnyxLight:
             ],
         )
         # TODO: why does the method not get called?
-        entity._start_dim_device(animation)
+        with patch.object(entity, "_end_dim_device") as mock_end_dim_device:
+            entity._start_dim_device(animation)
+            # assert not mock_end_dim_device.called
 
     @patch("asyncio.run_coroutine_threadsafe")
     def test_start_dim_device_end(self, entity):
@@ -298,7 +308,9 @@ class TestOnyxLight:
             ],
         )
         # TODO: why does the method not get called?
-        entity._start_dim_device(animation)
+        with patch.object(entity, "_end_dim_device") as mock_end_dim_device:
+            entity._start_dim_device(animation)
+            # assert mock_end_dim_device.called
 
     @patch("asyncio.run_coroutine_threadsafe")
     def test_end_dim_device(self, mock_run_coroutine_threadsafe, api, entity, device):
