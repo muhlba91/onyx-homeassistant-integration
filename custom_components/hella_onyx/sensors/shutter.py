@@ -269,6 +269,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
     def _end_moving_device(self, *args: Any):
         """Call STOP to update the device values on ONYX."""
+        # TODO:
+        _LOGGER.info("ending moving device %s", self._uuid)
         position_animation = self._device.actual_position.animation
         position_keyframe = (
             position_animation.keyframes[len(position_animation.keyframes) - 1]
