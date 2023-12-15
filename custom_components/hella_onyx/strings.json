@@ -23,7 +23,7 @@
   },
   "options": {
     "step": {
-      "user": {
+      "init": {
         "data": {
           "min_dim_duration": "[%key:common::config_flow::data::min_dim_duration%]",
           "max_dim_duration": "[%key:common::config_flow::data::max_dim_duration%]",
