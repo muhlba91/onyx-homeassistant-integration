@@ -51,7 +51,7 @@ async def async_setup_entry(
                 or item[1].device_type.is_light()
                 or item[1].device_type == DeviceType.WEATHER
             ),
-            api.data.items(),
+            api.devices.items(),
         )
     ]
     # all weather stations
@@ -77,7 +77,7 @@ async def async_setup_entry(
             ),
         ]
         for device_id, device in filter(
-            lambda item: item[1].device_type == DeviceType.WEATHER, api.data.items()
+            lambda item: item[1].device_type == DeviceType.WEATHER, api.devices.items()
         )
     ]
     sensors = [item for sublist in sensors for item in sublist]

@@ -19,7 +19,6 @@ from homeassistant.components.cover import (
     SUPPORT_STOP,
 )
 from homeassistant.helpers.event import (
-    track_point_in_utc_time,
     async_track_point_in_utc_time,
 )
 from homeassistant.util import utcnow
@@ -52,12 +51,9 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        # TODO:
-        _LOGGER.info("handling coordinator update")
         position_animation = self._device.actual_position.animation
         if position_animation is not None and len(position_animation.keyframes) > 0:
-            # TODO:
-            _LOGGER.info(
+            _LOGGER.debug(
                 "received position_animation for shutter %s: %s",
                 self._uuid,
                 position_animation,
@@ -66,8 +62,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
         angle_animation = self._device.actual_angle.animation
         if angle_animation is not None and len(angle_animation.keyframes) > 0:
-            # TODO:
-            _LOGGER.info(
+            _LOGGER.debug(
                 "received angle_animation for shutter %s: %s",
                 self._uuid,
                 angle_animation,
@@ -235,8 +230,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
     def _start_moving_device(self, animation: AnimationValue):
         """Start the update loop."""
         if self._moving_state == MovingState.STILL:
-            # TODO:
-            _LOGGER.info("not moving still device %s", self._uuid)
+            _LOGGER.debug("not moving still device %s", self._uuid)
             return
 
         keyframe = animation.keyframes[len(animation.keyframes) - 1]
@@ -250,8 +244,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         )
         is_moving = current_time < end_time
 
-        # TODO:
-        _LOGGER.info(
+        _LOGGER.debug(
             "moving device %s with current_time %s < end_time %s: %s",
             self._uuid,
             current_time,
@@ -270,8 +263,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
     def _end_moving_device(self, *args: Any):
         """Call STOP to update the device values on ONYX."""
-        # TODO:
-        _LOGGER.info("ending moving device %s", self._uuid)
+        _LOGGER.debug("ending moving device %s", self._uuid)
+
         position_animation = self._device.actual_position.animation
         position_keyframe = (
             position_animation.keyframes[len(position_animation.keyframes) - 1]
@@ -332,8 +325,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                     update = ceil(
                         position_animation.current_value + delta_per_unit * delta
                     )
-                    # TODO:
-                    _LOGGER.info(
+                    _LOGGER.debug(
                         "interpolating actual_position update for device %s: %d",
                         self._uuid,
                         update,
@@ -347,8 +339,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                     update = ceil(
                         angle_animation.current_value + delta_per_unit * delta
                     )
-                    # TODO:
-                    _LOGGER.info(
+                    _LOGGER.debug(
                         "interpolating actual_angle update for device %s: %d",
                         self._uuid,
                         update,

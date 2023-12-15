@@ -21,7 +21,7 @@ from custom_components.hella_onyx.light import async_setup_entry
 async def test_async_setup_entry(mock_hass):
     config_entry = ConfigEntry(1, DOMAIN, "entry", {}, "source", "POLL", {})
     api = MagicMock()
-    api.data = {
+    api.devices = {
         "shutter": Shutter(
             "shutter",
             "name",
@@ -66,13 +66,15 @@ async def test_async_setup_entry_filter_all(mock_hass):
     config_entry = ConfigEntry(1, DOMAIN, "entry", {}, "source", "POLL", {})
     api = MagicMock()
     api.data = {
-        "shutter": Shutter(
-            "shutter",
-            "name",
-            DeviceType.RAFFSTORE_90,
-            DeviceMode(DeviceType.RAFFSTORE_90),
-            list(),
-        )
+        "devices": {
+            "shutter": Shutter(
+                "shutter",
+                "name",
+                DeviceType.RAFFSTORE_90,
+                DeviceMode(DeviceType.RAFFSTORE_90),
+                list(),
+            )
+        }
     }
     async_add_entries = AsyncAddEntries()
     mock_hass.data = {

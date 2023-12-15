@@ -31,9 +31,9 @@ class TestOnyxLight:
 
     @pytest.fixture
     def entity(self, api, hass):
-        shutter = OnyxLight(api, "UTC", "name", DeviceType.BASIC_LIGHT, "uuid")
-        shutter.hass = hass
-        yield shutter
+        light = OnyxLight(api, "UTC", "name", DeviceType.BASIC_LIGHT, "uuid")
+        light.hass = hass
+        yield light
 
     @pytest.fixture
     def dimmable_entity(self, api):
@@ -272,7 +272,6 @@ class TestOnyxLight:
                 assert api.device.called
                 assert mock_async_write_ha_state.called
 
-    @patch("asyncio.run_coroutine_threadsafe")
     def test_start_dim_device_within_time(self, entity):
         current_time = time.time()
         animation = AnimationValue(
@@ -287,12 +286,10 @@ class TestOnyxLight:
                 )
             ],
         )
-        # TODO: why does the method not get called?
         with patch.object(entity, "_end_dim_device") as mock_end_dim_device:
             entity._start_dim_device(animation)
-            # assert not mock_end_dim_device.called
+            assert not mock_end_dim_device.called
 
-    @patch("asyncio.run_coroutine_threadsafe")
     def test_start_dim_device_end(self, entity):
         current_time = time.time()
         animation = AnimationValue(
@@ -307,10 +304,9 @@ class TestOnyxLight:
                 )
             ],
         )
-        # TODO: why does the method not get called?
         with patch.object(entity, "_end_dim_device") as mock_end_dim_device:
             entity._start_dim_device(animation)
-            # assert mock_end_dim_device.called
+            assert mock_end_dim_device.called
 
     @patch("asyncio.run_coroutine_threadsafe")
     def test_end_dim_device(self, mock_run_coroutine_threadsafe, api, entity, device):

@@ -14,7 +14,7 @@ from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
 )
 from homeassistant.helpers.event import (
-    track_point_in_utc_time,
+    async_track_point_in_utc_time,
 )
 from homeassistant.util import utcnow
 from onyx_client.data.animation_value import AnimationValue
@@ -178,7 +178,7 @@ class OnyxLight(OnyxEntity, LightEntity):
         )
 
         if is_dimming:
-            track_point_in_utc_time(
+            async_track_point_in_utc_time(
                 self.hass,
                 self._end_dim_device,
                 utcnow() + timedelta(seconds=end_time - current_time),
@@ -188,6 +188,8 @@ class OnyxLight(OnyxEntity, LightEntity):
 
     def _end_dim_device(self, *args: Any):
         """Call STOP to update the device values on ONYX."""
+        _LOGGER.debug("ending dimming device %s", self._uuid)
+
         animation = self._actual_brightness.animation
         keyframe = (
             animation.keyframes[len(animation.keyframes) - 1]
@@ -231,6 +233,7 @@ class OnyxLight(OnyxEntity, LightEntity):
                 update,
             )
             self._device.actual_brightness.value = update
+
             self.async_write_ha_state()
 
     @property

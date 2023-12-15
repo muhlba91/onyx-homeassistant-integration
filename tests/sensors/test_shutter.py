@@ -255,7 +255,6 @@ class TestOnyxShutter:
         assert entity.is_closed
         assert api.device.called
 
-    @patch("asyncio.run_coroutine_threadsafe")
     def test_start_moving_device_end(self, entity):
         current_time = time.time()
         animation = AnimationValue(
@@ -271,12 +270,10 @@ class TestOnyxShutter:
             ],
         )
         entity._moving_state = MovingState.CLOSING
-        # TODO: why does the method not get called?
         with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
             entity._start_moving_device(animation)
-            # assert mock_end_moving_device.called
+            assert mock_end_moving_device.called
 
-    @patch("asyncio.run_coroutine_threadsafe")
     def test_start_moving_device_within_time(self, entity):
         current_time = time.time()
         animation = AnimationValue(
@@ -292,12 +289,10 @@ class TestOnyxShutter:
             ],
         )
         entity._moving_state = MovingState.CLOSING
-        # TODO: why does the method not get called?
         with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
             entity._start_moving_device(animation)
             assert not mock_end_moving_device.called
 
-    @patch("asyncio.run_coroutine_threadsafe")
     def test_start_moving_device_still(self, entity):
         current_time = time.time()
         animation = AnimationValue(
@@ -313,7 +308,6 @@ class TestOnyxShutter:
             ],
         )
         entity._moving_state = MovingState.STILL
-        # TODO: why does the method not get called?
         with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
             entity._start_moving_device(animation)
             assert not mock_end_moving_device.called
