@@ -119,7 +119,7 @@ class APIConnector(DataUpdateCoordinator):
                     )
                 ) as session:
                     client = self._new_client(session)
-                    async for device in self._client.events(force_update):
+                    async for device in self._client().events(force_update):
                         self.updated_device(device)
                         self.async_set_updated_data(self.data)
             except Exception as ex:
