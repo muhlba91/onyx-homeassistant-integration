@@ -121,7 +121,10 @@ class APIConnector(DataUpdateCoordinator):
                     client = self._new_client(session)
                     async for device in self._client().events(force_update):
                         self.updated_device(device)
-                        self.async_set_updated_data(self.data)
+                        asyncio.run_coroutine_threadsafe(
+                            self.async_set_updated_data(self.data),
+                            self.hass.loop,
+                        )
             except Exception as ex:
                 _LOGGER.error(
                     "connection reset: %s, restarting with backoff of %s seconds (%s)",
