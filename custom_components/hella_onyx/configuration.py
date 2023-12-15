@@ -20,3 +20,6 @@ class Configuration:
         self.force_update = force_update
         self.fingerprint = fingerprint
         self.token = token
+
+    def __str__(self) -> str:
+        return f"Configuration(scan_interval={self.scan_interval}, min_dim_duration={self.min_dim_duration}, max_dim_duration={self.max_dim_duration}, force_update={self.force_update}, fingerprint={self.fingerprint})"
