@@ -2,7 +2,14 @@
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant import config_entries
+from homeassistant.core import callback
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    OptionsFlow,
+    FlowResult,
+    CONN_CLASS_LOCAL_POLL,
+)
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
     CONF_SCAN_INTERVAL,
@@ -38,11 +45,11 @@ AUTH_SCHEMA = vol.Schema(
 )
 
 
-class OnyxFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for ONYX."""
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
+    CONNECTION_CLASS = CONN_CLASS_LOCAL_POLL
 
     async def async_step_user(self, user_input=None):
         """Handle a flow initiated by the user."""
@@ -88,6 +95,14 @@ class OnyxFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> "OptionsFlowHandler":
+        """Get the options flow for this handler."""
+        return OptionsFlowHandler(config_entry)
+
     async def _async_exists(self, fingerprint):
         """Check if the endpoint exists already."""
         existing_fingerprints = [
@@ -103,3 +118,44 @@ class OnyxFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             access_token=token,
             client_session=async_get_clientsession(self.hass, False),
         ).verify()
+
+
+class OptionsFlowHandler(OptionsFlow):
+    """Handle a option flow for ONYX."""
+
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None) -> FlowResult:
+        """Handle options flow."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        data_schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_MIN_DIM_DURATION,
+                    default=self.config_entry.options.get(
+                        CONF_MIN_DIM_DURATION, DEFAULT_MIN_DIM_DURATION
+                    ),
+                ): cv.positive_int,
+                vol.Required(
+                    CONF_MAX_DIM_DURATION,
+                    default=self.config_entry.options.get(
+                        CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION
+                    ),
+                ): cv.positive_int,
+                vol.Required(
+                    CONF_SCAN_INTERVAL,
+                    default=self.config_entry.options.get(
+                        CONF_SCAN_INTERVAL, DEFAULT_INTERVAL
+                    ),
+                ): cv.positive_int,
+                vol.Required(
+                    CONF_FORCE_UPDATE,
+                    default=self.config_entry.options.get(CONF_FORCE_UPDATE, False),
+                ): cv.boolean,
+            }
+        )
+        return self.async_show_form(step_id="init", data_schema=data_schema)

@@ -6,6 +6,8 @@
         "data": {
           "fingerprint": "[%key:common::config_flow::data::fingerprint%]",
           "token": "[%key:common::config_flow::data::token%]",
+          "min_dim_duration": "[%key:common::config_flow::data::min_dim_duration%]",
+          "max_dim_duration": "[%key:common::config_flow::data::max_dim_duration%]",
           "scan_interval": "[%key:common::config_flow::data::scan_interval%]",
           "force_update": "[%key:common::config_flow::data::force_update%]"
         }

@@ -173,7 +173,7 @@ class TestOnyxLight:
             "uuid",
             {
                 "target_brightness": 4,
-                "dim_duration": 5780,
+                "dim_duration": 4810,
             },
         )
         assert mock_run_coroutine_threadsafe.called
@@ -216,7 +216,7 @@ class TestOnyxLight:
             value=14645, maximum=65535, minimum=0, read_only=False
         )
         api.device.return_value = device
-        assert entity._get_dim_duration(31) == 1726
+        assert entity._get_dim_duration(31) == 1309
         assert api.device.called
 
     def test__get_dim_duration_custom_max(self, api, entity, device):
@@ -225,7 +225,7 @@ class TestOnyxLight:
         )
         api.config.max_dim_duration = 2000
         api.device.return_value = device
-        assert entity._get_dim_duration(31) == 834
+        assert entity._get_dim_duration(31) == 640
         assert api.device.called
 
     def test__get_dim_duration_custom_min(self, api, entity, device):
@@ -234,7 +234,7 @@ class TestOnyxLight:
         )
         api.config.min_dim_duration = 2000
         api.device.return_value = device
-        assert entity._get_dim_duration(31) == 2891
+        assert entity._get_dim_duration(31) == 2668
         assert api.device.called
 
     def test__get_dim_duration_same(self, api, entity, device):
@@ -250,7 +250,7 @@ class TestOnyxLight:
             value=None, maximum=100, minimum=0, read_only=False
         )
         api.device.return_value = device
-        assert entity._get_dim_duration(90) == 5450
+        assert entity._get_dim_duration(90) == 4525
         assert api.device.called
 
     def test__get_dim_duration_actual_lower_than_new(self, api, entity, device):
