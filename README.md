@@ -10,6 +10,7 @@
 This component creates an integration that provides the following entities to control [Hella's ONYX.CENTER](https://www.hella.info/) via Home Assistant:
 
 - **raffstore/shutter** entities
+- **(dimmable) light** entities
 - **weather station** sensor entities
 
 ---
@@ -21,11 +22,12 @@ interpretation of values diverges in a few aspects.
 
 Therefore, a few limitations are imposed on/by this integration:
 
-| Limitation                               | Description                                                                                                                                         | Bound By               |
-|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|------------------------|
-| Fingerprint, Access Token Authentication | The API requires the ONYX.CENTER fingerprint and an access token. Basically, those can be retrieved programmatically, which is not implemented yet. | Personal Needs         |
-| Shutter Position                         | Home Assistant takes the position 0 as closed and 100 as open, Hella the opposite.                                                                  | Home Assistant         |
-| Tilt Position                            | Home Assistant takes the position 0 as closed and 100 as open, Hella's values range between 0-90 and 0-180.                                         | Home Assistant / Hella |
+| Limitation | Description| Bound By |
+|------------|------------|----------|
+| Fingerprint, Access Token Authentication | The API requires the ONYX.CENTER fingerprint and an access token. Basically, those can be retrieved programmatically, which is not implemented yet. | Personal Needs |
+| Shutter Position | Home Assistant takes the position 0 as closed and 100 as open, Hella the opposite. | Home Assistant |
+| Tilt Position | Home Assistant takes the position 0 as closed and 100 as open, Hella's values range between 0-90 and 0-180. | Home Assistant / Hella |
+| Light Brightness | Home Assistant takes the dim value 0 as off and 100 as on, Hella's values range between 0-65535. | Home Assistant / Hella |
 
 ### Realtime Updates / Streaming API
 
@@ -59,18 +61,18 @@ I recommend installation through [HACS](https://hacs.xyz/):
 The integration offers the following possibilities:
 
 - `main`: the latest stable release
-- `next`: the next, cutting-edge release (**attention**: may be unstable)
 - `v*`: releases following semantic versioning - if you need to pin the version, choose one of those
 
 ## Configuration
 
 Add it from the **Integrations menu**, set the configuration, and you're good to go.
 
-| Configuration Key        | Description                                                                                                                                                                                                                     |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Fingerprint              | Your ONYX.CENTER fingerprint (see below).                                                                                                                                                                                       |
-| Access Token             | The access token (see below).                                                                                                                                                                                                   |
-| Scan Interval            | Interval for polling for updates. This is used as a fallback if near realtime updates are failing and can be set to a higher value.                                                                                             |
+| Configuration Key | Description |
+|-------------------|-------------|
+| Fingerprint | Your ONYX.CENTER fingerprint (see below). |
+| Access Token | The access token (see below). |
+| Scan Interval | Interval for polling for updates. This is used as a fallback if near realtime updates are failing and can be set to a higher value. |
+| \[Lights] Minimum Dim Duration | The minimum dim duration to use when dimming a light. (Default: 200) |
 | Disable partial updates? | The integration relies on the streaming API. Hence, only partial device data will be retrieved. Enable this option to always retrieve the full device data. *Attention*: this may lead to more API requests and is discouraged. |
 
 **Important!** Please read **[ONYX.CENTER API's Access Control](https://github.com/hella-info/onyx_api#access-control)**
@@ -78,10 +80,10 @@ on how to retrieve the **fingerprint** and **access token**.
 
 Once configured, the integration **creates entities** for:
 
-| Entity               | Description                                                                                                      |
-|----------------------|------------------------------------------------------------------------------------------------------------------|
-| Cover                | Manage the shutter. ([API Reference](https://developers.home-assistant.io/docs/core/entity/cover/))              |
-| Light                | Manage the (dimmable) light. ([API Reference](https://developers.home-assistant.io/docs/core/entity/light/))              |
+| Entity | Description |
+|--------|-------------|
+| Cover | Manage the shutter. ([API Reference](https://developers.home-assistant.io/docs/core/entity/cover/)) |
+| Light | Manage the (dimmable) light. ([API Reference](https://developers.home-assistant.io/docs/core/entity/light/)) |
 | Sensor (Device Type) | The device type of the ONYX device. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Humidity) | The humidity of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Temperature) | The temperature of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
@@ -90,10 +92,10 @@ Once configured, the integration **creates entities** for:
 | Sensor (Weather Sun Brightness Peak) | The sun brightness peak of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Sun Brightness Sink) | The sun brightness sink of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 
-The **following ONYX devices** are **untested** due to the lack of a testing device:
+The **following ONYX devices** are **only community tested** due to the lack of a testing device:
 
-- Light
-- Weather Station
+- Light (thank you @clostermannshof)
+- Weather Station (thank you @mrogin-technic)
 
 ---
 
