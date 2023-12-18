@@ -49,6 +49,8 @@ This integration uses API `v3`.
 >
 > The issue is tracked here: <https://github.com/muhlba91/onyx-homeassistant-integration/issues/30>.
 
+---
+
 ## Installation
 
 I recommend installation through [HACS](https://hacs.xyz/):
@@ -75,10 +77,15 @@ Add it from the **Integrations menu**, set the configuration, and you're good to
 | \[Lights] Minimum Dim Duration | The minimum dim duration to use when dimming a light. (Default: 200) |
 | Disable partial updates? | The integration relies on the streaming API. Hence, only partial device data will be retrieved. Enable this option to always retrieve the full device data. *Attention*: this may lead to more API requests and is discouraged. |
 
-**Important!** Please read **[ONYX.CENTER API's Access Control](https://github.com/hella-info/onyx_api#access-control)**
-on how to retrieve the **fingerprint** and **access token**.
+> [!WARNING]
+> Currently, the integration does not support automated retrieval of the **axcess token** and the **fingerprint**.
+> Please read [ONYX.CENTER API's Access Control](https://github.com/hella-info/onyx_api#access-control) on how to retrieve them manually.
+>
+> The feature is tracked here: <https://github.com/muhlba91/onyx-homeassistant-integration/issues/6>.
 
-Once configured, the integration **creates entities** for:
+## Entities
+
+Once configured, the integration creates entities for:
 
 | Entity | Description |
 |--------|-------------|
