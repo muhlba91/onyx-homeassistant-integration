@@ -142,8 +142,12 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
         }
         new_options = {
             CONF_SCAN_INTERVAL: old_data.get(CONF_SCAN_INTERVAL, DEFAULT_INTERVAL),
-            CONF_MIN_DIM_DURATION: old_data.get(CONF_MIN_DIM_DURATION, DEFAULT_MIN_DIM_DURATION),
-            CONF_MAX_DIM_DURATION: old_data.get(CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION),
+            CONF_MIN_DIM_DURATION: old_data.get(
+                CONF_MIN_DIM_DURATION, DEFAULT_MIN_DIM_DURATION
+            ),
+            CONF_MAX_DIM_DURATION: old_data.get(
+                CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION
+            ),
             CONF_FORCE_UPDATE: old_data.get(CONF_FORCE_UPDATE, False),
         }
         config_entry.data = new_data

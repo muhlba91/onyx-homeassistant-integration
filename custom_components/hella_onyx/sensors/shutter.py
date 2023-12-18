@@ -53,7 +53,6 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        _LOGGER.info(self.api.config)
         position_animation = self._device.actual_position.animation
         if position_animation is not None and len(position_animation.keyframes) > 0:
             _LOGGER.debug(
