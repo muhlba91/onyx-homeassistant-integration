@@ -12,10 +12,10 @@
         "data": {
           "fingerprint": "Fingerprint",
           "token": "Access Token",
-          "min_dim_duration": "[Lights] Minimum Dim Duration",
-          "max_dim_duration": "[Lights] Maximum Dim Duration",
+          "min_dim_duration": "[Lights] Minimum Dim Duration (>= 0)",
+          "max_dim_duration": "[Lights] Maximum Dim Duration (<= 65535)",
           "scan_interval": "Scan Interval in Minutes",
-          "force_update": "Disable partial updates?"
+          "force_update": "[Advanced] Disable partial updates?"
         }
       }
     }
@@ -24,10 +24,10 @@
     "step": {
       "init": {
         "data": {
-          "min_dim_duration": "[Lights] Minimum Dim Duration",
-          "max_dim_duration": "[Lights] Maximum Dim Duration",
+          "min_dim_duration": "[Lights] Minimum Dim Duration (>= 0)",
+          "max_dim_duration": "[Lights] Maximum Dim Duration (<= 65535)",
           "scan_interval": "Scan Interval in Minutes",
-          "force_update": "Disable partial updates?"
+          "force_update": "[Advanced] Disable partial updates?"
         }
       }
     }

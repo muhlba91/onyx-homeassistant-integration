@@ -94,8 +94,8 @@ Once configured, the integration **creates entities** for:
 
 The **following ONYX devices** are **only community tested** due to the lack of a testing device:
 
-- Light (thank you @clostermannshof)
-- Weather Station (thank you @mrogin-technic)
+- Light (thank you [@clostermannshof](https://github.com/clostermannshof))
+- Weather Station (thank you [@mrogin-technic](https://github.com/mrogin-technic))
 
 ---
 

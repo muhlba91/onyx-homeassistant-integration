@@ -25,6 +25,8 @@ from .const import (
     CONF_MAX_DIM_DURATION,
     DEFAULT_MIN_DIM_DURATION,
     DEFAULT_MAX_DIM_DURATION,
+    MIN_DIM_DURATION,
+    MAX_DIM_DURATION,
     DEFAULT_INTERVAL,
     DOMAIN,
 )
@@ -65,8 +67,8 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
             fingerprint = user_input[CONF_FINGERPRINT]
             token = user_input[CONF_ACCESS_TOKEN]
             scan_interval = user_input[CONF_SCAN_INTERVAL]
-            min_dim_duration = user_input[CONF_MIN_DIM_DURATION]
-            max_dim_duration = user_input[CONF_MAX_DIM_DURATION]
+            min_dim_duration = max(MIN_DIM_DURATION, user_input[CONF_MIN_DIM_DURATION])
+            max_dim_duration = min(MAX_DIM_DURATION, user_input[CONF_MAX_DIM_DURATION])
             force_update = user_input[CONF_FORCE_UPDATE]
 
             if await self._async_exists(fingerprint):
