@@ -1,6 +1,87 @@
 # Changelog
 
 
+## [8.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v7.0.0...v8.0.0) (2023-12-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* uses the client event loop for event updates
+
+### Features
+
+* add configuration for dim durations ([961cc74](https://github.com/muhlba91/onyx-homeassistant-integration/commit/961cc74a4f52c736829d37b3ec4d4ba71a2420c5))
+* add options config flow ([e37ae4d](https://github.com/muhlba91/onyx-homeassistant-integration/commit/e37ae4dd56452afc9322c47a947c0d262fce0d85))
+* add support for lights ([8839c3c](https://github.com/muhlba91/onyx-homeassistant-integration/commit/8839c3cc1efe35ddf13b77a931cbc9460161faf0))
+* ignore devices without device type; update client to 8.1.0 ([a805145](https://github.com/muhlba91/onyx-homeassistant-integration/commit/a8051456028962dc8980c757eb14c0af4ab6a227))
+* replace event thread with coordinator and background task ([fe3f7ea](https://github.com/muhlba91/onyx-homeassistant-integration/commit/fe3f7eab846f1ac521992c82500d9332ffc431a5))
+* replace linters with ruff ([cd58021](https://github.com/muhlba91/onyx-homeassistant-integration/commit/cd5802153a21b48b725b4f869f67525976f622d7))
+
+
+### Bug Fixes
+
+* add __str__ for configuration and add debug log ([4659ee3](https://github.com/muhlba91/onyx-homeassistant-integration/commit/4659ee3a097d4b52db880bfaaa1fbcb843fbf2e4))
+* add entry migration ([5720bcd](https://github.com/muhlba91/onyx-homeassistant-integration/commit/5720bcdbeff8a8e26e6121f1e35e3d8b9d86e1c3))
+* add entry migration ([f4402c5](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f4402c50f5bd27bc9d80bb7fc668b2aa7831f7d2))
+* add light device sensor ([3b88d64](https://github.com/muhlba91/onyx-homeassistant-integration/commit/3b88d64e545956bff8dfffb40bf4f38454f87cd4))
+* add light platform ([d835172](https://github.com/muhlba91/onyx-homeassistant-integration/commit/d8351720e10ac19aa5530bc5791917d724fc9344))
+* add tests for config flow ([c43a8e6](https://github.com/muhlba91/onyx-homeassistant-integration/commit/c43a8e6c473d0e71590494a2169595cbfaa84494))
+* add translations for configs ([d8bc6ba](https://github.com/muhlba91/onyx-homeassistant-integration/commit/d8bc6ba8a5c0e5111e72ba01a163b4ab4336efc9))
+* call ha state update ([a408da3](https://github.com/muhlba91/onyx-homeassistant-integration/commit/a408da3a1776a2b637d63dc79153a811c7c20b47))
+* call light_on if no brightness is specified ([4c72d54](https://github.com/muhlba91/onyx-homeassistant-integration/commit/4c72d54e627d1b2f3de08a99498243b9f920a454))
+* change update method to onyx api client ([53a957f](https://github.com/muhlba91/onyx-homeassistant-integration/commit/53a957feb8708ba919aa573b7e2de1150d739450))
+* do not trigger background action for finished animations ([7812e24](https://github.com/muhlba91/onyx-homeassistant-integration/commit/7812e2421dbb577d11112e43c7bf2e4ba7f2364a))
+* fix dim duration calculation; update client to 8.3.3 to fix numeric value defaults ([cf2042d](https://github.com/muhlba91/onyx-homeassistant-integration/commit/cf2042d68aba913abad5f2bcd6c75a49347d7d59))
+* fix light supported_features return value ([f3af412](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f3af4120358370ba019a8e4b179d9de297cb7a07))
+* fix stop call ([6117eec](https://github.com/muhlba91/onyx-homeassistant-integration/commit/6117eec38a25fe15e9d4847e36bb9f239fd03571))
+* handle animation for lights ([935bc41](https://github.com/muhlba91/onyx-homeassistant-integration/commit/935bc41b528a4a7d6f5d607435d72c67de5e419c))
+* handle no brightness value; correctly feed on/off to home assistant ([90066fc](https://github.com/muhlba91/onyx-homeassistant-integration/commit/90066fc0c16f647be8611c9f6d55ede62e6c2bb4))
+* ignore invalid brightness value for dim duration ([839c57b](https://github.com/muhlba91/onyx-homeassistant-integration/commit/839c57bfaeeea7d40730a61249054657b8d49eb4))
+* ignore outdated animations ([f5f01d5](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f5f01d5ba1f807dd92b5ad499a808b0152c9015c))
+* ignore outdated animations ([f41452d](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f41452d0beaa7e1a64a7221eea8b682a537828cc))
+* interpolate updates instead of dropping old ones ([28bc0ce](https://github.com/muhlba91/onyx-homeassistant-integration/commit/28bc0ceee01bffc89fff739663e305902d33a27c))
+* interpolate updates instead of dropping old ones ([050d52c](https://github.com/muhlba91/onyx-homeassistant-integration/commit/050d52cd45b1470a011b1ad85c63e11a629e4701))
+* reduce backoff time for reconnects ([d5cd07f](https://github.com/muhlba91/onyx-homeassistant-integration/commit/d5cd07fa74f35d4de3cfe71cdbfa89713aee2076))
+* refactor dimming and moving updates ([dcfc299](https://github.com/muhlba91/onyx-homeassistant-integration/commit/dcfc29996629cc868c0a066a4d83633e84808bec))
+* reload entry on configuration change ([75581b5](https://github.com/muhlba91/onyx-homeassistant-integration/commit/75581b5ea328317a8a5c884be3cbaaf616bf6e78))
+* set defaults for new config ([54764fd](https://github.com/muhlba91/onyx-homeassistant-integration/commit/54764fdafb4a6c147d30657cf8f19ec39ed78bdd))
+* set dim duration correctly; add tests for dim duration variations ([8f70612](https://github.com/muhlba91/onyx-homeassistant-integration/commit/8f70612fa892863ed6f16c11c443e1ab19db70f8))
+* set event loop for client ([4a1cb81](https://github.com/muhlba91/onyx-homeassistant-integration/commit/4a1cb8105afaebcf8783fff17fbabf1d952406e2))
+* set event loop for client ([b20c729](https://github.com/muhlba91/onyx-homeassistant-integration/commit/b20c729a251eb0adda28e93d15a91681092356d4))
+* set event loop for client ([e0f8943](https://github.com/muhlba91/onyx-homeassistant-integration/commit/e0f89430e3d2347a803f74bc5d0aeef07a3432ea))
+* set event loop for client ([4ab1e3b](https://github.com/muhlba91/onyx-homeassistant-integration/commit/4ab1e3b498bf72566f5acf6501362554077f3df4))
+* set event loop for client ([3042cf4](https://github.com/muhlba91/onyx-homeassistant-integration/commit/3042cf417784eb92154087a9471330160fa884bc))
+* set event loop for client ([b7e94a3](https://github.com/muhlba91/onyx-homeassistant-integration/commit/b7e94a309eddb9e87747223109450eac83238e58))
+* set event loop for client ([b5e3fae](https://github.com/muhlba91/onyx-homeassistant-integration/commit/b5e3faea662abcd75ad65861c49281e7cdef1cdc))
+* set event loop for client ([45b1d6b](https://github.com/muhlba91/onyx-homeassistant-integration/commit/45b1d6b199caaea74779810d5c6483c6fb6a23b7))
+* set hassio event loop for client ([2378b19](https://github.com/muhlba91/onyx-homeassistant-integration/commit/2378b193afb527dc1652656af586d0ec43e08fa7))
+* update client to 8.3.1 to implement deep merge ([c87ca95](https://github.com/muhlba91/onyx-homeassistant-integration/commit/c87ca954a09800668af745b31633f0244102d99f))
+
+
+### Miscellaneous Chores
+
+* adapt logging ([891a124](https://github.com/muhlba91/onyx-homeassistant-integration/commit/891a1245117a866d5ece8e6871ca00ebab6e2035))
+* **ci:** adopt release please for v4 ([989cf78](https://github.com/muhlba91/onyx-homeassistant-integration/commit/989cf780075f3ab5b144ec3c9a6c9693c10c6029))
+* clean shutter moving log ([d197388](https://github.com/muhlba91/onyx-homeassistant-integration/commit/d19738853251aef3ba704af20853ca602062d977))
+* **deps:** update actions/setup-python action to v5 ([2f24df3](https://github.com/muhlba91/onyx-homeassistant-integration/commit/2f24df3cf00ea87c8d819d6aec8c11a7ffbc63c7))
+* **deps:** update client to 8.0.2 ([34103e2](https://github.com/muhlba91/onyx-homeassistant-integration/commit/34103e262b7fd6b9992b7b61b485213414d9fd2c))
+* **deps:** update dependency aioresponses to v0.7.6 ([ee0fe43](https://github.com/muhlba91/onyx-homeassistant-integration/commit/ee0fe4383581a888ea57501f1fec5d73df6fdbb8))
+* **deps:** update dependency homeassistant to v2023.12.0 ([44e184e](https://github.com/muhlba91/onyx-homeassistant-integration/commit/44e184e2d3bb3e14330aa27cbce4498ad3a1f5bc))
+* **deps:** update dependency homeassistant to v2023.12.2 ([d0710ed](https://github.com/muhlba91/onyx-homeassistant-integration/commit/d0710ed486aff444875fa2f777ebc3d414062322))
+* **deps:** update dependency pre-commit to v3.6.0 ([32c4fc2](https://github.com/muhlba91/onyx-homeassistant-integration/commit/32c4fc282bb0c2a3a217d5b76cf8d10d841d148a))
+* **deps:** update dependency pytest-asyncio to ^0.23.0 ([1151786](https://github.com/muhlba91/onyx-homeassistant-integration/commit/11517862939e83ab37bbf03385bfc46d6308de10))
+* **deps:** update dependency pytest-asyncio to v0.23.1 ([dce3062](https://github.com/muhlba91/onyx-homeassistant-integration/commit/dce3062fa712d45bfc3d2cc790c7089fae78ae6a))
+* **deps:** update dependency pytest-asyncio to v0.23.2 ([debfe61](https://github.com/muhlba91/onyx-homeassistant-integration/commit/debfe61edd6eaedc9991ad07e7f0d386ef777901))
+* **deps:** update dependency ruff to v0.1.7 ([b533be2](https://github.com/muhlba91/onyx-homeassistant-integration/commit/b533be2965a8cac5911f0ea0a1fe2fa77601e19c))
+* **deps:** update dependency ruff to v0.1.8 ([c39bec9](https://github.com/muhlba91/onyx-homeassistant-integration/commit/c39bec95bd047e6121df3f15b02457a43ba55d58))
+* **deps:** update github/codeql-action action to v3 ([e57a75b](https://github.com/muhlba91/onyx-homeassistant-integration/commit/e57a75be5ff963cd09777c82c46635bb9985c428))
+* **deps:** update google-github-actions/release-please-action action to v4 ([844bbac](https://github.com/muhlba91/onyx-homeassistant-integration/commit/844bbac22fd54e9ed04eea86e1f9e092b5b54de1))
+
+
+### Code Refactoring
+
+* refactor background events ([d13df42](https://github.com/muhlba91/onyx-homeassistant-integration/commit/d13df429a11832fadf14210fef47902b8653a6dd))
+
 ## [7.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v6.0.1...v7.0.0) (2023-11-16)
 
 
