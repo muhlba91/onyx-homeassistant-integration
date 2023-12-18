@@ -62,10 +62,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     fingerprint = entry.data[CONF_FINGERPRINT]
     token = entry.data[CONF_ACCESS_TOKEN]
-    scan_interval = entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_INTERVAL)
-    min_dim_duration = entry.data.get(CONF_MIN_DIM_DURATION, DEFAULT_MIN_DIM_DURATION)
-    max_dim_duration = entry.data.get(CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION)
-    force_update = entry.data.get(CONF_FORCE_UPDATE, False)
+    scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_INTERVAL)
+    min_dim_duration = entry.options.get(
+        CONF_MIN_DIM_DURATION, DEFAULT_MIN_DIM_DURATION
+    )
+    max_dim_duration = entry.options.get(
+        CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION
+    )
+    force_update = entry.options.get(CONF_FORCE_UPDATE, False)
 
     _LOGGER.debug("setting up %s integration with fingerprint %s", DOMAIN, fingerprint)
     if force_update:
@@ -123,3 +127,30 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok
+
+
+async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
+    """Migrate old entry."""
+    _LOGGER.debug("migrating from version %d", config_entry.version)
+
+    if config_entry.version == 1:
+        old_data = {**config_entry.data}
+
+        new_data = {
+            CONF_FINGERPRINT: old_data.get(CONF_FINGERPRINT),
+            CONF_ACCESS_TOKEN: old_data.get(CONF_ACCESS_TOKEN),
+        }
+        new_options = {
+            CONF_SCAN_INTERVAL: old_data.get(CONF_SCAN_INTERVAL, DEFAULT_INTERVAL),
+            CONF_MIN_DIM_DURATION: old_data.get(CONF_MIN_DIM_DURATION),
+            CONF_MAX_DIM_DURATION: old_data.get(CONF_MAX_DIM_DURATION),
+            CONF_FORCE_UPDATE: old_data.get(CONF_FORCE_UPDATE, False),
+        }
+        config_entry.data = new_data
+        config_entry.options = new_options
+
+        config_entry.version = 2
+
+    _LOGGER.info("migration to version %d successful", config_entry.version)
+
+    return True

@@ -207,5 +207,5 @@ class TestOnyxOptionsFlowHandler:
         }
         form = await options_flow.async_step_init(user_input)
         assert form is not None
-        assert form["title"] == ""
+        assert form["title"] != ""
         assert form["data"] == user_input

@@ -48,7 +48,7 @@ AUTH_SCHEMA = vol.Schema(
 class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for ONYX."""
 
-    VERSION = 1
+    VERSION = 2
     CONNECTION_CLASS = CONN_CLASS_LOCAL_POLL
 
     async def async_step_user(self, user_input=None):
@@ -80,6 +80,8 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
                 data={
                     CONF_FINGERPRINT: fingerprint,
                     CONF_ACCESS_TOKEN: token,
+                },
+                options={
                     CONF_SCAN_INTERVAL: scan_interval,
                     CONF_MIN_DIM_DURATION: min_dim_duration,
                     CONF_MAX_DIM_DURATION: max_dim_duration,
@@ -130,7 +132,12 @@ class OnyxOptionsFlowHandler(OptionsFlow):
     async def async_step_init(self, user_input=None) -> FlowResult:
         """Handle options flow."""
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            return self.async_create_entry(
+                title=self.config_entry.title, data=user_input
+            )
+
+        if user_input is None:
+            user_input = self.config_entry.options
 
         data_schema = vol.Schema(
             {
