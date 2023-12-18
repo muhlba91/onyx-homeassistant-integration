@@ -9,6 +9,7 @@ from homeassistant.const import (
     CONF_ACCESS_TOKEN,
     CONF_SCAN_INTERVAL,
     CONF_FORCE_UPDATE,
+    Platform,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
@@ -49,16 +50,10 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 PLATFORMS = [
-    "cover",
-    "sensor",
-    "light",
+    Platform.COVER,
+    Platform.LIGHT,
+    Platform.SENSOR,
 ]
-
-
-async def async_setup(hass: HomeAssistant, config: dict):
-    """Set up ONYX component via configuration.yaml."""
-    hass.data.setdefault(DOMAIN, {})
-    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
@@ -88,7 +83,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         fingerprint,
         token,
     )
-    _LOGGER.debug("using config: %s", onyx_config)
+    _LOGGER.info("using config: %s", onyx_config)
     onyx_api = APIConnector(hass, onyx_config)
     await onyx_api.async_config_entry_first_refresh()
     onyx_timezone = await onyx_api.get_timezone()
@@ -104,8 +99,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, platform),
         )
+    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     return True
+
+
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry):
+    """Reload the config entry when it changed."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):

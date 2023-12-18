@@ -134,7 +134,7 @@ class APIConnector(DataUpdateCoordinator):
                             self.hass.loop,
                         )
             except Exception as ex:
-                _LOGGER.error(
+                _LOGGER.warning(
                     "connection reset: %s, restarting with backoff of %s seconds (%s)",
                     ex,
                     backoff,
