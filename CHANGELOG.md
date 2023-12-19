@@ -1,6 +1,18 @@
 # Changelog
 
 
+## [9.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v8.0.0...v9.0.0) (2023-12-19)
+
+
+### Features
+
+* implement automated exchange of API code to fingerprint and token; fix [#6](https://github.com/muhlba91/onyx-homeassistant-integration/issues/6) ([71814c3](https://github.com/muhlba91/onyx-homeassistant-integration/commit/71814c39b9b3f1adb06313336da3151b928ebff5))
+
+
+### Miscellaneous Chores
+
+* set next release to 9.0.0 ([19eb1b0](https://github.com/muhlba91/onyx-homeassistant-integration/commit/19eb1b0c9d7c73988bc9f3197e5e6670011afb56))
+
 ## [8.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v7.0.0...v8.0.0) (2023-12-18)
 
 
