@@ -1,19 +1,32 @@
 {
+  "title": "Hella ONYX.CENTER",
   "config": {
     "abort": {
-      "already_configured": "Device is already configured"
+      "already_configured": "This ONYX.CENTER fingerprint is already configured."
     },
     "error": {
-      "cannot_connect": "Failed to connect",
-      "unknown": "Unexpected error"
+      "invalid_code": "The provided code could not be exchanged for access credentials.",
+      "invalid_connection_data": "The provided connection data could not be verified.",
+      "unknown": "Unexpected error."
     },
     "step": {
       "user": {
+        "title": "Set Connection Details",
         "data": {
           "fingerprint": "Fingerprint",
-          "token": "Access Token",
-          "min_dim_duration": "[Lights] Minimum Dim Duration (>= 0)",
-          "max_dim_duration": "[Lights] Maximum Dim Duration (<= 65535)",
+          "access_token": "Access Token",
+          "code": "API Code"
+        },
+        "data_description": {
+          "code": "Either specify the API Code from the ONYX app, or a fingerprint & token pair!",
+          "fingerprint": "Attention: if you specify an API code, fingerprint & token are ignored!"
+        }
+      },
+      "options": {
+        "title": "Set Device Options",
+        "data": {
+          "min_dim_duration": "[Lights] Minimum Dim Duration",
+          "max_dim_duration": "[Lights] Maximum Dim Duration",
           "scan_interval": "Scan Interval in Minutes",
           "force_update": "[Advanced] Disable partial updates?"
         }
@@ -23,14 +36,14 @@
   "options": {
     "step": {
       "init": {
+        "title": "Set Device Options",
         "data": {
-          "min_dim_duration": "[Lights] Minimum Dim Duration (>= 0)",
-          "max_dim_duration": "[Lights] Maximum Dim Duration (<= 65535)",
+          "min_dim_duration": "[Lights] Minimum Dim Duration",
+          "max_dim_duration": "[Lights] Maximum Dim Duration",
           "scan_interval": "Scan Interval in Minutes",
           "force_update": "[Advanced] Disable partial updates?"
         }
       }
     }
-  },
-  "title": "Hella ONYX.CENTER"
+  }
 }

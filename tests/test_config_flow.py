@@ -2,12 +2,15 @@
 import pytest
 
 from unittest.mock import patch, MagicMock
+from aioresponses import aioresponses
 
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
+    CONF_CODE,
     CONF_SCAN_INTERVAL,
     CONF_FORCE_UPDATE,
 )
+from homeassistant.config_entries import ConfigEntry
 
 from custom_components.hella_onyx.const import (
     CONF_FINGERPRINT,
@@ -19,140 +22,276 @@ from custom_components.hella_onyx.config_flow import (
     OnyxOptionsFlowHandler,
 )
 
+from onyx_client.utils.const import API_URL
+
 
 class TestOnyxFlowHandler:
     @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_show_form")
-    @pytest.mark.asyncio
-    async def test_async_step_init_without_data(self, mock_async_show_form):
-        config_flow = OnyxFlowHandler()
-        await config_flow.async_step_init(None)
-        assert mock_async_show_form.called
-
     @patch(
-        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_create_entry"
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
     )
-    @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_abort")
-    @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_exists")
     @pytest.mark.asyncio
-    async def test_async_step_init_with_data_exists(
-        self, mock_async_exists, mock_async_abort, mock_async_create_entry
+    async def test_async_step_user_without_data(
+        self, mock_async_step_options, mock_async_show_form
     ):
         config_flow = OnyxFlowHandler()
-        await config_flow.async_step_init(
-            {
-                CONF_FINGERPRINT: "finger",
-                CONF_ACCESS_TOKEN: "token",
-                CONF_SCAN_INTERVAL: 10,
-                CONF_MIN_DIM_DURATION: 0,
-                CONF_MAX_DIM_DURATION: 100,
-                CONF_FORCE_UPDATE: False,
-            }
-        )
-        assert mock_async_exists.called
-        assert mock_async_abort.called
-        assert not mock_async_create_entry.called
+        await config_flow.async_step_user(None)
+        assert mock_async_show_form.called
+        assert not mock_async_step_options.called
 
     @patch(
-        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_create_entry"
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
     )
-    @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_abort")
-    @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_exists")
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"
+    )
     @patch(
         "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_verify_conn"
     )
     @pytest.mark.asyncio
-    async def test_async_step_init_with_data_invalid_creds(
+    async def test_async_step_user_with_data_exists(
         self,
         mock_async_verify_conn,
-        mock_async_exists,
-        mock_async_abort,
-        mock_async_create_entry,
+        mock_async_abort_entries_match,
+        mock_async_step_options,
     ):
-        mock_async_exists.return_value = False
+        mock_async_verify_conn.return_value = True
+        config_flow = OnyxFlowHandler()
+        await config_flow.async_step_user(
+            {
+                CONF_FINGERPRINT: "finger",
+                CONF_ACCESS_TOKEN: "token",
+            }
+        )
+        assert mock_async_abort_entries_match.called
+        assert mock_async_verify_conn.called
+        assert mock_async_step_options.called
+
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_verify_conn"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
+    )
+    @pytest.mark.asyncio
+    async def test_async_step_user_with_data_invalid_creds(
+        self,
+        mock_async_step_options,
+        mock_async_verify_conn,
+        mock_async_abort_entries_match,
+    ):
         mock_async_verify_conn.return_value = False
 
         config_flow = OnyxFlowHandler()
-        await config_flow.async_step_init(
+        await config_flow.async_step_user(
             {
                 CONF_FINGERPRINT: "finger",
                 CONF_ACCESS_TOKEN: "token",
-                CONF_SCAN_INTERVAL: 10,
-                CONF_MIN_DIM_DURATION: 0,
-                CONF_MAX_DIM_DURATION: 100,
-                CONF_FORCE_UPDATE: False,
             }
         )
-        assert mock_async_exists.called
         assert mock_async_verify_conn.called
-        assert mock_async_abort.called
-        assert not mock_async_create_entry.called
+        assert not mock_async_abort_entries_match.called
+        assert not mock_async_step_options.called
 
     @patch(
-        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_create_entry"
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"
     )
-    @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_abort")
-    @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_exists")
     @patch(
         "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_verify_conn"
     )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
+    )
     @pytest.mark.asyncio
-    async def test_async_step_init_with_data(
+    async def test_async_step_user_with_data(
         self,
+        mock_async_step_options,
         mock_async_verify_conn,
-        mock_async_exists,
-        mock_async_abort,
-        mock_async_create_entry,
+        mock_async_abort_entries_match,
     ):
-        mock_async_exists.return_value = False
         mock_async_verify_conn.return_value = True
 
         config_flow = OnyxFlowHandler()
-        await config_flow.async_step_init(
+        await config_flow.async_step_user(
             {
                 CONF_FINGERPRINT: "finger",
                 CONF_ACCESS_TOKEN: "token",
-                CONF_SCAN_INTERVAL: 10,
-                CONF_MIN_DIM_DURATION: 0,
-                CONF_MAX_DIM_DURATION: 100,
-                CONF_FORCE_UPDATE: False,
             }
         )
-        assert mock_async_exists.called
+        assert mock_async_abort_entries_match.called
         assert mock_async_verify_conn.called
-        assert not mock_async_abort.called
+        assert mock_async_step_options.called
+
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_verify_conn"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
+    )
+    @pytest.mark.asyncio
+    async def test_async_step_user_with_code(
+        self,
+        mock_async_step_options,
+        mock_async_verify_conn,
+        mock_async_abort_entries_match,
+    ):
+        mock_async_verify_conn.return_value = True
+        with aioresponses() as mock_response:
+            mock_response.post(
+                f"{API_URL}/authorize",
+                status=200,
+                payload={
+                    "fingerprint": "finger",
+                    "token": "token",
+                },
+            )
+
+            config_flow = OnyxFlowHandler()
+            config_flow.hass = MagicMock()
+            await config_flow.async_step_user(
+                {
+                    CONF_CODE: "code",
+                }
+            )
+            assert mock_async_abort_entries_match.called
+            assert mock_async_verify_conn.called
+            assert mock_async_step_options.called
+
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_verify_conn"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
+    )
+    @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_show_form")
+    @pytest.mark.asyncio
+    async def test_async_step_user_with_invalid_code(
+        self,
+        mock_async_show_form,
+        mock_async_step_options,
+        mock_async_verify_conn,
+        mock_async_abort_entries_match,
+    ):
+        mock_async_verify_conn.return_value = True
+        with aioresponses() as mock_response:
+            mock_response.post(
+                f"{API_URL}/authorize",
+                status=400,
+            )
+
+            config_flow = OnyxFlowHandler()
+            config_flow.hass = MagicMock()
+            await config_flow.async_step_user(
+                {
+                    CONF_CODE: "code",
+                }
+            )
+            assert not mock_async_abort_entries_match.called
+            assert not mock_async_verify_conn.called
+            assert not mock_async_step_options.called
+            assert mock_async_show_form.called
+
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_verify_conn"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
+    )
+    @pytest.mark.asyncio
+    async def test_async_step_user_with_entry(
+        self,
+        mock_async_step_options,
+        mock_async_verify_conn,
+        mock_async_abort_entries_match,
+    ):
+        mock_async_verify_conn.return_value = True
+
+        config_flow = OnyxFlowHandler()
+        config_flow._entry = ConfigEntry(2, "ONYX", "finger", data={}, source="")
+        config_flow.hass = MagicMock()
+        await config_flow.async_step_user(
+            {
+                CONF_FINGERPRINT: "finger",
+                CONF_ACCESS_TOKEN: "token",
+            }
+        )
+        assert not mock_async_abort_entries_match.called
+        assert config_flow.hass.config_entries.async_update_entry.called
+        assert mock_async_verify_conn.called
+        assert not mock_async_step_options.called
+
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
+    )
+    @pytest.mark.asyncio
+    async def test_async_step_user_with_entry_no_data(
+        self,
+        mock_async_step_options,
+        mock_async_abort_entries_match,
+    ):
+        config_flow = OnyxFlowHandler()
+        config_flow._entry = ConfigEntry(2, "ONYX", "finger", data={}, source="")
+        await config_flow.async_step_user()
+        assert not mock_async_abort_entries_match.called
+        assert not mock_async_step_options.called
+
+    @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_show_form")
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_create_entry"
+    )
+    @pytest.mark.asyncio
+    async def test_async_step_options_without_data(
+        self, mock_async_create_entry, mock_async_step_options
+    ):
+        config_flow = OnyxFlowHandler()
+        await config_flow.async_step_options(None)
+        assert not mock_async_create_entry.called
+        assert mock_async_step_options.called
+
+    @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_show_form")
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_create_entry"
+    )
+    @pytest.mark.asyncio
+    async def test_async_step_options_with_data(
+        self, mock_async_create_entry, mock_async_step_options
+    ):
+        config_flow = OnyxFlowHandler()
+        config_flow._data = {CONF_FINGERPRINT: "finger"}
+        await config_flow.async_step_options(
+            {
+                CONF_SCAN_INTERVAL: 60,
+                CONF_MIN_DIM_DURATION: 0,
+                CONF_MAX_DIM_DURATION: 2000,
+                CONF_FORCE_UPDATE: True,
+            }
+        )
         assert mock_async_create_entry.called
+        assert not mock_async_step_options.called
 
-    @patch(
-        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_current_entries"
-    )
+    @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_user")
     @pytest.mark.asyncio
-    async def test_async_exists(
-        self,
-        mock_async_current_entries,
-    ):
-        entry = MagicMock()
-        entry.data = {"fingerprint": "finger"}
-        mock_async_current_entries.return_value = [entry]
-
+    async def test_async_step_reauth(self, mock_async_step_user):
         config_flow = OnyxFlowHandler()
-        exists = await config_flow._async_exists("finger")
-        assert exists
-        assert mock_async_current_entries.called
-
-    @patch(
-        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_current_entries"
-    )
-    @pytest.mark.asyncio
-    async def test_async_exists_none(
-        self,
-        mock_async_current_entries,
-    ):
-        mock_async_current_entries.return_value = []
-
-        config_flow = OnyxFlowHandler()
-        exists = await config_flow._async_exists("finger")
-        assert not exists
-        assert mock_async_current_entries.called
+        config_flow.hass = MagicMock()
+        config_flow.context = {"entry_id": "finger"}
+        await config_flow.async_step_reauth({})
+        assert mock_async_step_user.called
 
     @patch("onyx_client.client.OnyxClient.verify")
     @pytest.mark.asyncio

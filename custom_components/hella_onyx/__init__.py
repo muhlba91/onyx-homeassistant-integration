@@ -2,8 +2,6 @@
 import asyncio
 import logging
 
-import voluptuous as vol
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
@@ -12,7 +10,6 @@ from homeassistant.const import (
     Platform,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
 
 from .api_connector import APIConnector
 from .configuration import Configuration
@@ -30,24 +27,6 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-ONYX_SCHEMA = vol.Schema(
-    vol.All(
-        {
-            vol.Required(CONF_FINGERPRINT): cv.string,
-            vol.Required(CONF_ACCESS_TOKEN): cv.string,
-            vol.Required(CONF_SCAN_INTERVAL): cv.positive_int,
-            vol.Required(CONF_MIN_DIM_DURATION): cv.positive_int,
-            vol.Required(CONF_MAX_DIM_DURATION): cv.positive_int,
-            vol.Required(CONF_FORCE_UPDATE, default=False): cv.boolean,
-        },
-    )
-)
-
-CONFIG_SCHEMA = vol.Schema(
-    {DOMAIN: vol.Schema(vol.All(cv.ensure_list, [ONYX_SCHEMA]))},
-    extra=vol.ALLOW_EXTRA,
-)
 
 PLATFORMS = [
     Platform.COVER,

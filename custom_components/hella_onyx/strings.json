@@ -3,27 +3,40 @@
   "config": {
     "step": {
       "user": {
+        "title": "[%key:common::config_flow:::title%]",
         "data": {
+          "code": "[%key:common::config_flow::data::code%]",
           "fingerprint": "[%key:common::config_flow::data::fingerprint%]",
-          "token": "[%key:common::config_flow::data::token%]",
-          "min_dim_duration": "[%key:common::config_flow::data::min_dim_duration%]",
-          "max_dim_duration": "[%key:common::config_flow::data::max_dim_duration%]",
-          "scan_interval": "[%key:common::config_flow::data::scan_interval%]",
-          "force_update": "[%key:common::config_flow::data::force_update%]"
+          "access_token": "[%key:common::config_flow::data::access_token%]"
+        },
+        "data_description": {
+          "code": "[%key:common::config_flow::data_description::code%]",
+          "fingerprint": "[%key:common::config_flow::data_description::fingerprint%]"
+        }
+      },
+      "options": {
+        "title": "[%key:common::config_flow::options::title%]",
+        "data": {
+          "min_dim_duration": "[%key:common::config_flow::options::min_dim_duration%]",
+          "max_dim_duration": "[%key:common::config_flow::options::max_dim_duration%]",
+          "scan_interval": "[%key:common::config_flow::options::scan_interval%]",
+          "force_update": "[%key:common::config_flow::options::force_update%]"
         }
       }
     },
     "error": {
-      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "invalid_code": "[%key:common::config_flow::error::invalid_code%]",
+      "invalid_connection_data": "[%key:common::config_flow::error::invalid_connection_data%]",
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      "already_configured": "[%key:common::config_flow::abort::already_configured%]"
     }
   },
   "options": {
     "step": {
       "init": {
+        "title": "[%key:common::config_flow::data::title%]",
         "data": {
           "min_dim_duration": "[%key:common::config_flow::data::min_dim_duration%]",
           "max_dim_duration": "[%key:common::config_flow::data::max_dim_duration%]",
