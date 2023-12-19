@@ -27,6 +27,7 @@ from onyx_client.data.numeric_value import NumericValue
 from ..api_connector import APIConnector
 from ..const import INCREASED_INTERVAL_DELTA
 from ..sensors.onyx_entity import OnyxEntity
+from ..util.interpolation import interpolate
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -221,11 +222,13 @@ class OnyxLight(OnyxEntity, LightEntity):
             and current_time > start_time
             and keyframe.duration > 0
         ):
-            delta = current_time - start_time
-            delta_per_unit = (
-                self._device.target_brightness.value - animation.current_value
-            ) / keyframe.duration
-            update = ceil(animation.current_value + delta_per_unit * delta)
+            update = interpolate(
+                animation.current_value,
+                self._device.target_brightness.value,
+                keyframe.duration,
+                current_time,
+                start_time,
+            )
             _LOGGER.debug(
                 "interpolating actual_brightness update for device %s: %d",
                 self._uuid,

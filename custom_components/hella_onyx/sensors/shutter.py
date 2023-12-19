@@ -32,6 +32,7 @@ from ..api_connector import APIConnector
 from ..const import INCREASED_INTERVAL_DELTA
 from ..enum.moving_state import MovingState
 from ..sensors.onyx_entity import OnyxEntity
+from ..util.interpolation import interpolate
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -327,13 +328,12 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                 position_start_time is not None and current_time > position_start_time
             ) or (angle_start_time is not None and current_time > angle_start_time):
                 if position_animation is not None and position_keyframe.duration > 0:
-                    delta = current_time - position_start_time
-                    delta_per_unit = (
-                        self._device.target_position.value
-                        - position_animation.current_value
-                    ) / position_keyframe.duration
-                    update = ceil(
-                        position_animation.current_value + delta_per_unit * delta
+                    update = interpolate(
+                        position_animation.current_value,
+                        self._device.target_position.value,
+                        position_keyframe.duration,
+                        current_time,
+                        position_start_time,
                     )
                     _LOGGER.debug(
                         "interpolating actual_position update for device %s: %d",
@@ -342,12 +342,12 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                     )
                     self._device.actual_position.value = update
                 if angle_animation is not None and angle_keyframe.duration > 0:
-                    delta = current_time - angle_start_time
-                    delta_per_unit = (
-                        self._device.target_angle.value - angle_animation.current_value
-                    ) / angle_keyframe.duration
-                    update = ceil(
-                        angle_animation.current_value + delta_per_unit * delta
+                    update = interpolate(
+                        angle_animation.current_value,
+                        self._device.target_angle.value,
+                        angle_keyframe.duration,
+                        current_time,
+                        angle_start_time,
                     )
                     _LOGGER.debug(
                         "interpolating actual_angle update for device %s: %d",
