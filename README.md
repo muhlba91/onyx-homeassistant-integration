@@ -24,7 +24,6 @@ Therefore, a few limitations are imposed on/by this integration:
 
 | Limitation | Description| Bound By |
 |------------|------------|----------|
-| Fingerprint, Access Token Authentication | The API requires the ONYX.CENTER fingerprint and an access token. Basically, those can be retrieved programmatically, which is not implemented yet. | Personal Needs |
 | Shutter Position | Home Assistant takes the position 0 as closed and 100 as open, Hella the opposite. | Home Assistant |
 | Tilt Position | Home Assistant takes the position 0 as closed and 100 as open, Hella's values range between 0-90 and 0-180. | Home Assistant / Hella |
 | Light Brightness | Home Assistant takes the dim value 0 as off and 100 as on, Hella's values range between 0-65535. | Home Assistant / Hella |
@@ -71,17 +70,15 @@ Add it from the **Integrations menu**, set the configuration, and you're good to
 
 | Configuration Key | Description |
 |-------------------|-------------|
-| Fingerprint | Your ONYX.CENTER fingerprint (see below). |
-| Access Token | The access token (see below). |
+| API Code | The code retrieved by the ONYX app when allowing a new client to connect. |
+| Fingerprint | Your ONYX.CENTER fingerprint. |
+| Access Token | The access token. |
 | Scan Interval | Interval for polling for updates. This is used as a fallback if near realtime updates are failing and can be set to a higher value. |
 | \[Lights] Minimum Dim Duration | The minimum dim duration to use when dimming a light. (Default: 200) |
 | Disable partial updates? | The integration relies on the streaming API. Hence, only partial device data will be retrieved. Enable this option to always retrieve the full device data. *Attention*: this may lead to more API requests and is discouraged. |
 
-> [!WARNING]
-> Currently, the integration does not support automated retrieval of the **axcess token** and the **fingerprint**.
-> Please read [ONYX.CENTER API's Access Control](https://github.com/hella-info/onyx_api#access-control) on how to retrieve them manually.
->
-> The feature is tracked here: <https://github.com/muhlba91/onyx-homeassistant-integration/issues/6>.
+To configure the integration you can either directly specify a **fingerprint** and an **access token** or use the issued **API code** from the ONYX app directly.
+The integration will then exchange this code through the API to retrieve the fingerprint and access token for your ONYX.CENTER.
 
 ## Entities
 
