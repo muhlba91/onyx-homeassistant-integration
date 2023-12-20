@@ -5,6 +5,7 @@
 [![](https://img.shields.io/coveralls/github/muhlba91/onyx-homeassistant-integration?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
 [![Known Vulnerabilities](https://snyk.io/test/github/muhlba91/onyx-homeassistant-integration/badge.svg)](https://snyk.io/test/github/muhlba91/onyx-homeassistant-integration)
+[![](https://img.shields.io/github/all-contributors/muhlba91/onyx-homeassistant-integration?color=ee8449&style=for-the-badge)](#contributors)
 <a href="https://www.buymeacoffee.com/muhlba91" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="28" width="150"></a>
 
 This component creates an integration that provides the following entities to control [Hella's ONYX.CENTER](https://www.hella.info/) via Home Assistant:
@@ -148,10 +149,31 @@ adhere to the additional rules outlined in `.conform.yaml`.
 
 ---
 
-## Contributions
+## Contributors
 
-Please feel free to contribute, be it with Issues or Pull Requests! Please read
-the [Contribution guidelines](CONTRIBUTING.md)
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://muehlbachler.io/"><img src="https://avatars.githubusercontent.com/u/653739?v=4?s=100" width="100px;" alt="Daniel Mühlbachler-Pietrzykowski"/><br /><sub><b>Daniel Mühlbachler-Pietrzykowski</b></sub></a><br /><a href="#maintenance-muhlba91" title="Maintenance">🚧</a> <a href="https://github.com/muhlba91/pulumi-proxmoxve/commits?author=muhlba91" title="Code">💻</a> <a href="https://github.com/muhlba91/pulumi-proxmoxve/commits?author=muhlba91" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/mrogin-technic"><img src="https://avatars.githubusercontent.com/u/20296380?v=4?s=100" width="100px;" alt="mrogin-technic"/><br /><sub><b>mrogin-technic</b></sub></a><br /><a href="#ideas-mrogin-technic" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Jibberchris"><img src="https://avatars.githubusercontent.com/u/121609026?v=4?s=100" width="100px;" alt="Chris Jibber"/><br /><sub><b>Chris Jibber</b></sub></a><br /><a href="#ideas-Jibberchris" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/clostermannshof"><img src="https://avatars.githubusercontent.com/u/151548723?v=4?s=100" width="100px;" alt="Fabian"/><br /><sub><b>Fabian</b></sub></a><br /><a href="#ideas-clostermannshof" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/tbarth64"><img src="https://avatars.githubusercontent.com/u/79904446?v=4?s=100" width="100px;" alt="tbarth64"/><br /><sub><b>tbarth64</b></sub></a><br /><a href="#ideas-tbarth64" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/muhlba91/pulumi-proxmoxve/issues?q=author%3Atbarth64" title="Bug reports">🐛</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
 
 ## Supporting
 
