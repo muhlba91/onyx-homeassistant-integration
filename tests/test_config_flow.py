@@ -219,7 +219,14 @@ class TestOnyxFlowHandler:
         mock_async_verify_conn.return_value = True
 
         config_flow = OnyxFlowHandler()
-        config_flow._entry = ConfigEntry(2, "ONYX", "finger", data={}, source="")
+        config_flow._entry = ConfigEntry(
+            version=2,
+            minor_version=1,
+            domain="ONYX",
+            title="finger",
+            data={},
+            source="",
+        )
         config_flow.hass = MagicMock()
         await config_flow.async_step_user(
             {
@@ -245,7 +252,14 @@ class TestOnyxFlowHandler:
         mock_async_abort_entries_match,
     ):
         config_flow = OnyxFlowHandler()
-        config_flow._entry = ConfigEntry(2, "ONYX", "finger", data={}, source="")
+        config_flow._entry = ConfigEntry(
+            version=2,
+            minor_version=1,
+            domain="ONYX",
+            title="finger",
+            data={},
+            source="",
+        )
         await config_flow.async_step_user()
         assert not mock_async_abort_entries_match.called
         assert not mock_async_step_options.called

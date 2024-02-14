@@ -133,7 +133,12 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
         config_entry.options = new_options
 
         config_entry.version = 2
+        config_entry.minor_version = 1
 
-    _LOGGER.info("migration to version %d successful", config_entry.version)
+    _LOGGER.info(
+        "migration to version %d.%d successful",
+        config_entry.version,
+        config_entry.minor_version,
+    )
 
     return True
