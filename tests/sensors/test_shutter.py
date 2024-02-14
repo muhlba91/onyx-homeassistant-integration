@@ -4,14 +4,7 @@ import time
 
 from unittest.mock import MagicMock, patch
 
-from homeassistant.components.cover import (
-    CoverDeviceClass,
-    SUPPORT_CLOSE,
-    SUPPORT_OPEN,
-    SUPPORT_SET_POSITION,
-    SUPPORT_SET_TILT_POSITION,
-    SUPPORT_STOP,
-)
+from homeassistant.components.cover import CoverDeviceClass, CoverEntityFeature
 from homeassistant.core import HomeAssistant
 
 from onyx_client.data.animation_keyframe import AnimationKeyframe
@@ -71,16 +64,19 @@ class TestOnyxShutter:
 
     def test_supported_features_with_tilt(self, entity):
         assert entity.supported_features == (
-            SUPPORT_OPEN
-            | SUPPORT_CLOSE
-            | SUPPORT_STOP
-            | SUPPORT_SET_POSITION
-            | SUPPORT_SET_TILT_POSITION
+            CoverEntityFeature.OPEN
+            | CoverEntityFeature.CLOSE
+            | CoverEntityFeature.STOP
+            | CoverEntityFeature.SET_POSITION
+            | CoverEntityFeature.SET_TILT_POSITION
         )
 
     def test_supported_features_without_tilt(self, rollershutter_entity):
         assert rollershutter_entity.supported_features == (
-            SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP | SUPPORT_SET_POSITION
+            CoverEntityFeature.OPEN
+            | CoverEntityFeature.CLOSE
+            | CoverEntityFeature.STOP
+            | CoverEntityFeature.SET_POSITION
         )
 
     def test_current_cover_position(self, api, entity, device):

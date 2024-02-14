@@ -13,11 +13,7 @@ from homeassistant.components.cover import (
     ATTR_TILT_POSITION,
     CoverDeviceClass,
     CoverEntity,
-    SUPPORT_CLOSE,
-    SUPPORT_OPEN,
-    SUPPORT_SET_POSITION,
-    SUPPORT_SET_TILT_POSITION,
-    SUPPORT_STOP,
+    CoverEntityFeature,
 )
 from homeassistant.helpers.event import (
     async_track_point_in_utc_time,
@@ -98,7 +94,10 @@ class OnyxShutter(OnyxEntity, CoverEntity):
     def supported_features(self):
         """Flag supported features."""
         supported_features = (
-            SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP | SUPPORT_SET_POSITION
+            CoverEntityFeature.OPEN
+            | CoverEntityFeature.CLOSE
+            | CoverEntityFeature.STOP
+            | CoverEntityFeature.SET_POSITION
         )
 
         if (
@@ -106,7 +105,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             in (DeviceType.RAFFSTORE_90, DeviceType.RAFFSTORE_180)
             is not None
         ):
-            supported_features |= SUPPORT_SET_TILT_POSITION
+            supported_features |= CoverEntityFeature.SET_TILT_POSITION
 
         return supported_features
 
