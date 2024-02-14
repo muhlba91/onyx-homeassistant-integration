@@ -21,7 +21,14 @@ from custom_components.hella_onyx.light import async_setup_entry
 @patch("homeassistant.core.HomeAssistant")
 @pytest.mark.asyncio
 async def test_async_setup_entry(mock_hass):
-    config_entry = ConfigEntry(1, DOMAIN, "entry", {}, "source", "POLL", {})
+    config_entry = ConfigEntry(
+        version=1,
+        minor_version=1,
+        domain=DOMAIN,
+        title="entry",
+        data={},
+        source="source",
+    )
     api = MagicMock()
     api.devices = {
         "shutter": Shutter(
@@ -65,7 +72,14 @@ async def test_async_setup_entry(mock_hass):
 @patch("homeassistant.core.HomeAssistant")
 @pytest.mark.asyncio
 async def test_async_setup_entry_filter_all(mock_hass):
-    config_entry = ConfigEntry(1, DOMAIN, "entry", {}, "source", "POLL", {})
+    config_entry = ConfigEntry(
+        version=1,
+        minor_version=1,
+        domain=DOMAIN,
+        title="entry",
+        data={},
+        source="source",
+    )
     api = MagicMock()
     api.data = {
         "devices": {
