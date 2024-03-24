@@ -31,7 +31,7 @@ onyx-client = "^9.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.0.0"
-pytest-cov = { extras = ["toml"], version = "^4.1.0" }
+pytest-cov = { extras = ["toml"], version = "^5.0.0" }
 coverage = { extras = ["toml"], version = "^7.0.0" }
 pre-commit = "^3.3.2"
 pytest-asyncio = "^0.23.0"
