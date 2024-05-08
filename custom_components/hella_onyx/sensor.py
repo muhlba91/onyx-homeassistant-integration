@@ -1,4 +1,5 @@
 """The ONYX sensors."""
+
 import logging
 
 from typing import Callable, Optional

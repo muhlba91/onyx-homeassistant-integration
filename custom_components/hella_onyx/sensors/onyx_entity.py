@@ -1,4 +1,5 @@
 """The ONYX entity."""
+
 from homeassistant.core import callback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 

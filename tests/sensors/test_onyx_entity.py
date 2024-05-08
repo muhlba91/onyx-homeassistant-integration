@@ -1,4 +1,5 @@
 """Test for the ONYX Entity."""
+
 import pytest
 
 from unittest.mock import MagicMock

@@ -1,4 +1,5 @@
 """Test for the ONYX Configuration."""
+
 import pytest
 
 from custom_components.hella_onyx.configuration import Configuration

@@ -1,4 +1,5 @@
 """The ONYX weather sensors."""
+
 from typing import Optional
 
 from homeassistant.components.sensor import (

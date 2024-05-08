@@ -1,4 +1,5 @@
 """Test for the ONYX Weather Sensors."""
+
 import pytest
 
 from unittest.mock import MagicMock

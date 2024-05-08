@@ -1,4 +1,5 @@
 """Test for the ONYX Light Entity."""
+
 import pytest
 
 from unittest.mock import MagicMock, patch

@@ -1,4 +1,5 @@
 """The ONYX.CENTER integration."""
+
 import asyncio
 import logging
 

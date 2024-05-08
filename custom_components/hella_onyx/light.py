@@ -1,4 +1,5 @@
 """The ONYX light entity."""
+
 import logging
 
 from typing import Callable, Optional

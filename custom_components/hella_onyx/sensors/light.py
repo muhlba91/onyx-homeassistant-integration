@@ -1,4 +1,5 @@
 """The ONYX light entity."""
+
 import asyncio
 import logging
 import time

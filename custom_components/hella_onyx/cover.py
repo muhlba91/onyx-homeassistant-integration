@@ -1,4 +1,5 @@
 """The ONYX shutter entity."""
+
 import logging
 
 from typing import Callable, Optional

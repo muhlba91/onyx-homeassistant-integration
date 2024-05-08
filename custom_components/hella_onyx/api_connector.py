@@ -1,4 +1,5 @@
 """API connector for the ONYX integration."""
+
 import logging
 import asyncio
 

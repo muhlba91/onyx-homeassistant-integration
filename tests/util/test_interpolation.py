@@ -1,4 +1,5 @@
 """Test for the ONYX Interpolation util."""
+
 from custom_components.hella_onyx.util.interpolation import interpolate
 
 

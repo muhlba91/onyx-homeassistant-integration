@@ -1,4 +1,5 @@
 """Test for the ONYX Config Flow."""
+
 import pytest
 
 from unittest.mock import patch, MagicMock

@@ -1,4 +1,5 @@
 """The ONYX device type sensor."""
+
 from ..sensors.onyx_entity import OnyxEntity
 
 

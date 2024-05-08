@@ -1,4 +1,5 @@
 """Config flow for the ONYX integration."""
+
 import voluptuous as vol
 
 from homeassistant.helpers import selector

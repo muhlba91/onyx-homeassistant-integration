@@ -1,4 +1,5 @@
 """Test for the ONYX Light Entity."""
+
 import pytest
 import time
 
@@ -295,7 +296,9 @@ class TestOnyxLight:
             animation=animation,
         )
         api.device.return_value = device
-        with patch.object(entity, "schedule_update_ha_state") as mock_schedule_update_ha_state:
+        with patch.object(
+            entity, "schedule_update_ha_state"
+        ) as mock_schedule_update_ha_state:
             with patch.object(entity, "_start_dim_device") as mock_start_dim_device:
                 entity._handle_coordinator_update()
                 mock_start_dim_device.assert_called_with(animation)
@@ -312,7 +315,9 @@ class TestOnyxLight:
             animation=animation,
         )
         api.device.return_value = device
-        with patch.object(entity, "schedule_update_ha_state") as mock_schedule_update_ha_state:
+        with patch.object(
+            entity, "schedule_update_ha_state"
+        ) as mock_schedule_update_ha_state:
             with patch.object(entity, "_start_dim_device") as mock_start_dim_device:
                 entity._handle_coordinator_update()
                 mock_start_dim_device.assert_not_called
@@ -367,7 +372,9 @@ class TestOnyxLight:
             ),
         )
         api.device.return_value = device
-        with patch.object(entity, "schedule_update_ha_state") as mock_schedule_update_ha_state:
+        with patch.object(
+            entity, "schedule_update_ha_state"
+        ) as mock_schedule_update_ha_state:
             entity._end_dim_device()
             assert api.device.called
             assert not mock_schedule_update_ha_state.called
@@ -394,7 +401,9 @@ class TestOnyxLight:
             read_only=False,
         )
         api.device.return_value = device
-        with patch.object(entity, "schedule_update_ha_state") as mock_schedule_update_ha_state:
+        with patch.object(
+            entity, "schedule_update_ha_state"
+        ) as mock_schedule_update_ha_state:
             entity._end_dim_device()
             assert api.device.called
             assert mock_schedule_update_ha_state.called
@@ -421,7 +430,9 @@ class TestOnyxLight:
             read_only=False,
         )
         api.device.return_value = device
-        with patch.object(entity, "schedule_update_ha_state") as mock_schedule_update_ha_state:
+        with patch.object(
+            entity, "schedule_update_ha_state"
+        ) as mock_schedule_update_ha_state:
             entity._end_dim_device()
             assert api.device.called
             assert not mock_schedule_update_ha_state.called

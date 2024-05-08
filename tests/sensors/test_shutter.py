@@ -1,4 +1,5 @@
 """Test for the ONYX Shutter Entity."""
+
 import pytest
 import time
 
@@ -154,7 +155,9 @@ class TestOnyxShutter:
             animation=None,
         )
         api.device.return_value = device
-        with patch.object(entity, "schedule_update_ha_state") as mock_schedule_update_ha_state:
+        with patch.object(
+            entity, "schedule_update_ha_state"
+        ) as mock_schedule_update_ha_state:
             with patch.object(
                 entity, "_start_moving_device"
             ) as mock_start_moving_device:
@@ -188,7 +191,9 @@ class TestOnyxShutter:
             animation=animation,
         )
         api.device.return_value = device
-        with patch.object(entity, "schedule_update_ha_state") as mock_schedule_update_ha_state:
+        with patch.object(
+            entity, "schedule_update_ha_state"
+        ) as mock_schedule_update_ha_state:
             with patch.object(
                 entity, "_start_moving_device"
             ) as mock_start_moving_device:
@@ -214,7 +219,9 @@ class TestOnyxShutter:
             animation=None,
         )
         api.device.return_value = device
-        with patch.object(entity, "schedule_update_ha_state") as mock_schedule_update_ha_state:
+        with patch.object(
+            entity, "schedule_update_ha_state"
+        ) as mock_schedule_update_ha_state:
             with patch.object(
                 entity, "_start_moving_device"
             ) as mock_start_moving_device:

@@ -1,4 +1,5 @@
 """The ONYX shutter entity."""
+
 import asyncio
 import logging
 import time
