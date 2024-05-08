@@ -1,7 +1,5 @@
 [build-system]
-requires = [
-    "poetry>=1.7.0"
-]
+requires = ["poetry>=1.7.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
@@ -10,15 +8,11 @@ version = "10.0.0"
 description = "Home Assistant Integration for Hella's ONYX.CENTER API."
 license = "MIT"
 authors = [
-    "Daniel Muehlbachler-Pietrzykowski <daniel.muehlbachler@niftyside.io>"
+    "Daniel Muehlbachler-Pietrzykowski <daniel.muehlbachler@niftyside.io>",
 ]
 readme = "README.md"
 repository = "https://github.com/muhlba91/onyx-homeassistant-integration"
-keywords = [
-    "hella",
-    "onxy",
-    "homeassistant"
-]
+keywords = ["hella", "onxy", "homeassistant"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
@@ -36,24 +30,18 @@ coverage = { extras = ["toml"], version = "^7.0.0" }
 pre-commit = "^3.3.2"
 pytest-asyncio = "^0.23.0"
 aioresponses = "^0.7.4"
-homeassistant = "^2024.2.0"
+homeassistant = "^2024.5.0"
 ruff = "^0.4.0"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "--strict-markers --cov=custom_components"
-testpaths = [
-    "tests",
-]
-norecursedirs = [
-    ".git",
-]
+testpaths = ["tests"]
+norecursedirs = [".git"]
 
 [tool.coverage.run]
 relative_files = true
-source = [
-    "custom_components",
-]
+source = ["custom_components"]
 
 [tool.coverage.report]
 exclude_lines = [
