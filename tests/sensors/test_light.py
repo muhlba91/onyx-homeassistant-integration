@@ -295,12 +295,12 @@ class TestOnyxLight:
             animation=animation,
         )
         api.device.return_value = device
-        with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
+        with patch.object(entity, "schedule_update_ha_state") as mock_schedule_update_ha_state:
             with patch.object(entity, "_start_dim_device") as mock_start_dim_device:
                 entity._handle_coordinator_update()
                 mock_start_dim_device.assert_called_with(animation)
                 assert api.device.called
-                assert mock_async_write_ha_state.called
+                assert mock_schedule_update_ha_state.called
 
     def test_handle_coordinator_update_no_animation(self, entity, device, api):
         animation = None
@@ -312,12 +312,12 @@ class TestOnyxLight:
             animation=animation,
         )
         api.device.return_value = device
-        with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
+        with patch.object(entity, "schedule_update_ha_state") as mock_schedule_update_ha_state:
             with patch.object(entity, "_start_dim_device") as mock_start_dim_device:
                 entity._handle_coordinator_update()
                 mock_start_dim_device.assert_not_called
                 assert api.device.called
-                assert mock_async_write_ha_state.called
+                assert mock_schedule_update_ha_state.called
 
     def test_start_dim_device_within_time(self, entity):
         current_time = time.time()
@@ -367,10 +367,10 @@ class TestOnyxLight:
             ),
         )
         api.device.return_value = device
-        with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
+        with patch.object(entity, "schedule_update_ha_state") as mock_schedule_update_ha_state:
             entity._end_dim_device()
             assert api.device.called
-            assert not mock_async_write_ha_state.called
+            assert not mock_schedule_update_ha_state.called
             assert mock_run_coroutine_threadsafe.called
             api.send_device_command_action.assert_called_with("uuid", Action.STOP)
 
@@ -394,10 +394,10 @@ class TestOnyxLight:
             read_only=False,
         )
         api.device.return_value = device
-        with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
+        with patch.object(entity, "schedule_update_ha_state") as mock_schedule_update_ha_state:
             entity._end_dim_device()
             assert api.device.called
-            assert mock_async_write_ha_state.called
+            assert mock_schedule_update_ha_state.called
             assert not mock_run_coroutine_threadsafe.called
             assert entity._device.actual_brightness.value == 1
 
@@ -421,8 +421,8 @@ class TestOnyxLight:
             read_only=False,
         )
         api.device.return_value = device
-        with patch.object(entity, "async_write_ha_state") as mock_async_write_ha_state:
+        with patch.object(entity, "schedule_update_ha_state") as mock_schedule_update_ha_state:
             entity._end_dim_device()
             assert api.device.called
-            assert not mock_async_write_ha_state.called
+            assert not mock_schedule_update_ha_state.called
             assert not mock_run_coroutine_threadsafe.called

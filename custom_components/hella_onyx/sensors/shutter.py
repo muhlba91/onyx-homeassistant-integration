@@ -355,7 +355,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                     )
                     self._device.actual_angle.value = update
 
-            self.async_write_ha_state()
+            self.schedule_update_ha_state()
 
     def _calculate_and_set_state(self, actual: int, new_value: int):
         """Calculate and set the new moving state."""

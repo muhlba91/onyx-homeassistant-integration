@@ -29,7 +29,7 @@ class OnyxEntity(CoordinatorEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()
 
     @property
     def icon(self):

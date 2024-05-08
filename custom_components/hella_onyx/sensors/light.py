@@ -236,7 +236,7 @@ class OnyxLight(OnyxEntity, LightEntity):
             )
             self._device.actual_brightness.value = update
 
-            self.async_write_ha_state()
+            self.schedule_update_ha_state()
 
     @property
     def _actual_brightness(self) -> NumericValue:
