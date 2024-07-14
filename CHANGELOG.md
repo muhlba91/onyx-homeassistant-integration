@@ -1,6 +1,79 @@
 # Changelog
 
 
+## [10.1.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.0.0...v10.1.0) (2024-07-14)
+
+
+### Features
+
+* set homeassistant version for HACS to 2024.5.0 ([ca33175](https://github.com/muhlba91/onyx-homeassistant-integration/commit/ca33175237665ad1570c1288364af064ea910217))
+
+
+### Bug Fixes
+
+* fix call async_write_ha_state from thread ([0b3050d](https://github.com/muhlba91/onyx-homeassistant-integration/commit/0b3050de1aae3b0c95c9b43bfd1818b9b29f366a))
+
+
+### Miscellaneous Chores
+
+* **deps:** run poetry update ([3f71120](https://github.com/muhlba91/onyx-homeassistant-integration/commit/3f7112066287ab4ef6fa64d2032b2debc9e63dd8))
+* **deps:** update dependency coverage to v7.4.2 ([227526f](https://github.com/muhlba91/onyx-homeassistant-integration/commit/227526f8f7cbdea64bf5e730fb6594728b72e139))
+* **deps:** update dependency coverage to v7.4.3 ([4f542cc](https://github.com/muhlba91/onyx-homeassistant-integration/commit/4f542cc0bc5b1b5d26a2887809fb8e824070220d))
+* **deps:** update dependency coverage to v7.4.4 ([6091455](https://github.com/muhlba91/onyx-homeassistant-integration/commit/6091455f4a0fbea6917957b4fcc06e58e024e38e))
+* **deps:** update dependency coverage to v7.5.0 ([ac2daf1](https://github.com/muhlba91/onyx-homeassistant-integration/commit/ac2daf1a5d759b96bf770edb88929b0e4d43ff22))
+* **deps:** update dependency coverage to v7.5.1 ([7c1f5c3](https://github.com/muhlba91/onyx-homeassistant-integration/commit/7c1f5c3425e5bd909be2c33f1a0dfd8d8a5c8627))
+* **deps:** update dependency coverage to v7.5.2 ([d0f46d6](https://github.com/muhlba91/onyx-homeassistant-integration/commit/d0f46d642df42ab8d101b402ddd7841d75a674c8))
+* **deps:** update dependency coverage to v7.5.3 ([8481756](https://github.com/muhlba91/onyx-homeassistant-integration/commit/848175694e31221508c49c5a38961a171cb5b1bc))
+* **deps:** update dependency coverage to v7.5.4 ([cd3e7c3](https://github.com/muhlba91/onyx-homeassistant-integration/commit/cd3e7c3d29bbb08398c2a408df2c73a859a0dca8))
+* **deps:** update dependency coverage to v7.6.0 ([6129e30](https://github.com/muhlba91/onyx-homeassistant-integration/commit/6129e30919f73c35113656cb0089919e4b9cd78f))
+* **deps:** update dependency homeassistant to v2024.2.3 ([fd2eb73](https://github.com/muhlba91/onyx-homeassistant-integration/commit/fd2eb73ed8adf1f799c818303d471331d1daddf4))
+* **deps:** update dependency homeassistant to v2024.2.4 ([7de75c1](https://github.com/muhlba91/onyx-homeassistant-integration/commit/7de75c13d2a55760fc2ca20030ee9915fa604f0b))
+* **deps:** update dependency homeassistant to v2024.2.5 ([ec72665](https://github.com/muhlba91/onyx-homeassistant-integration/commit/ec7266578f3a8d5746481cf6d498465203d37335))
+* **deps:** update dependency homeassistant to v2024.3.0 ([2d0cf94](https://github.com/muhlba91/onyx-homeassistant-integration/commit/2d0cf94765c59ebdd926ef7c66da1ac7ae0447fe))
+* **deps:** update dependency homeassistant to v2024.3.1 ([f408c82](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f408c82cdacb80012f47870d9905f34e04fbba11))
+* **deps:** update dependency homeassistant to v2024.3.2 ([69e3a71](https://github.com/muhlba91/onyx-homeassistant-integration/commit/69e3a71979635b556ce934862bed492961400bd0))
+* **deps:** update dependency homeassistant to v2024.3.3 ([3a9b5e8](https://github.com/muhlba91/onyx-homeassistant-integration/commit/3a9b5e8da39d8b817f7af65ae2a6405666761d0b))
+* **deps:** update dependency homeassistant to v2024.4.0 ([7392054](https://github.com/muhlba91/onyx-homeassistant-integration/commit/73920544ed99833447215a1945a1d9017e56c6a3))
+* **deps:** update dependency homeassistant to v2024.4.2 ([533d583](https://github.com/muhlba91/onyx-homeassistant-integration/commit/533d5839b288a73665fb62fb8399aaa808a870fb))
+* **deps:** update dependency homeassistant to v2024.4.3 ([b6a1557](https://github.com/muhlba91/onyx-homeassistant-integration/commit/b6a155730a9e6250c9b06e6c01c7f078980ed49b))
+* **deps:** update dependency homeassistant to v2024.4.4 ([a251aac](https://github.com/muhlba91/onyx-homeassistant-integration/commit/a251aacad8a282b3f25435fd683795b19f274940))
+* **deps:** update dependency homeassistant to v2024.5.0 ([d363727](https://github.com/muhlba91/onyx-homeassistant-integration/commit/d3637273dccab3b89a66712e44f9e99506c33e2d))
+* **deps:** update dependency pre-commit to v3.6.2 ([f4bc6d3](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f4bc6d38617c106df6acd922419574652fe3668b))
+* **deps:** update dependency pre-commit to v3.7.0 ([41362f7](https://github.com/muhlba91/onyx-homeassistant-integration/commit/41362f7e784a694ebad7c5ee899c43615895db63))
+* **deps:** update dependency pre-commit to v3.7.1 ([f96853b](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f96853bce090ab89785cdca85ea6b5404d55421e))
+* **deps:** update dependency pytest to v8.0.2 ([5d17f33](https://github.com/muhlba91/onyx-homeassistant-integration/commit/5d17f337538960124e61b5b8b8adc9fc5422bc88))
+* **deps:** update dependency pytest to v8.1.0 ([e3584d6](https://github.com/muhlba91/onyx-homeassistant-integration/commit/e3584d69cb4235852793c1feeb20b5185ed555b2))
+* **deps:** update dependency pytest to v8.1.1 ([5f6be3f](https://github.com/muhlba91/onyx-homeassistant-integration/commit/5f6be3f06dac3191776625332e319f16948e39d6))
+* **deps:** update dependency pytest to v8.1.2 ([efdc92b](https://github.com/muhlba91/onyx-homeassistant-integration/commit/efdc92b54978a6b1551d41e7292c71932595e6bf))
+* **deps:** update dependency pytest to v8.2.0 ([66e075c](https://github.com/muhlba91/onyx-homeassistant-integration/commit/66e075c9331e75e4eed2037d5022aa69bc8468ae))
+* **deps:** update dependency pytest to v8.2.1 ([7d90797](https://github.com/muhlba91/onyx-homeassistant-integration/commit/7d9079789d1a7f9417fc5a2803975cb6cd5261a5))
+* **deps:** update dependency pytest to v8.2.2 ([069cba4](https://github.com/muhlba91/onyx-homeassistant-integration/commit/069cba4ba234280ab9702b6eb94b9d182a27a6f0))
+* **deps:** update dependency pytest-asyncio to v0.23.6 ([1e9a17a](https://github.com/muhlba91/onyx-homeassistant-integration/commit/1e9a17ada2eb2bb2fff2540cd84d692cef9e2d2a))
+* **deps:** update dependency pytest-asyncio to v0.23.7 ([07d1672](https://github.com/muhlba91/onyx-homeassistant-integration/commit/07d1672614a4b7020adef6f22ec5a45398503f51))
+* **deps:** update dependency pytest-cov to v5 ([fbf038f](https://github.com/muhlba91/onyx-homeassistant-integration/commit/fbf038fba06b04e59cb077a474eebef00ac31653))
+* **deps:** update dependency ruff to ^0.3.0 ([1f332e0](https://github.com/muhlba91/onyx-homeassistant-integration/commit/1f332e0c1f0d0277d4c47d4487612d7407fdb44b))
+* **deps:** update dependency ruff to ^0.4.0 ([046f698](https://github.com/muhlba91/onyx-homeassistant-integration/commit/046f698574834b59726b8e365076ce88d2025e4b))
+* **deps:** update dependency ruff to ^0.5.0 ([fb621ae](https://github.com/muhlba91/onyx-homeassistant-integration/commit/fb621ae39859a3d9f19dad5961369c862f32781d))
+* **deps:** update dependency ruff to v0.3.1 ([f1857af](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f1857af55569cd9a66225a9b0f6851b3d55033de))
+* **deps:** update dependency ruff to v0.3.2 ([cc05858](https://github.com/muhlba91/onyx-homeassistant-integration/commit/cc05858642077836982e1262196faf0f34a7a24c))
+* **deps:** update dependency ruff to v0.3.3 ([158d6e2](https://github.com/muhlba91/onyx-homeassistant-integration/commit/158d6e2145b7c6ba0349c9c974d1e99bfb0d5a69))
+* **deps:** update dependency ruff to v0.3.4 ([4aa0bf9](https://github.com/muhlba91/onyx-homeassistant-integration/commit/4aa0bf91b34b41b9bdb00a2bf3b7f78c476e4b31))
+* **deps:** update dependency ruff to v0.3.5 ([4fca449](https://github.com/muhlba91/onyx-homeassistant-integration/commit/4fca4494fd8514084c5f43f406c7c62dcfa435b9))
+* **deps:** update dependency ruff to v0.3.6 ([d9c0cda](https://github.com/muhlba91/onyx-homeassistant-integration/commit/d9c0cda45c30d01923be2810d8ebb2e0c48e11b7))
+* **deps:** update dependency ruff to v0.3.7 ([6faf2f4](https://github.com/muhlba91/onyx-homeassistant-integration/commit/6faf2f4cf01bfac6bed39a9693c4f50f9ac44d7f))
+* **deps:** update dependency ruff to v0.4.1 ([5a39fe5](https://github.com/muhlba91/onyx-homeassistant-integration/commit/5a39fe5b7c82e810e883335ee777eb048b7453aa))
+* **deps:** update dependency ruff to v0.4.10 ([6a101b1](https://github.com/muhlba91/onyx-homeassistant-integration/commit/6a101b1be7e15615c0eadb0e744b3d21398a69cd))
+* **deps:** update dependency ruff to v0.4.2 ([5c7a0ea](https://github.com/muhlba91/onyx-homeassistant-integration/commit/5c7a0ead1f86459d8e8aa709acebcd279476fe73))
+* **deps:** update dependency ruff to v0.4.3 ([6e5fae0](https://github.com/muhlba91/onyx-homeassistant-integration/commit/6e5fae010375976fe74193c76ef4508b9f3db516))
+* **deps:** update dependency ruff to v0.4.4 ([67f4701](https://github.com/muhlba91/onyx-homeassistant-integration/commit/67f4701765210ff8ccf888fb5322abaab9dad518))
+* **deps:** update dependency ruff to v0.4.5 ([27e4b0f](https://github.com/muhlba91/onyx-homeassistant-integration/commit/27e4b0f67d375caf935a29f11dd8539e52558e51))
+* **deps:** update dependency ruff to v0.4.6 ([3bec090](https://github.com/muhlba91/onyx-homeassistant-integration/commit/3bec090a77731e96b7cd85b3aabfe5b8e8e875dc))
+* **deps:** update dependency ruff to v0.4.7 ([6712b47](https://github.com/muhlba91/onyx-homeassistant-integration/commit/6712b470e927eecab5db5fe67cd257e373d3c3a3))
+* **deps:** update dependency ruff to v0.4.8 ([e63a2dc](https://github.com/muhlba91/onyx-homeassistant-integration/commit/e63a2dc2fef8f4da83128b317ef685113fbab4fa))
+* **deps:** update dependency ruff to v0.4.9 ([48535de](https://github.com/muhlba91/onyx-homeassistant-integration/commit/48535de4b7c7f74c70c783dcbe9217e81bd0d386))
+* **deps:** update dependency ruff to v0.5.1 ([dcb99b5](https://github.com/muhlba91/onyx-homeassistant-integration/commit/dcb99b535183b3e98278c946b246aa02adfec4f2))
+* **deps:** update dependency ruff to v0.5.2 ([bcc98ca](https://github.com/muhlba91/onyx-homeassistant-integration/commit/bcc98cabbaf851a2a3625bf171bbbedc8ba1be0a))
+
 ## [10.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v9.0.0...v10.0.0) (2024-02-18)
 
 
