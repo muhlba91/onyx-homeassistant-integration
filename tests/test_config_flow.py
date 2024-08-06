@@ -227,6 +227,8 @@ class TestOnyxFlowHandler:
             title="finger",
             data={},
             source="",
+            unique_id="onyx",
+            options={},
         )
         config_flow.hass = MagicMock()
         await config_flow.async_step_user(
@@ -260,6 +262,8 @@ class TestOnyxFlowHandler:
             title="finger",
             data={},
             source="",
+            unique_id="onyx",
+            options={},
         )
         await config_flow.async_step_user()
         assert not mock_async_abort_entries_match.called
