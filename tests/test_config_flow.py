@@ -229,6 +229,7 @@ class TestOnyxFlowHandler:
             source="",
             unique_id="onyx",
             options={},
+            discovery_keys={},
         )
         config_flow.hass = MagicMock()
         await config_flow.async_step_user(
@@ -264,6 +265,7 @@ class TestOnyxFlowHandler:
             source="",
             unique_id="onyx",
             options={},
+            discovery_keys={},
         )
         await config_flow.async_step_user()
         assert not mock_async_abort_entries_match.called

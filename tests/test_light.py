@@ -31,6 +31,7 @@ async def test_async_setup_entry(mock_hass):
         source="source",
         unique_id="onyx",
         options={},
+        discovery_keys={},
     )
     api = MagicMock()
     api.devices = {
@@ -84,6 +85,7 @@ async def test_async_setup_entry_filter_all(mock_hass):
         source="source",
         unique_id="onyx",
         options={},
+        discovery_keys={},
     )
     api = MagicMock()
     api.data = {
