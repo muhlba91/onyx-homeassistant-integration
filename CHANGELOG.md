@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [10.2.2](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.2.1...v10.2.2) (2024-10-17)
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependency ruff to ^0.7.0 ([998e350](https://github.com/muhlba91/onyx-homeassistant-integration/commit/998e350ff5ff3dbe0cf748de6a927f3da7b8498c))
+
 ## [10.2.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.2.0...v10.2.1) (2024-10-17)
 
 
