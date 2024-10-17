@@ -279,6 +279,31 @@ class TestOnyxShutter:
             entity._start_moving_device(animation)
             assert mock_end_moving_device.called
 
+    def test_start_moving_device_end_multiple_keyframes(self, entity):
+        current_time = time.time()
+        animation = AnimationValue(
+            start=current_time - 100,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=5,
+                    delay=0,
+                ),
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=5,
+                    delay=0,
+                ),
+            ],
+        )
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            entity._start_moving_device(animation)
+            assert mock_end_moving_device.called
+
     def test_start_moving_device_within_time(self, entity):
         current_time = time.time()
         animation = AnimationValue(
@@ -298,6 +323,31 @@ class TestOnyxShutter:
             entity._start_moving_device(animation)
             assert not mock_end_moving_device.called
 
+    def test_start_moving_device_within_time_multiple_keyframes(self, entity):
+        current_time = time.time()
+        animation = AnimationValue(
+            start=current_time,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=500,
+                    delay=0,
+                ),
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=500,
+                    delay=0,
+                ),
+            ],
+        )
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            entity._start_moving_device(animation)
+            assert not mock_end_moving_device.called
+
     def test_start_moving_device_still(self, entity):
         current_time = time.time()
         animation = AnimationValue(
@@ -310,6 +360,31 @@ class TestOnyxShutter:
                     duration=10,
                     delay=0,
                 )
+            ],
+        )
+        entity._moving_state = MovingState.STILL
+        with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            entity._start_moving_device(animation)
+            assert not mock_end_moving_device.called
+
+    def test_start_moving_device_still_multiple_keyframes(self, entity):
+        current_time = time.time()
+        animation = AnimationValue(
+            start=current_time - 100,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=5,
+                    delay=0,
+                ),
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=5,
+                    delay=0,
+                ),
             ],
         )
         entity._moving_state = MovingState.STILL
@@ -713,13 +788,29 @@ class TestOnyxShutter:
     def test__max_angle_rollershutter(self, rollershutter_entity):
         assert rollershutter_entity._max_angle == 100
 
-    def test__calculate_state_CLOSING(self, entity, device, api):
+    def test__calculate_state_CLOSING(self, entity):
         assert entity._calculate_state(100, 10) == MovingState.OPENING
 
-    def test__calculate_state_OPENING(self, entity, device, api):
+    def test__calculate_state_OPENING(self, entity):
         assert entity._calculate_state(10, 100) == MovingState.CLOSING
 
     def test__calculate_state_STILL(self, entity, api):
         api.device.return_value = None
         assert entity._calculate_state(10, 10) == MovingState.STILL
         assert not api.device.called
+
+    def test__calculate_animation_duration_and_delay(self, entity):
+        assert entity._calculate_animation_duration_and_delay(
+            [AnimationKeyframe("linear", 100000, 10, 50)]
+        ) == (10, 100000)
+
+    def test__calculate_animation_duration_and_delay_multiple_keyframes(self, entity):
+        assert entity._calculate_animation_duration_and_delay(
+            [
+                AnimationKeyframe("linear", 100000, 10, 50),
+                AnimationKeyframe("linear", 100000, 10, 50),
+            ]
+        ) == (20, 200000)
+
+    def test__calculate_animation_duration_and_delay_none_keyframes(self, entity):
+        assert entity._calculate_animation_duration_and_delay([None]) is None

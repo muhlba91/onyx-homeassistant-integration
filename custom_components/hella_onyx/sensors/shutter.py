@@ -5,6 +5,8 @@ import logging
 import time
 
 from datetime import timedelta
+from functools import reduce
+from operator import add
 from math import ceil
 from typing import Any, Optional
 
@@ -236,14 +238,11 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             _LOGGER.debug("not moving still device %s", self._uuid)
             return
 
-        keyframe = animation.keyframes[len(animation.keyframes) - 1]
+        keyframe = self._calculate_animation_duration_and_delay(animation.keyframes)
 
         current_time = time.time()
         end_time = (
-            animation.start
-            + keyframe.duration
-            + keyframe.delay
-            + INCREASED_INTERVAL_DELTA
+            animation.start + keyframe[0] + keyframe[1] + INCREASED_INTERVAL_DELTA
         )
         is_moving = current_time < end_time
 
@@ -270,34 +269,34 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
         position_animation = self._device.actual_position.animation
         position_keyframe = (
-            position_animation.keyframes[len(position_animation.keyframes) - 1]
+            self._calculate_animation_duration_and_delay(position_animation.keyframes)
             if position_animation is not None and len(position_animation.keyframes) > 0
             else None
         )
         position_start_time = (
-            (position_animation.start + position_keyframe.delay)
+            (position_animation.start + position_keyframe[1])
             if position_keyframe is not None and position_animation is not None
             else None
         )
         position_end_time = (
-            (position_start_time + position_keyframe.duration)
+            (position_start_time + position_keyframe[0])
             if position_keyframe is not None and position_start_time is not None
             else None
         )
 
         angle_animation = self._device.actual_angle.animation
         angle_keyframe = (
-            angle_animation.keyframes[len(angle_animation.keyframes) - 1]
+            self._calculate_animation_duration_and_delay(angle_animation.keyframes)
             if angle_animation is not None and len(angle_animation.keyframes) > 0
             else None
         )
         angle_start_time = (
-            (angle_animation.start + angle_keyframe.delay)
+            (angle_animation.start + angle_keyframe[1])
             if angle_keyframe is not None and angle_animation is not None
             else None
         )
         angle_end_time = (
-            (angle_start_time + angle_keyframe.duration)
+            (angle_start_time + angle_keyframe[0])
             if angle_keyframe is not None and angle_start_time is not None
             else None
         )
@@ -327,11 +326,11 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             elif (
                 position_start_time is not None and current_time > position_start_time
             ) or (angle_start_time is not None and current_time > angle_start_time):
-                if position_animation is not None and position_keyframe.duration > 0:
+                if position_animation is not None and position_keyframe[0] > 0:
                     update = interpolate(
                         position_animation.current_value,
                         self._device.target_position.value,
-                        position_keyframe.duration,
+                        position_keyframe[0],
                         current_time,
                         position_start_time,
                     )
@@ -341,11 +340,11 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                         update,
                     )
                     self._device.actual_position.value = update
-                if angle_animation is not None and angle_keyframe.duration > 0:
+                if angle_animation is not None and angle_keyframe[0] > 0:
                     update = interpolate(
                         angle_animation.current_value,
                         self._device.target_angle.value,
-                        angle_keyframe.duration,
+                        angle_keyframe[0],
                         current_time,
                         angle_start_time,
                     )
@@ -382,3 +381,14 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             return MovingState.CLOSING
         else:
             return MovingState.STILL
+
+    @staticmethod
+    def _calculate_animation_duration_and_delay(keyframes: list) -> tuple:
+        """Calculate the animation duration and delay."""
+        usable_keyframes = [kf for kf in keyframes if kf is not None]
+        if len(usable_keyframes) == 0:
+            return None
+
+        duration = reduce(add, [kf.duration for kf in usable_keyframes])
+        delay = reduce(add, [kf.delay for kf in usable_keyframes])
+        return duration, delay
