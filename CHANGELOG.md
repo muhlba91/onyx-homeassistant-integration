@@ -1,6 +1,18 @@
 # Changelog
 
 
+## [10.2.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.2.0...v10.2.1) (2024-10-17)
+
+
+### Bug Fixes
+
+* do not rely on order of keyframes and sum up their duration and delay ([10c8e35](https://github.com/muhlba91/onyx-homeassistant-integration/commit/10c8e359c8c0c4ba4e34e48674b14ba4d58adf17))
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependency coverage to v7.6.3 ([c70c467](https://github.com/muhlba91/onyx-homeassistant-integration/commit/c70c4673388b663908df9b1ee88ca3b61cc524e5))
+
 ## [10.2.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.1.0...v10.2.0) (2024-10-13)
 
 
