@@ -1384,13 +1384,13 @@ test = ["codespell (==2.3.0)", "mypy (==1.10.0)", "pre-commit (==3.7.1)", "pre-c
 
 [[package]]
 name = "home-assistant-bluetooth"
-version = "1.12.2"
+version = "1.13.0"
 description = "Home Assistant Bluetooth Models and Helpers"
 optional = false
-python-versions = "<3.13,>=3.11"
+python-versions = "<3.14,>=3.11"
 files = [
-    {file = "home_assistant_bluetooth-1.12.2-py3-none-any.whl", hash = "sha256:ded84c2f621255d2ed3bfa9a1ad824e2aadfbbd43c093da700fdc294f0c39202"},
-    {file = "home_assistant_bluetooth-1.12.2.tar.gz", hash = "sha256:40d6c26a409c6a490f4ebc6d6b816e70743e6e0cad81942649998a8b281e5532"},
+    {file = "home_assistant_bluetooth-1.13.0-py3-none-any.whl", hash = "sha256:caec3d6ced580d3bd015ab74a9ee7e91693650d0548637c5f294101167fc6e82"},
+    {file = "home_assistant_bluetooth-1.13.0.tar.gz", hash = "sha256:3fa8a0d05a844063501a37e0b98501337e7035623b345d5c285a778e9416fd93"},
 ]
 
 [package.dependencies]
@@ -1398,13 +1398,13 @@ habluetooth = ">=3.0"
 
 [[package]]
 name = "homeassistant"
-version = "2024.10.2"
+version = "2024.10.3"
 description = "Open-source home automation platform running on Python 3."
 optional = false
 python-versions = ">=3.12.0"
 files = [
-    {file = "homeassistant-2024.10.2-py3-none-any.whl", hash = "sha256:a39bcbcc935bf6c93969803c7bbf1d45e6e463397dcfe8e86a97bcf7c844cf4a"},
-    {file = "homeassistant-2024.10.2.tar.gz", hash = "sha256:9952a890be8472f2ccbce10a230d5d94441e5dac4c2cef04c4c3b3c3aaf5782b"},
+    {file = "homeassistant-2024.10.3-py3-none-any.whl", hash = "sha256:8d4ada5576f0e5a19d87c8c616b2bd90b36a3ca3b70332c5e37c7667f03163d9"},
+    {file = "homeassistant-2024.10.3.tar.gz", hash = "sha256:0e10dd0afa2fe7f61fd8c9d8daf795f16fe5624dcb4c3cf16296c0b1b8f159c8"},
 ]
 
 [package.dependencies]
@@ -1425,7 +1425,7 @@ ciso8601 = "2.3.1"
 cryptography = "43.0.1"
 fnv-hash-fast = "1.0.2"
 hass-nabucasa = "0.81.1"
-home-assistant-bluetooth = "1.12.2"
+home-assistant-bluetooth = "1.13.0"
 httpx = "0.27.2"
 ifaddr = "0.2.0"
 Jinja2 = "3.1.4"
