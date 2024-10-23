@@ -141,29 +141,6 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
         config_entry.version = 2
         config_entry.minor_version = 1
 
-    if config_entry.version == 2 and config_entry.minor_version == 1:
-        old_options = {**config_entry.options}
-
-        new_options = {
-            CONF_SCAN_INTERVAL: old_options.get(
-                CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
-            ),
-            CONF_MIN_DIM_DURATION: old_options.get(
-                CONF_MIN_DIM_DURATION, DEFAULT_MIN_DIM_DURATION
-            ),
-            CONF_MAX_DIM_DURATION: old_options.get(
-                CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION
-            ),
-            CONF_ADDITIONAL_DELAY: old_options.get(
-                CONF_ADDITIONAL_DELAY, DEFAULT_ADDITIONAL_DELAY
-            ),
-            CONF_FORCE_UPDATE: old_options.get(CONF_FORCE_UPDATE, False),
-        }
-        config_entry.options = new_options
-
-        config_entry.version = 2
-        config_entry.minor_version = 2
-
     _LOGGER.info(
         "migration to version %d.%d successful",
         config_entry.version,
