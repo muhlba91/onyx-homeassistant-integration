@@ -25,6 +25,7 @@
       "options": {
         "title": "Set Device Options",
         "data": {
+          "additional_delay": "Additional Delay for forced STOP",
           "min_dim_duration": "[Lights] Minimum Dim Duration",
           "max_dim_duration": "[Lights] Maximum Dim Duration",
           "scan_interval": "Scan Interval in Minutes",
@@ -38,6 +39,7 @@
       "init": {
         "title": "Set Device Options",
         "data": {
+          "additional_delay": "Additional Delay for forced STOP",
           "min_dim_duration": "[Lights] Minimum Dim Duration",
           "max_dim_duration": "[Lights] Maximum Dim Duration",
           "scan_interval": "Scan Interval in Minutes",

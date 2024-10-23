@@ -3,7 +3,7 @@
 import pytest
 import time
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from homeassistant.components.light import (
     ColorMode,
@@ -21,7 +21,8 @@ from onyx_client.enum.device_type import DeviceType
 from custom_components.hella_onyx.const import (
     DEFAULT_MIN_DIM_DURATION,
     DEFAULT_MAX_DIM_DURATION,
-    DEFAULT_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_ADDITIONAL_DELAY,
 )
 from custom_components.hella_onyx.configuration import Configuration
 from custom_components.hella_onyx.light import OnyxLight
@@ -31,9 +32,10 @@ class TestOnyxLight:
     @pytest.fixture
     def config(self):
         yield Configuration(
-            DEFAULT_INTERVAL,
+            DEFAULT_SCAN_INTERVAL,
             DEFAULT_MIN_DIM_DURATION,
             DEFAULT_MAX_DIM_DURATION,
+            DEFAULT_ADDITIONAL_DELAY,
             False,
             "",
             "",
@@ -342,7 +344,7 @@ class TestOnyxLight:
             entity._start_dim_device(animation)
             assert not mock_end_dim_device.called
 
-    def test_start_dim_device_end(self, entity):
+    def test_start_dim_device_end(self, entity, api, config):
         current_time = time.time()
         animation = AnimationValue(
             start=current_time - 100,
@@ -357,8 +359,34 @@ class TestOnyxLight:
             ],
         )
         with patch.object(entity, "_end_dim_device") as mock_end_dim_device:
+            config.additional_delay = 0
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
             entity._start_dim_device(animation)
             assert mock_end_dim_device.called
+            assert config_mock.called
+
+    def test_start_dim_device_end_within_time(self, entity, api, config):
+        current_time = time.time()
+        animation = AnimationValue(
+            start=current_time,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=1000,
+                    delay=0,
+                )
+            ],
+        )
+        with patch.object(entity, "_end_dim_device") as mock_end_dim_device:
+            config.additional_delay = 1000
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
+            entity._start_dim_device(animation)
+            assert not mock_end_dim_device.called
+            assert config_mock.called
 
     @patch("asyncio.run_coroutine_threadsafe")
     def test_end_dim_device(self, mock_run_coroutine_threadsafe, api, entity, device):

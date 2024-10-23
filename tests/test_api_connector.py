@@ -18,6 +18,7 @@ from custom_components.hella_onyx import APIConnector
 from custom_components.hella_onyx.const import (
     DEFAULT_MIN_DIM_DURATION,
     DEFAULT_MAX_DIM_DURATION,
+    DEFAULT_ADDITIONAL_DELAY,
 )
 from custom_components.hella_onyx.configuration import Configuration
 from custom_components.hella_onyx.api_connector import (
@@ -38,6 +39,7 @@ class TestAPIConnector:
             100000000,
             DEFAULT_MIN_DIM_DURATION,
             DEFAULT_MAX_DIM_DURATION,
+            DEFAULT_ADDITIONAL_DELAY,
             False,
             "finger",
             "token",

@@ -26,7 +26,6 @@ from onyx_client.enum.device_type import DeviceType
 from onyx_client.data.numeric_value import NumericValue
 
 from ..api_connector import APIConnector
-from ..const import INCREASED_INTERVAL_DELTA
 from ..sensors.onyx_entity import OnyxEntity
 from ..util.interpolation import interpolate
 
@@ -166,7 +165,7 @@ class OnyxLight(OnyxEntity, LightEntity):
             animation.start
             + keyframe.duration
             + keyframe.delay
-            + INCREASED_INTERVAL_DELTA
+            + self.api.config.additional_delay
         )
         is_dimming = current_time < end_time
 

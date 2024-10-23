@@ -3,7 +3,7 @@
 import pytest
 import time
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from homeassistant.components.cover import CoverDeviceClass, CoverEntityFeature
 from homeassistant.core import HomeAssistant
@@ -16,6 +16,13 @@ from onyx_client.device.shutter import Shutter
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
+from custom_components.hella_onyx.const import (
+    DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_MAX_DIM_DURATION,
+    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_ADDITIONAL_DELAY,
+)
+from custom_components.hella_onyx.configuration import Configuration
 from custom_components.hella_onyx.cover import OnyxShutter
 from custom_components.hella_onyx.enum.moving_state import MovingState
 
@@ -49,6 +56,18 @@ class TestOnyxShutter:
             DeviceType.RAFFSTORE_90,
             DeviceMode(DeviceType.RAFFSTORE_90),
             list(Action),
+        )
+
+    @pytest.fixture
+    def config(self):
+        yield Configuration(
+            DEFAULT_SCAN_INTERVAL,
+            DEFAULT_MIN_DIM_DURATION,
+            DEFAULT_MAX_DIM_DURATION,
+            DEFAULT_ADDITIONAL_DELAY,
+            False,
+            "",
+            "",
         )
 
     def test_icon(self, entity):
@@ -260,7 +279,7 @@ class TestOnyxShutter:
         assert entity.is_closed
         assert api.device.called
 
-    def test_start_moving_device_end(self, entity):
+    def test_start_moving_device_end(self, entity, api, config):
         current_time = time.time()
         animation = AnimationValue(
             start=current_time - 100,
@@ -276,10 +295,14 @@ class TestOnyxShutter:
         )
         entity._moving_state = MovingState.CLOSING
         with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            config.additional_delay = 0
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
             entity._start_moving_device(animation)
             assert mock_end_moving_device.called
+            assert config_mock.called
 
-    def test_start_moving_device_end_multiple_keyframes(self, entity):
+    def test_start_moving_device_end_multiple_keyframes(self, entity, api, config):
         current_time = time.time()
         animation = AnimationValue(
             start=current_time - 100,
@@ -301,10 +324,14 @@ class TestOnyxShutter:
         )
         entity._moving_state = MovingState.CLOSING
         with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            config.additional_delay = 0
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
             entity._start_moving_device(animation)
             assert mock_end_moving_device.called
+            assert config_mock.called
 
-    def test_start_moving_device_within_time(self, entity):
+    def test_start_moving_device_within_time(self, entity, api, config):
         current_time = time.time()
         animation = AnimationValue(
             start=current_time,
@@ -320,10 +347,16 @@ class TestOnyxShutter:
         )
         entity._moving_state = MovingState.CLOSING
         with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            config.additional_delay = 0
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
             entity._start_moving_device(animation)
             assert not mock_end_moving_device.called
+            assert config_mock.called
 
-    def test_start_moving_device_within_time_multiple_keyframes(self, entity):
+    def test_start_moving_device_within_time_multiple_keyframes(
+        self, entity, api, config
+    ):
         current_time = time.time()
         animation = AnimationValue(
             start=current_time,
@@ -345,8 +378,36 @@ class TestOnyxShutter:
         )
         entity._moving_state = MovingState.CLOSING
         with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            config.additional_delay = 0
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
             entity._start_moving_device(animation)
             assert not mock_end_moving_device.called
+            assert config_mock.called
+
+    def test_start_moving_device_within_time_due_to_additional_delay(
+        self, entity, api, config
+    ):
+        current_time = time.time()
+        animation = AnimationValue(
+            start=current_time,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=1000,
+                    delay=0,
+                )
+            ],
+        )
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
+            entity._start_moving_device(animation)
+            assert not mock_end_moving_device.called
+            assert config_mock.called
 
     def test_start_moving_device_still(self, entity):
         current_time = time.time()

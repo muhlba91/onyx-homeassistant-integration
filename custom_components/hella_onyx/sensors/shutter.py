@@ -28,7 +28,6 @@ from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
 from ..api_connector import APIConnector
-from ..const import INCREASED_INTERVAL_DELTA
 from ..enum.moving_state import MovingState
 from ..sensors.onyx_entity import OnyxEntity
 from ..util.interpolation import interpolate
@@ -242,7 +241,10 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
         current_time = time.time()
         end_time = (
-            animation.start + keyframe[0] + keyframe[1] + INCREASED_INTERVAL_DELTA
+            animation.start
+            + keyframe[0]
+            + keyframe[1]
+            + self.api.config.additional_delay
         )
         is_moving = current_time < end_time
 

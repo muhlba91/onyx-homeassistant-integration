@@ -26,11 +26,15 @@ from .const import (
     CONF_FINGERPRINT,
     CONF_MIN_DIM_DURATION,
     CONF_MAX_DIM_DURATION,
+    CONF_ADDITIONAL_DELAY,
     DEFAULT_MIN_DIM_DURATION,
     DEFAULT_MAX_DIM_DURATION,
+    DEFAULT_ADDITIONAL_DELAY,
     MIN_DIM_DURATION,
     MAX_DIM_DURATION,
-    DEFAULT_INTERVAL,
+    MIN_ADDITIONAL_DELAY,
+    MAX_ADDITIONAL_DELAY,
+    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
 
@@ -39,7 +43,7 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for ONYX."""
 
     VERSION = 2
-    MINOR_VERSION = 1
+    MINOR_VERSION = 2
     CONNECTION_CLASS = CONN_CLASS_LOCAL_POLL
 
     def __init__(self) -> None:
@@ -132,6 +136,9 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             scan_interval = user_input[CONF_SCAN_INTERVAL]
+            additional_delay = max(
+                MIN_ADDITIONAL_DELAY, user_input[CONF_ADDITIONAL_DELAY]
+            )
             min_dim_duration = max(MIN_DIM_DURATION, user_input[CONF_MIN_DIM_DURATION])
             max_dim_duration = min(MAX_DIM_DURATION, user_input[CONF_MAX_DIM_DURATION])
             force_update = user_input[CONF_FORCE_UPDATE]
@@ -142,6 +149,7 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
                     data=self._data,
                     options={
                         CONF_SCAN_INTERVAL: scan_interval,
+                        CONF_ADDITIONAL_DELAY: additional_delay,
                         CONF_MIN_DIM_DURATION: min_dim_duration,
                         CONF_MAX_DIM_DURATION: max_dim_duration,
                         CONF_FORCE_UPDATE: force_update,
@@ -196,6 +204,15 @@ def _get_options_schema(data: dict | None = None):
     return vol.Schema(
         {
             vol.Optional(
+                CONF_ADDITIONAL_DELAY,
+                default=data.get(CONF_ADDITIONAL_DELAY, DEFAULT_ADDITIONAL_DELAY),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=MIN_ADDITIONAL_DELAY,
+                    max=MAX_ADDITIONAL_DELAY,
+                )
+            ),
+            vol.Optional(
                 CONF_MIN_DIM_DURATION,
                 default=data.get(CONF_MIN_DIM_DURATION, DEFAULT_MIN_DIM_DURATION),
             ): selector.NumberSelector(
@@ -215,7 +232,7 @@ def _get_options_schema(data: dict | None = None):
             ),
             vol.Optional(
                 CONF_SCAN_INTERVAL,
-                default=data.get(CONF_SCAN_INTERVAL, DEFAULT_INTERVAL),
+                default=data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
             ): selector.NumberSelector(
                 selector.NumberSelectorConfig(
                     min=0,

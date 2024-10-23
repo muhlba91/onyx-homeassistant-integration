@@ -17,6 +17,7 @@ from custom_components.hella_onyx.const import (
     CONF_FINGERPRINT,
     CONF_MIN_DIM_DURATION,
     CONF_MAX_DIM_DURATION,
+    CONF_ADDITIONAL_DELAY,
 )
 from custom_components.hella_onyx.config_flow import (
     OnyxFlowHandler,
@@ -299,6 +300,7 @@ class TestOnyxFlowHandler:
                 CONF_SCAN_INTERVAL: 60,
                 CONF_MIN_DIM_DURATION: 0,
                 CONF_MAX_DIM_DURATION: 2000,
+                CONF_ADDITIONAL_DELAY: 1000,
                 CONF_FORCE_UPDATE: True,
             }
         )
@@ -344,6 +346,7 @@ class TestOnyxOptionsFlowHandler:
         assert form is not None
         assert "title" not in form
         assert "min_dim_duration" in form["data_schema"].schema
+        assert "additional_delay" in form["data_schema"].schema
         assert "scan_interval" in form["data_schema"].schema
         assert "force_update" in form["data_schema"].schema
 
@@ -363,6 +366,7 @@ class TestOnyxOptionsFlowHandler:
             CONF_SCAN_INTERVAL: 100,
             CONF_MIN_DIM_DURATION: 10,
             CONF_MAX_DIM_DURATION: 10,
+            CONF_ADDITIONAL_DELAY: 10,
             CONF_FORCE_UPDATE: False,
         }
         form = await options_flow.async_step_init(user_input)

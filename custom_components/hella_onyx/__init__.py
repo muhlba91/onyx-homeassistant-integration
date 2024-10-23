@@ -18,9 +18,11 @@ from .const import (
     CONF_FINGERPRINT,
     CONF_MIN_DIM_DURATION,
     CONF_MAX_DIM_DURATION,
+    CONF_ADDITIONAL_DELAY,
     DEFAULT_MIN_DIM_DURATION,
     DEFAULT_MAX_DIM_DURATION,
-    DEFAULT_INTERVAL,
+    DEFAULT_ADDITIONAL_DELAY,
+    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     ONYX_API,
     ONYX_CONFIG,
@@ -42,7 +44,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     fingerprint = entry.data[CONF_FINGERPRINT]
     token = entry.data[CONF_ACCESS_TOKEN]
-    scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_INTERVAL)
+    scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+    additional_delay = entry.options.get(
+        CONF_ADDITIONAL_DELAY, DEFAULT_ADDITIONAL_DELAY
+    )
     min_dim_duration = entry.options.get(
         CONF_MIN_DIM_DURATION, DEFAULT_MIN_DIM_DURATION
     )
@@ -63,6 +68,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         scan_interval,
         min_dim_duration,
         max_dim_duration,
+        additional_delay,
         force_update,
         fingerprint,
         token,
@@ -108,7 +114,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
     """Migrate old entry."""
-    _LOGGER.debug("migrating from version %d", config_entry.version)
+    _LOGGER.debug(
+        "migrating from version %d.%d", config_entry.version, config_entry.minor_version
+    )
 
     if config_entry.version == 1:
         old_data = {**config_entry.data}
@@ -118,7 +126,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
             CONF_ACCESS_TOKEN: old_data.get(CONF_ACCESS_TOKEN),
         }
         new_options = {
-            CONF_SCAN_INTERVAL: old_data.get(CONF_SCAN_INTERVAL, DEFAULT_INTERVAL),
+            CONF_SCAN_INTERVAL: old_data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
             CONF_MIN_DIM_DURATION: old_data.get(
                 CONF_MIN_DIM_DURATION, DEFAULT_MIN_DIM_DURATION
             ),
@@ -132,6 +140,29 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
 
         config_entry.version = 2
         config_entry.minor_version = 1
+
+    if config_entry.version == 2 and config_entry.minor_version == 1:
+        old_options = {**config_entry.options}
+
+        new_options = {
+            CONF_SCAN_INTERVAL: old_options.get(
+                CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+            ),
+            CONF_MIN_DIM_DURATION: old_options.get(
+                CONF_MIN_DIM_DURATION, DEFAULT_MIN_DIM_DURATION
+            ),
+            CONF_MAX_DIM_DURATION: old_options.get(
+                CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION
+            ),
+            CONF_ADDITIONAL_DELAY: old_options.get(
+                CONF_ADDITIONAL_DELAY, DEFAULT_ADDITIONAL_DELAY
+            ),
+            CONF_FORCE_UPDATE: old_options.get(CONF_FORCE_UPDATE, False),
+        }
+        config_entry.options = new_options
+
+        config_entry.version = 2
+        config_entry.minor_version = 2
 
     _LOGGER.info(
         "migration to version %d.%d successful",
