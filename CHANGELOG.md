@@ -1,6 +1,25 @@
 # Changelog
 
 
+## [10.3.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.2.1...v10.3.0) (2024-10-23)
+
+
+### Features
+
+* add configurable delay to call stop; relates to [#220](https://github.com/muhlba91/onyx-homeassistant-integration/issues/220) ([e11f913](https://github.com/muhlba91/onyx-homeassistant-integration/commit/e11f91338442fe2cfd5f2f780c6a6c7cd92067d9))
+
+
+### Bug Fixes
+
+* do not migrate options ([139fdbc](https://github.com/muhlba91/onyx-homeassistant-integration/commit/139fdbc9a8e0ee5fec3bb15fa403b4dedc253438))
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependency coverage to v7.6.4 ([f42bb17](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f42bb17357e3562c46c04f5e00a19f0d237684a4))
+* **deps:** update dependency homeassistant to v2024.10.3 ([d251cca](https://github.com/muhlba91/onyx-homeassistant-integration/commit/d251cca0549f6b323d94134c3ff25affa6428e9f))
+* **deps:** update dependency ruff to ^0.7.0 ([998e350](https://github.com/muhlba91/onyx-homeassistant-integration/commit/998e350ff5ff3dbe0cf748de6a927f3da7b8498c))
+
 ## [10.2.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.2.0...v10.2.1) (2024-10-17)
 
 
