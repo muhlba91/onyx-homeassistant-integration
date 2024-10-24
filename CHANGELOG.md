@@ -1,6 +1,16 @@
 # Changelog
 
 
+## [10.3.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.3.0...v10.3.1) (2024-10-24)
+
+
+### Miscellaneous Chores
+
+* **deps:** update actions/setup-python action to v5.3.0 ([16f0c3c](https://github.com/muhlba91/onyx-homeassistant-integration/commit/16f0c3c6137a287704f1542e634c295a79283b65))
+* **deps:** update dependency ruff to v0.7.1 ([1b7a374](https://github.com/muhlba91/onyx-homeassistant-integration/commit/1b7a37417bc7ef0805cd9bd33bd3d0817290ef0c))
+* fix minor scorecard issues ([ac42c6b](https://github.com/muhlba91/onyx-homeassistant-integration/commit/ac42c6bb7cad6a2519aa420d9fb0f051e1cf3af6))
+* introduce repository and project security scanning ([29c94a0](https://github.com/muhlba91/onyx-homeassistant-integration/commit/29c94a0e97bcc1e0102ba2f9db8d8d664c180d7e))
+
 ## [10.3.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.2.1...v10.3.0) (2024-10-23)
 
 
