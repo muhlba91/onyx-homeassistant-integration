@@ -4,7 +4,7 @@ repos:
     rev: v0.1.6
     hooks:
       - id: ruff
-        args: [ --fix ]
+        args: [--fix]
       - id: ruff-format
   - repo: https://github.com/talos-systems/conform
     rev: v0.1.0-alpha.27
@@ -15,6 +15,8 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
       - id: check-json
       - id: check-merge-conflict
       - id: check-symlinks
@@ -22,8 +24,9 @@ repos:
       - id: check-xml
       - id: check-yaml
       - id: detect-aws-credentials
-        args: [
-            "--allow-missing-credentials"
-        ]
+        args: ["--allow-missing-credentials"]
       - id: detect-private-key
-
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.16.3
+    hooks:
+      - id: gitleaks
