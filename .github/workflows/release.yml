@@ -22,5 +22,9 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: google-github-actions/release-please-action@v4
+      - uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - uses: google-github-actions/release-please-action@e4dc86ba9405554aeba3c6bb2d169500e7d3b4ee # v4.1.1
         id: release
