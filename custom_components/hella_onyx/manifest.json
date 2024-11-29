@@ -5,7 +5,7 @@
   "documentation": "https://github.com/muhlba91/onyx-homeassistant-integration",
   "issue_tracker": "https://github.com/muhlba91/onyx-homeassistant-integration/issues",
   "requirements": [
-    "onyx-client==9.0.0"
+    "onyx-client==9.1.0"
   ],
   "ssdp": [],
   "zeroconf": [],
