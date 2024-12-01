@@ -2,10 +2,11 @@
   "domain": "hella_onyx",
   "name": "Hella ONYX.CENTER",
   "config_flow": true,
+  "integration_type": "hub",
   "documentation": "https://github.com/muhlba91/onyx-homeassistant-integration",
   "issue_tracker": "https://github.com/muhlba91/onyx-homeassistant-integration/issues",
   "requirements": [
-    "onyx-client==9.1.0"
+    "onyx-client==9.1.1"
   ],
   "ssdp": [],
   "zeroconf": [],
