@@ -1,6 +1,14 @@
 # Changelog
 
 
+## [10.4.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.4.0...v10.4.1) (2024-12-01)
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependencies ([07ae6e7](https://github.com/muhlba91/onyx-homeassistant-integration/commit/07ae6e789dd309721e74d0aef179f2967ef7c4ee))
+* **deps:** update dependency onyx-client to v9.1.1 ([8f1c696](https://github.com/muhlba91/onyx-homeassistant-integration/commit/8f1c69689fac3c21a33a2383f9ca68c3c4e63002))
+
 ## [10.4.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.3.0...v10.4.0) (2024-11-29)
 
 
