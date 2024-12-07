@@ -20,8 +20,8 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.13"
-onyx-client = "^9.1.1"
+python = ">=3.12,<3.14"
+onyx-client = "^9.2.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.0.0"
