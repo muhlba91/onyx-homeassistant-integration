@@ -1,6 +1,28 @@
 # Changelog
 
 
+## [11.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.4.1...v11.0.0) (2024-12-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* adds compatibility with home-assistant 2024.12.0 and python 3.13
+
+### Features
+
+* update to include python 3.13 ([721cf4a](https://github.com/muhlba91/onyx-homeassistant-integration/commit/721cf4a0f0bd2c42d1a159daed7589029a754608))
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependency coverage to v7.6.9 ([b3aee1a](https://github.com/muhlba91/onyx-homeassistant-integration/commit/b3aee1ad29b55501d2cc3ba9f016f903d9bf2ef4))
+* **deps:** update dependency homeassistant to v2024.12.0 ([72f1412](https://github.com/muhlba91/onyx-homeassistant-integration/commit/72f1412528dbbf5d066aedb8b40d7cfefa576730))
+* **deps:** update dependency homeassistant to v2024.12.1 ([7424a9e](https://github.com/muhlba91/onyx-homeassistant-integration/commit/7424a9ec53d8c3a6c62a554dd1af5c56cc5a3f25))
+* **deps:** update dependency pytest to v8.3.4 ([e91b876](https://github.com/muhlba91/onyx-homeassistant-integration/commit/e91b876932238e95e7a35c835a772b6022c50687))
+* **deps:** update dependency ruff to v0.8.2 ([0662e36](https://github.com/muhlba91/onyx-homeassistant-integration/commit/0662e36fd262be18227c3aa0ffa5e5b7329cc912))
+* **deps:** update github/codeql-action action to v3.27.6 ([40046cc](https://github.com/muhlba91/onyx-homeassistant-integration/commit/40046ccc4cfc1dcde815b628ea8b0d357ff0daa3))
+* **deps:** update pre-commit hook astral-sh/ruff-pre-commit to v0.8.2 ([5e0520b](https://github.com/muhlba91/onyx-homeassistant-integration/commit/5e0520b4c781f0c697486a1de30801625624f59f))
+
 ## [10.4.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.4.0...v10.4.1) (2024-12-01)
 
 
