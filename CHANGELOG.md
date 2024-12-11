@@ -1,6 +1,14 @@
 # Changelog
 
 
+## [11.0.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v11.0.0...v11.0.1) (2024-12-11)
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependency homeassistant to v2024.12.2 ([ded1bb4](https://github.com/muhlba91/onyx-homeassistant-integration/commit/ded1bb4aa9f91fc5f998ce0f4a05c20d08651c02))
+* **deps:** update github/codeql-action action to v3.27.7 ([f92054a](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f92054a16e189a7c8af011f06929b12bc2d76b8f))
+
 ## [11.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.4.1...v11.0.0) (2024-12-07)
 
 
