@@ -1,6 +1,22 @@
 # Changelog
 
 
+## [11.0.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v11.0.0...v11.0.1) (2024-12-19)
+
+
+### Miscellaneous Chores
+
+* **deps:** update actions/upload-artifact action to v4.5.0 ([570a0e0](https://github.com/muhlba91/onyx-homeassistant-integration/commit/570a0e0acb1f657cecb6c44b971f147d60a10748))
+* **deps:** update dependency homeassistant to v2024.12.2 ([ded1bb4](https://github.com/muhlba91/onyx-homeassistant-integration/commit/ded1bb4aa9f91fc5f998ce0f4a05c20d08651c02))
+* **deps:** update dependency homeassistant to v2024.12.3 ([9e055a7](https://github.com/muhlba91/onyx-homeassistant-integration/commit/9e055a74b7d34a81407fa6e3cbbf69f67416d13b))
+* **deps:** update dependency homeassistant to v2024.12.4 ([fc58d89](https://github.com/muhlba91/onyx-homeassistant-integration/commit/fc58d89473f3490869186d7979e64ec1cd2c5da0))
+* **deps:** update dependency ruff to v0.8.3 ([83ac19b](https://github.com/muhlba91/onyx-homeassistant-integration/commit/83ac19bd87ec1532d83fc18e54fba11409d82d44))
+* **deps:** update dependency ruff to v0.8.4 ([31089fb](https://github.com/muhlba91/onyx-homeassistant-integration/commit/31089fb4501326569849765d1eaa56dc3246fcbb))
+* **deps:** update github/codeql-action action to v3.27.7 ([f92054a](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f92054a16e189a7c8af011f06929b12bc2d76b8f))
+* **deps:** update github/codeql-action action to v3.27.8 ([3b087dd](https://github.com/muhlba91/onyx-homeassistant-integration/commit/3b087ddc7651c87a38b262e2f4d08f14f1c99c97))
+* **deps:** update github/codeql-action action to v3.27.9 ([b798a6f](https://github.com/muhlba91/onyx-homeassistant-integration/commit/b798a6fa7f5bd6630e4dd60ce2c3c694bfb7470d))
+* **deps:** update pre-commit hook astral-sh/ruff-pre-commit to v0.8.3 ([788fc6a](https://github.com/muhlba91/onyx-homeassistant-integration/commit/788fc6a534b579c28817cb02cdfc930bbda0ae71))
+
 ## [11.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v10.4.1...v11.0.0) (2024-12-07)
 
 
