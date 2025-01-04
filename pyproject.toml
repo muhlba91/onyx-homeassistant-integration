@@ -28,7 +28,7 @@ pytest = "^8.0.0"
 pytest-cov = { extras = ["toml"], version = "^6.0.0" }
 coverage = { extras = ["toml"], version = "^7.0.0" }
 pre-commit = "^4.0.0"
-pytest-asyncio = "^0.24.0"
+pytest-asyncio = "^0.25.0"
 aioresponses = "^0.7.4"
 homeassistant = "^2025.0.0"
 ruff = "^0.8.0"
