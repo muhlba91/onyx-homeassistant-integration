@@ -21,9 +21,9 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.14"
-onyx-client = "^9.2.0"
+onyx-client = "^9.2.1"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
 pytest-cov = { extras = ["toml"], version = "^6.0.0" }
 coverage = { extras = ["toml"], version = "^7.0.0" }

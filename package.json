@@ -5,6 +5,7 @@
         "contributors:generate": "all-contributors generate"
     },
     "devDependencies": {
-        "all-contributors-cli": "^6.24.0"
-    }
+        "all-contributors-cli": "^6.26.1"
+    },
+    "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
 }

@@ -435,3 +435,4 @@ dmypy.json
 .ruff_cache/
 tmp/
 node_modules/
+.yarn/
