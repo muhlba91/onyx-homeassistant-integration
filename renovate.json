@@ -17,20 +17,20 @@
         "poetry"
     ],
     "github-actions": {
-        "fileMatch": [
-            "^(workflow-templates|\\.github/workflows)/[^/]+\\.ya?ml$",
-            "(^|/)action\\.ya?ml$"
+        "managerFilePatterns": [
+            "/^(workflow-templates|\\.github/workflows)/[^/]+\\.ya?ml$/",
+            "/(^|/)action\\.ya?ml$/"
         ]
     },
     "pre-commit": {
         "enabled": true,
-        "fileMatch": [
-            "(^|/)\\.pre-commit-config\\.ya?ml$"
+        "managerFilePatterns": [
+            "/(^|/)\\.pre-commit-config\\.ya?ml$/"
         ]
     },
     "poetry": {
-        "fileMatch": [
-            "(^|/)pyproject\\.toml$"
+        "managerFilePatterns": [
+            "/(^|/)pyproject\\.toml$/"
         ]
     }
 }
