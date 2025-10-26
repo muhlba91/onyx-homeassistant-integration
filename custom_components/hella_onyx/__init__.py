@@ -83,7 +83,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         local_address,
     )
     _LOGGER.info("using config: %s", onyx_config)
-    onyx_api = APIConnector(hass, onyx_config)
+    onyx_api = APIConnector(hass, onyx_config, entry)
     await onyx_api.async_config_entry_first_refresh()
     onyx_timezone = await onyx_api.get_timezone()
 

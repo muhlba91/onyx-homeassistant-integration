@@ -23,12 +23,13 @@ _LOGGER = logging.getLogger(__name__)
 class APIConnector(DataUpdateCoordinator):
     """API connector for an ONYX.CENTER."""
 
-    def __init__(self, hass, config: Configuration):
+    def __init__(self, hass, config: Configuration, entry=None):
         """Initialize the connector."""
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
+            config_entry=entry,
             update_interval=timedelta(minutes=config.scan_interval),
             request_refresh_debouncer=Debouncer(
                 hass, _LOGGER, cooldown=0, immediate=True

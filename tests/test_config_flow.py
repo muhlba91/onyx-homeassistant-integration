@@ -39,7 +39,8 @@ class TestOnyxFlowHandler:
         self, mock_async_step_options, mock_async_show_form
     ):
         config_flow = OnyxFlowHandler()
-        await config_flow.async_step_user(None)
+        config_flow.hass = MagicMock()
+        await config_flow.async_step_user()
         assert mock_async_show_form.called
         assert not mock_async_step_options.called
 
@@ -302,6 +303,7 @@ class TestOnyxFlowHandler:
             unique_id="onyx",
             options={},
             discovery_keys={},
+            subentries_data={},
         )
         config_flow.hass = MagicMock()
         await config_flow.async_step_user(
@@ -338,6 +340,7 @@ class TestOnyxFlowHandler:
             unique_id="onyx",
             options={},
             discovery_keys={},
+            subentries_data={},
         )
         await config_flow.async_step_user()
         assert not mock_async_abort_entries_match.called
