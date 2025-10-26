@@ -16,9 +16,12 @@ from .api_connector import APIConnector
 from .configuration import Configuration
 from .const import (
     CONF_FINGERPRINT,
+    CONF_INTERPOLATION_FREQUENCY,
+    CONF_LOCAL_ADDRESS,
     CONF_MIN_DIM_DURATION,
     CONF_MAX_DIM_DURATION,
     CONF_ADDITIONAL_DELAY,
+    DEFAULT_INTERPOLATION_FREQUENCY,
     DEFAULT_MIN_DIM_DURATION,
     DEFAULT_MAX_DIM_DURATION,
     DEFAULT_ADDITIONAL_DELAY,
@@ -44,7 +47,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     fingerprint = entry.data[CONF_FINGERPRINT]
     token = entry.data[CONF_ACCESS_TOKEN]
+    local_address = entry.options.get(CONF_LOCAL_ADDRESS, None)
     scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+    interpolation_frequency = entry.options.get(
+        CONF_INTERPOLATION_FREQUENCY, DEFAULT_INTERPOLATION_FREQUENCY
+    )
     additional_delay = entry.options.get(
         CONF_ADDITIONAL_DELAY, DEFAULT_ADDITIONAL_DELAY
     )
@@ -69,9 +76,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         min_dim_duration,
         max_dim_duration,
         additional_delay,
+        interpolation_frequency,
         force_update,
         fingerprint,
         token,
+        local_address,
     )
     _LOGGER.info("using config: %s", onyx_config)
     onyx_api = APIConnector(hass, onyx_config)
@@ -139,6 +148,33 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
         config_entry.options = new_options
 
         config_entry.version = 2
+        config_entry.minor_version = 1
+
+    if config_entry.version == 2:
+        old_data = {**config_entry.data}
+
+        new_data = {
+            CONF_FINGERPRINT: old_data.get(CONF_FINGERPRINT),
+            CONF_ACCESS_TOKEN: old_data.get(CONF_ACCESS_TOKEN),
+        }
+        new_options = {
+            CONF_LOCAL_ADDRESS: old_data.get(CONF_LOCAL_ADDRESS, None),
+            CONF_SCAN_INTERVAL: old_data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+            CONF_INTERPOLATION_FREQUENCY: old_data.get(
+                CONF_INTERPOLATION_FREQUENCY, DEFAULT_INTERPOLATION_FREQUENCY
+            ),
+            CONF_MIN_DIM_DURATION: old_data.get(
+                CONF_MIN_DIM_DURATION, DEFAULT_MIN_DIM_DURATION
+            ),
+            CONF_MAX_DIM_DURATION: old_data.get(
+                CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION
+            ),
+            CONF_FORCE_UPDATE: old_data.get(CONF_FORCE_UPDATE, False),
+        }
+        config_entry.data = new_data
+        config_entry.options = new_options
+
+        config_entry.version = 3
         config_entry.minor_version = 1
 
     _LOGGER.info(

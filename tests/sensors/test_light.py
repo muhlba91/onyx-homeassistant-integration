@@ -19,6 +19,7 @@ from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
 from custom_components.hella_onyx.const import (
+    DEFAULT_INTERPOLATION_FREQUENCY,
     DEFAULT_MIN_DIM_DURATION,
     DEFAULT_MAX_DIM_DURATION,
     DEFAULT_SCAN_INTERVAL,
@@ -36,9 +37,11 @@ class TestOnyxLight:
             DEFAULT_MIN_DIM_DURATION,
             DEFAULT_MAX_DIM_DURATION,
             DEFAULT_ADDITIONAL_DELAY,
+            DEFAULT_INTERPOLATION_FREQUENCY,
             False,
             "",
             "",
+            None,
         )
 
     @pytest.fixture
@@ -382,6 +385,29 @@ class TestOnyxLight:
         )
         with patch.object(entity, "_end_dim_device") as mock_end_dim_device:
             config.additional_delay = 1000
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
+            entity._start_dim_device(animation)
+            assert not mock_end_dim_device.called
+            assert config_mock.called
+
+    def test_start_dim_device_end_within_time_interpolation(self, entity, api, config):
+        current_time = time.time()
+        animation = AnimationValue(
+            start=current_time,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=1000,
+                    delay=0,
+                )
+            ],
+        )
+        with patch.object(entity, "_end_dim_device") as mock_end_dim_device:
+            config.additional_delay = 1000
+            config.interpolation_frequency = 500
             config_mock = PropertyMock(return_value=config)
             type(api).config = config_mock
             entity._start_dim_device(animation)

@@ -17,6 +17,7 @@
       "options": {
         "title": "[%key:common::config_flow::options::title%]",
         "data": {
+          "interpolation_frequency": "[%key:common::config_flow::options::interpolation_frequency%]",
           "additional_delay": "[%key:common::config_flow::options::additional_delay%]",
           "min_dim_duration": "[%key:common::config_flow::options::min_dim_duration%]",
           "max_dim_duration": "[%key:common::config_flow::options::max_dim_duration%]",
@@ -39,6 +40,7 @@
       "init": {
         "title": "[%key:common::config_flow::data::title%]",
         "data": {
+          "interpolation_frequency": "[%key:common::config_flow::data::interpolation_frequency%]",
           "additional_delay": "[%key:common::config_flow::data::additional_delay%]",
           "min_dim_duration": "[%key:common::config_flow::data::min_dim_duration%]",
           "max_dim_duration": "[%key:common::config_flow::data::max_dim_duration%]",

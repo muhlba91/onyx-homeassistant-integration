@@ -10,18 +10,22 @@ class Configuration:
         min_dim_duration,
         max_dim_duration,
         additional_delay,
+        interpolation_frequency,
         force_update,
         fingerprint,
         token,
+        local_address,
     ):
         """Initialize the configuration."""
         self.scan_interval = scan_interval
         self.min_dim_duration = min_dim_duration
         self.max_dim_duration = max_dim_duration
         self.additional_delay = additional_delay
+        self.interpolation_frequency = interpolation_frequency
         self.force_update = force_update
         self.fingerprint = fingerprint
         self.token = token
+        self.local_address = local_address
 
     def __str__(self) -> str:
-        return f"Configuration(scan_interval={self.scan_interval}, min_dim_duration={self.min_dim_duration}, max_dim_duration={self.max_dim_duration}, additional_delay={self.additional_delay}, force_update={self.force_update}, fingerprint={self.fingerprint})"
+        return f"Configuration(scan_interval={self.scan_interval}, min_dim_duration={self.min_dim_duration}, max_dim_duration={self.max_dim_duration}, additional_delay={self.additional_delay}, interpolation_frequency={self.interpolation_frequency}, force_update={self.force_update}, fingerprint={self.fingerprint}, local_address={self.local_address})"

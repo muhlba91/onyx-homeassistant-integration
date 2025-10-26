@@ -160,28 +160,55 @@ class OnyxLight(OnyxEntity, LightEntity):
         """Start the update loop."""
         keyframe = animation.keyframes[len(animation.keyframes) - 1]
 
+        utc_now = utcnow()
         current_time = time.time()
         end_time = (
             animation.start
             + keyframe.duration
             + keyframe.delay
-            + self.api.config.additional_delay
+            + self.api.config.additional_delay / 1000
         )
+        time_delta = timedelta(seconds=end_time - current_time)
         is_dimming = current_time < end_time
 
         _LOGGER.debug(
-            "dimming device %s with current_time %s < end_time %s: %s",
+            "dimming device %s with current_time %s < end_time %s (delta: %s): %s",
             self._uuid,
             current_time,
             end_time,
+            time_delta,
             is_dimming,
         )
 
         if is_dimming:
+            interpolation_frequency = self.api.config.interpolation_frequency / 1000
+            if interpolation_frequency > 0:
+                for slice in range(
+                    0, int(time_delta.total_seconds() // interpolation_frequency)
+                ):
+                    utc_intermediate_time = utc_now + timedelta(
+                        seconds=slice * interpolation_frequency
+                    )
+                    async_track_point_in_utc_time(
+                        self.hass,
+                        self._end_dim_device,
+                        utc_intermediate_time,
+                    )
+                    _LOGGER.debug(
+                        "scheduled intermediate end_dim_device for device %s at %s",
+                        self._uuid,
+                        utc_intermediate_time,
+                    )
+            utc_end_time = utc_now + time_delta
             async_track_point_in_utc_time(
                 self.hass,
                 self._end_dim_device,
-                utcnow() + timedelta(seconds=end_time - current_time),
+                utc_end_time,
+            )
+            _LOGGER.debug(
+                "scheduled end_dim_device for device %s at %s",
+                self._uuid,
+                utc_end_time,
             )
         else:
             self._end_dim_device()
