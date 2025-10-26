@@ -15,6 +15,8 @@ from homeassistant.config_entries import ConfigEntry
 
 from custom_components.hella_onyx.const import (
     CONF_FINGERPRINT,
+    CONF_INTERPOLATION_FREQUENCY,
+    CONF_LOCAL_ADDRESS,
     CONF_MIN_DIM_DURATION,
     CONF_MAX_DIM_DURATION,
     CONF_ADDITIONAL_DELAY,
@@ -137,6 +139,36 @@ class TestOnyxFlowHandler:
         "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
     )
     @pytest.mark.asyncio
+    async def test_async_step_user_with_data_and_local_address(
+        self,
+        mock_async_step_options,
+        mock_async_verify_conn,
+        mock_async_abort_entries_match,
+    ):
+        mock_async_verify_conn.return_value = True
+
+        config_flow = OnyxFlowHandler()
+        await config_flow.async_step_user(
+            {
+                CONF_FINGERPRINT: "finger",
+                CONF_ACCESS_TOKEN: "token",
+                CONF_LOCAL_ADDRESS: "localhost",
+            }
+        )
+        assert mock_async_abort_entries_match.called
+        assert mock_async_verify_conn.called
+        assert mock_async_step_options.called
+
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_verify_conn"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
+    )
+    @pytest.mark.asyncio
     async def test_async_step_user_with_code(
         self,
         mock_async_step_options,
@@ -159,6 +191,45 @@ class TestOnyxFlowHandler:
             await config_flow.async_step_user(
                 {
                     CONF_CODE: "code",
+                }
+            )
+            assert mock_async_abort_entries_match.called
+            assert mock_async_verify_conn.called
+            assert mock_async_step_options.called
+
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_verify_conn"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
+    )
+    @pytest.mark.asyncio
+    async def test_async_step_user_with_code_and_local_address(
+        self,
+        mock_async_step_options,
+        mock_async_verify_conn,
+        mock_async_abort_entries_match,
+    ):
+        mock_async_verify_conn.return_value = True
+        with aioresponses() as mock_response:
+            mock_response.post(
+                "https://localhost/api/v3/authorize",
+                status=200,
+                payload={
+                    "fingerprint": "finger",
+                    "token": "token",
+                },
+            )
+
+            config_flow = OnyxFlowHandler()
+            config_flow.hass = MagicMock()
+            await config_flow.async_step_user(
+                {
+                    CONF_CODE: "code",
+                    CONF_LOCAL_ADDRESS: "localhost",
                 }
             )
             assert mock_async_abort_entries_match.called
@@ -297,11 +368,37 @@ class TestOnyxFlowHandler:
         config_flow._data = {CONF_FINGERPRINT: "finger"}
         await config_flow.async_step_options(
             {
+                CONF_LOCAL_ADDRESS: None,
                 CONF_SCAN_INTERVAL: 60,
                 CONF_MIN_DIM_DURATION: 0,
                 CONF_MAX_DIM_DURATION: 2000,
                 CONF_ADDITIONAL_DELAY: 1000,
                 CONF_FORCE_UPDATE: True,
+                CONF_INTERPOLATION_FREQUENCY: 5000,
+            }
+        )
+        assert mock_async_create_entry.called
+        assert not mock_async_step_options.called
+
+    @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_show_form")
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_create_entry"
+    )
+    @pytest.mark.asyncio
+    async def test_async_step_options_with_data_and_local_address(
+        self, mock_async_create_entry, mock_async_step_options
+    ):
+        config_flow = OnyxFlowHandler()
+        config_flow._data = {CONF_FINGERPRINT: "finger"}
+        await config_flow.async_step_options(
+            {
+                CONF_LOCAL_ADDRESS: "192.168.1.1",
+                CONF_SCAN_INTERVAL: 60,
+                CONF_MIN_DIM_DURATION: 0,
+                CONF_MAX_DIM_DURATION: 2000,
+                CONF_ADDITIONAL_DELAY: 1000,
+                CONF_FORCE_UPDATE: True,
+                CONF_INTERPOLATION_FREQUENCY: 5000,
             }
         )
         assert mock_async_create_entry.called
@@ -324,14 +421,27 @@ class TestOnyxFlowHandler:
     ):
         config_flow = OnyxFlowHandler()
         config_flow.hass = MagicMock()
-        await config_flow._async_verify_conn("finger", "token")
+        await config_flow._async_verify_conn("finger", "token", None)
+        assert mock_verify.called
+
+    @patch("onyx_client.client.OnyxClient.verify")
+    @pytest.mark.asyncio
+    async def test_async_verify_conn_local_address(
+        self,
+        mock_verify,
+    ):
+        config_flow = OnyxFlowHandler()
+        config_flow.hass = MagicMock()
+        await config_flow._async_verify_conn("finger", "token", "192.168.1.1")
         assert mock_verify.called
 
 
 class TestOnyxOptionsFlowHandler:
+    @patch("homeassistant.core.HomeAssistant")
     @pytest.mark.asyncio
     async def test_async_step_init_without_data(
         self,
+        mock_hass,
     ):
         entry = MagicMock()
         value = {
@@ -339,9 +449,12 @@ class TestOnyxOptionsFlowHandler:
             CONF_MIN_DIM_DURATION: 0,
             CONF_MAX_DIM_DURATION: 100,
             CONF_FORCE_UPDATE: False,
+            CONF_INTERPOLATION_FREQUENCY: 5000,
         }
         entry.options.return_value = value
-        options_flow = OnyxOptionsFlowHandler(entry)
+        options_flow = OnyxOptionsFlowHandler()
+        options_flow.hass = mock_hass
+        mock_hass.config_entries.async_get_entry.return_value = entry
         form = await options_flow.async_step_init()
         assert form is not None
         assert "title" not in form
@@ -350,9 +463,11 @@ class TestOnyxOptionsFlowHandler:
         assert "scan_interval" in form["data_schema"].schema
         assert "force_update" in form["data_schema"].schema
 
+    @patch("homeassistant.core.HomeAssistant")
     @pytest.mark.asyncio
     async def test_async_step_init_with_data(
         self,
+        mock_hass,
     ):
         entry = MagicMock()
         entry.options.return_value = {
@@ -360,8 +475,10 @@ class TestOnyxOptionsFlowHandler:
             CONF_MIN_DIM_DURATION: 0,
             CONF_MAX_DIM_DURATION: 100,
             CONF_FORCE_UPDATE: False,
+            CONF_INTERPOLATION_FREQUENCY: 5000,
         }
-        options_flow = OnyxOptionsFlowHandler(entry)
+        options_flow = OnyxOptionsFlowHandler()
+        options_flow.hass = mock_hass
         user_input = {
             CONF_SCAN_INTERVAL: 100,
             CONF_MIN_DIM_DURATION: 10,
@@ -369,6 +486,7 @@ class TestOnyxOptionsFlowHandler:
             CONF_ADDITIONAL_DELAY: 10,
             CONF_FORCE_UPDATE: False,
         }
+        mock_hass.config_entries.async_get_entry.return_value = entry
         form = await options_flow.async_step_init(user_input)
         assert form is not None
         assert form["title"] != ""

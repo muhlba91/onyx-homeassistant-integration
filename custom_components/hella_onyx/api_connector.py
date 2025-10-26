@@ -49,6 +49,7 @@ class APIConnector(DataUpdateCoordinator):
                 fingerprint=self.config.fingerprint,
                 access_token=self.config.token,
                 client_session=async_get_clientsession(self.hass),
+                local_address=self.config.local_address,
             )
         return self.__client
 

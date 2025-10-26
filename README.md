@@ -41,14 +41,6 @@ suggested is anywhere between 30-180 minutes.
 
 This integration uses API `v3`.
 
-> [!WARNING]
-> The streaming API uses a HTTP GET request which, unfortunately, is timing out and ending the connection every ~10 minutes.
-> Currently, the client is reconnecting after a short backoff time.
->
-> Hence, errors in your Home Assistant log like `[onyx_client.client] Unexpected exception: ClientPayloadError('Response payload is not completed'). Retrying with backoff Xs.` are to be expected.
->
-> The issue is tracked here: <https://github.com/muhlba91/onyx-homeassistant-integration/issues/30>.
-
 ---
 
 ## Installation
@@ -67,19 +59,33 @@ The integration offers the following possibilities:
 
 ## Configuration
 
-Add it from the **Integrations menu**, set the configuration, and you're good to go.
+Add it from the **Integrations** menu, set the configuration, and you're good to go.
 
 | Configuration Key | Description |
 |-------------------|-------------|
 | API Code | The code retrieved by the ONYX app when allowing a new client to connect. |
 | Fingerprint | Your ONYX.CENTER fingerprint. |
 | Access Token | The access token. |
-| Scan Interval | Interval for polling for updates. This is used as a fallback if near realtime updates are failing and can be set to a higher value. |
+| Local Address | Your ONYX.CENTER local IP address. |
+| Interpolation Frequency | Frequency (in ms) to interpolate the position or light intensity while moving. A lower value results in smoother transitions but more updates. Set to 0 to disable interpolation. (Default: 5000) |
+| Additional Delay for forced STOP | Additional delay (in ms) to wait before sending a forced STOP command to update the shutter position. (Default: 1000) |
 | \[Lights] Minimum Dim Duration | The minimum dim duration to use when dimming a light. (Default: 200) |
+| \[Lights] Maximum Dim Duration | The maximum dim duration to use when dimming a light. (Default: 200) |
+| Scan Interval | Interval for polling for updates. This is used as a fallback if near realtime updates are failing and can be set to a higher value. |
 | Disable partial updates? | The integration relies on the streaming API. Hence, only partial device data will be retrieved. Enable this option to always retrieve the full device data. *Attention*: this may lead to more API requests and is discouraged. |
 
+### Authentication
+
 To configure the integration you can either directly specify a **fingerprint** and an **access token** or use the issued **API code** from the ONYX app directly.
+
 The integration will then exchange this code through the API to retrieve the fingerprint and access token for your ONYX.CENTER.
+
+### Local API Access
+
+To use local API access, you need to provide the local IP address of your ONYX.CENTER device.
+Additionally, follow [Authentication](#authentication) to provide the necessary credentials.
+
+If a local address is provided, the integration will always try to connect to the local API.
 
 ## Entities
 

@@ -17,6 +17,7 @@ from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
 from custom_components.hella_onyx.const import (
+    DEFAULT_INTERPOLATION_FREQUENCY,
     DEFAULT_MIN_DIM_DURATION,
     DEFAULT_MAX_DIM_DURATION,
     DEFAULT_SCAN_INTERVAL,
@@ -65,9 +66,11 @@ class TestOnyxShutter:
             DEFAULT_MIN_DIM_DURATION,
             DEFAULT_MAX_DIM_DURATION,
             DEFAULT_ADDITIONAL_DELAY,
+            DEFAULT_INTERPOLATION_FREQUENCY,
             False,
             "",
             "",
+            None,
         )
 
     def test_icon(self, entity):
@@ -348,6 +351,30 @@ class TestOnyxShutter:
         entity._moving_state = MovingState.CLOSING
         with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
             config.additional_delay = 0
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
+            entity._start_moving_device(animation)
+            assert not mock_end_moving_device.called
+            assert config_mock.called
+
+    def test_start_moving_device_within_time_interpolation(self, entity, api, config):
+        current_time = time.time()
+        animation = AnimationValue(
+            start=current_time,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear",
+                    value=0,
+                    duration=1000,
+                    delay=0,
+                )
+            ],
+        )
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "_end_moving_device") as mock_end_moving_device:
+            config.additional_delay = 0
+            config.interpolation_frequency = 500
             config_mock = PropertyMock(return_value=config)
             type(api).config = config_mock
             entity._start_moving_device(animation)

@@ -16,6 +16,7 @@ from onyx_client.group.group import Group
 
 from custom_components.hella_onyx import APIConnector
 from custom_components.hella_onyx.const import (
+    DEFAULT_INTERPOLATION_FREQUENCY,
     DEFAULT_MIN_DIM_DURATION,
     DEFAULT_MAX_DIM_DURATION,
     DEFAULT_ADDITIONAL_DELAY,
@@ -40,9 +41,11 @@ class TestAPIConnector:
             DEFAULT_MIN_DIM_DURATION,
             DEFAULT_MAX_DIM_DURATION,
             DEFAULT_ADDITIONAL_DELAY,
+            DEFAULT_INTERPOLATION_FREQUENCY,
             False,
             "finger",
             "token",
+            None,
         )
         yield APIConnector(None, config)
 
