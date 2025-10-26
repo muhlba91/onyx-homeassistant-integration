@@ -15,21 +15,24 @@
         "data": {
           "fingerprint": "Fingerprint",
           "access_token": "Access Token",
-          "code": "API Code"
+          "code": "API Code",
+          "local_address": "Local IP Address (optional)"
         },
         "data_description": {
           "code": "Either specify the API Code from the ONYX app, or a fingerprint & token pair!",
-          "fingerprint": "Attention: if you specify an API code, fingerprint & token are ignored!"
+          "fingerprint": "Attention: if you specify an API code, fingerprint & token are ignored!",
+          "local_address": "Attention: if a local address is specified, the integration will not attempt to connect via the public API!"
         }
       },
       "options": {
         "title": "Set Device Options",
         "data": {
-          "interpolation_frequency": "Interpolation Frequency",
-          "additional_delay": "Additional Delay for forced STOP",
-          "min_dim_duration": "[Lights] Minimum Dim Duration",
-          "max_dim_duration": "[Lights] Maximum Dim Duration",
-          "scan_interval": "Scan Interval in Minutes",
+          "local_address": "Local IP Address (optional)",
+          "interpolation_frequency": "Interpolation Frequency [s]",
+          "additional_delay": "Additional Delay for forced STOP [ms]",
+          "min_dim_duration": "[Lights] Minimum Dim Duration [ms]",
+          "max_dim_duration": "[Lights] Maximum Dim Duration [ms]",
+          "scan_interval": "Scan Interval [min]",
           "force_update": "[Advanced] Disable partial updates?"
         }
       }
@@ -40,11 +43,12 @@
       "init": {
         "title": "Set Device Options",
         "data": {
-          "interpolation_frequency": "Interpolation Frequency",
-          "additional_delay": "Additional Delay for forced STOP",
-          "min_dim_duration": "[Lights] Minimum Dim Duration",
-          "max_dim_duration": "[Lights] Maximum Dim Duration",
-          "scan_interval": "Scan Interval in Minutes",
+          "local_address": "Local IP Address (optional)",
+          "interpolation_frequency": "Interpolation Frequency [s]",
+          "additional_delay": "Additional Delay for forced STOP [ms]",
+          "min_dim_duration": "[Lights] Minimum Dim Duration [ms]",
+          "max_dim_duration": "[Lights] Maximum Dim Duration [ms]",
+          "scan_interval": "Scan Interval [min]",
           "force_update": "[Advanced] Disable partial updates?"
         }
       }

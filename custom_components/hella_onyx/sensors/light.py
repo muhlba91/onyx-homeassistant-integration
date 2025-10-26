@@ -181,7 +181,7 @@ class OnyxLight(OnyxEntity, LightEntity):
         )
 
         if is_dimming:
-            interpolation_frequency = self.api.config.interpolation_frequency / 1000
+            interpolation_frequency = self.api.config.interpolation_frequency
             if interpolation_frequency > 0:
                 for slice in range(
                     0, int(time_delta.total_seconds() // interpolation_frequency)
