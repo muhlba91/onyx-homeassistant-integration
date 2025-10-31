@@ -1850,14 +1850,14 @@ habluetooth = ">=3.0"
 
 [[package]]
 name = "homeassistant"
-version = "2025.11.0b0"
+version = "2025.11.0b1"
 description = "Open-source home automation platform running on Python 3."
 optional = false
 python-versions = ">=3.13.2"
 groups = ["dev"]
 files = [
-    {file = "homeassistant-2025.11.0b0-py3-none-any.whl", hash = "sha256:03a9b78d0d5f0415a6c48a82a3fe24d23b40a3a70b7394cc24a2ff77913235d1"},
-    {file = "homeassistant-2025.11.0b0.tar.gz", hash = "sha256:bd747b5ea45deaa5bcd1ffd1355e52393b7479f56abfc5e8de1fe01fbd9ef756"},
+    {file = "homeassistant-2025.11.0b1-py3-none-any.whl", hash = "sha256:63e64cf33a1f7a861c01cf79aef9356e8d95b9c12f6b6f4958e8ba845b9647b9"},
+    {file = "homeassistant-2025.11.0b1.tar.gz", hash = "sha256:e2780efc7bd2367932f53653b9a634a0080eed969d3ec364e852e9c23c76fd0b"},
 ]
 
 [package.dependencies]
@@ -3638,21 +3638,21 @@ pytest = ">=6.0.0"
 
 [[package]]
 name = "pytest-homeassistant-custom-component"
-version = "0.13.290"
+version = "0.13.291"
 description = "Experimental package to automatically extract test plugins for Home Assistant custom components"
 optional = false
 python-versions = ">=3.13"
 groups = ["dev"]
 files = [
-    {file = "pytest_homeassistant_custom_component-0.13.290-py3-none-any.whl", hash = "sha256:4f531328364524e96ff56ac536fa7c5b4b3177fa397a8c8f9e7c8e40d045a794"},
-    {file = "pytest_homeassistant_custom_component-0.13.290.tar.gz", hash = "sha256:a7ca3e81cf50d9063acfe547412cd2581f2b06f88dff8c99a2b9d283afed6bf8"},
+    {file = "pytest_homeassistant_custom_component-0.13.291-py3-none-any.whl", hash = "sha256:62b23f3be414688c443b76ed08d0187ed1d5ba20de9163495b6a3c590bc99788"},
+    {file = "pytest_homeassistant_custom_component-0.13.291.tar.gz", hash = "sha256:c30d37338dc1a157b3b32101154d260dbd2ea58406b4cdcdaf2071548efccf9e"},
 ]
 
 [package.dependencies]
 coverage = "7.10.6"
 freezegun = "1.5.2"
 go2rtc-client = "0.2.1"
-homeassistant = "2025.11.0b0"
+homeassistant = "2025.11.0b1"
 librt = "0.2.1"
 license-expression = "30.4.3"
 mock-open = "1.4.0"
