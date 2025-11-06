@@ -1862,14 +1862,14 @@ habluetooth = ">=3.0"
 
 [[package]]
 name = "homeassistant"
-version = "2025.11.0b4"
+version = "2025.11.0"
 description = "Open-source home automation platform running on Python 3."
 optional = false
 python-versions = ">=3.13.2"
 groups = ["dev"]
 files = [
-    {file = "homeassistant-2025.11.0b4-py3-none-any.whl", hash = "sha256:04862c960e2460c662c161b9692ce0b248cd2596e3ec66effaee87c199416545"},
-    {file = "homeassistant-2025.11.0b4.tar.gz", hash = "sha256:68de20e7313d5b6fcf9ea4e93ce03decf4fa161367c2bbc80c219a6b3e54a820"},
+    {file = "homeassistant-2025.11.0-py3-none-any.whl", hash = "sha256:8120d9afb2eb9a8b091c1b80ef3c57d627ac8cf6fb293ce0558c892f6f5f801a"},
+    {file = "homeassistant-2025.11.0.tar.gz", hash = "sha256:2525abfb21afa5761ce81c3707ec552e9628915335d5db09641598cbe5b86c7e"},
 ]
 
 [package.dependencies]
@@ -3650,21 +3650,21 @@ pytest = ">=6.0.0"
 
 [[package]]
 name = "pytest-homeassistant-custom-component"
-version = "0.13.293"
+version = "0.13.294"
 description = "Experimental package to automatically extract test plugins for Home Assistant custom components"
 optional = false
 python-versions = ">=3.13"
 groups = ["dev"]
 files = [
-    {file = "pytest_homeassistant_custom_component-0.13.293-py3-none-any.whl", hash = "sha256:15ae0a875d49bcf82db26866bcc98239d5257be2d439595de24c078492c1274b"},
-    {file = "pytest_homeassistant_custom_component-0.13.293.tar.gz", hash = "sha256:d778bbc60b8220bc68f09f810831a11cf12814ca5bb9d822ecd987d74bdebd3d"},
+    {file = "pytest_homeassistant_custom_component-0.13.294-py3-none-any.whl", hash = "sha256:716ce7b30d9791695f3d50fea35e79a965cc5c0025a4e1bcd805338198073bcc"},
+    {file = "pytest_homeassistant_custom_component-0.13.294.tar.gz", hash = "sha256:cdbdff7cdb70d253b201bf02147f6720d674ee27c1366139352a8982f174e8ee"},
 ]
 
 [package.dependencies]
 coverage = "7.10.6"
 freezegun = "1.5.2"
 go2rtc-client = "0.2.1"
-homeassistant = "2025.11.0b4"
+homeassistant = "2025.11.0"
 librt = "0.2.1"
 license-expression = "30.4.3"
 mock-open = "1.4.0"
