@@ -1,6 +1,18 @@
 # Changelog
 
 
+## [12.0.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v12.0.0...v12.0.1) (2025-11-15)
+
+
+### Bug Fixes
+
+* fix config migration ([c3f15e0](https://github.com/muhlba91/onyx-homeassistant-integration/commit/c3f15e0eb2f9dac700be2b09e2eb8cc04015954b))
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependency coverage to v7.11.3 ([8859e31](https://github.com/muhlba91/onyx-homeassistant-integration/commit/8859e314af23778d9fc1d9fb5e864f3543e13ed9))
+
 ## [12.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v11.1.0...v12.0.0) (2025-11-15)
 
 
