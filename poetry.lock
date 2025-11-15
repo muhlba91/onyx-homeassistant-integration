@@ -1235,14 +1235,13 @@ toml = ["tomli ; python_full_version <= \"3.11.0a6\""]
 
 [[package]]
 name = "cronsim"
-version = "2.6"
+version = "2.7"
 description = "Cron expression parser and evaluator"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "cronsim-2.6-py3-none-any.whl", hash = "sha256:5e153ff8ed64da7ee8d5caac470dbeda8024ab052c3010b1be149772b4801835"},
-    {file = "cronsim-2.6.tar.gz", hash = "sha256:5aab98716ef90ab5ac6be294b2c3965dbf76dc869f048846a0af74ebb506c10d"},
+    {file = "cronsim-2.7-py3-none-any.whl", hash = "sha256:1e1431fa08c51dc7f72e67e571c7c7a09af26420169b607badd4ca9677ffad1e"},
 ]
 
 [[package]]
@@ -1862,14 +1861,14 @@ habluetooth = ">=3.0"
 
 [[package]]
 name = "homeassistant"
-version = "2025.11.1"
+version = "2025.11.2"
 description = "Open-source home automation platform running on Python 3."
 optional = false
 python-versions = ">=3.13.2"
 groups = ["dev"]
 files = [
-    {file = "homeassistant-2025.11.1-py3-none-any.whl", hash = "sha256:414718321b0bf8f1a8697253c3fabe36742d7e77b8873873e6aab2b5ec1b584e"},
-    {file = "homeassistant-2025.11.1.tar.gz", hash = "sha256:5bdc6e59fcfd94241768f83e3b7d779b3331bc17d8eb80ab53bbf0363adaff79"},
+    {file = "homeassistant-2025.11.2-py3-none-any.whl", hash = "sha256:823395b05b9da96d94bd11c789c957b8f91c46ac54f5d7def9c766acd5eb44d7"},
+    {file = "homeassistant-2025.11.2.tar.gz", hash = "sha256:8f5d1ad864a715abba29832916b142ac24eab26cbf0f9a7a07040cbe53847bec"},
 ]
 
 [package.dependencies]
@@ -1890,7 +1889,7 @@ awesomeversion = "25.8.0"
 bcrypt = "5.0.0"
 certifi = ">=2021.5.30"
 ciso8601 = "2.3.3"
-cronsim = "2.6"
+cronsim = "2.7"
 cryptography = "46.0.2"
 fnv-hash-fast = "1.6.0"
 hass-nabucasa = "1.5.1"
@@ -3650,21 +3649,21 @@ pytest = ">=6.0.0"
 
 [[package]]
 name = "pytest-homeassistant-custom-component"
-version = "0.13.295"
+version = "0.13.296"
 description = "Experimental package to automatically extract test plugins for Home Assistant custom components"
 optional = false
 python-versions = ">=3.13"
 groups = ["dev"]
 files = [
-    {file = "pytest_homeassistant_custom_component-0.13.295-py3-none-any.whl", hash = "sha256:810111e3c4ad44a05da40c41af53b498ce52746361abf9786605d7f78337feac"},
-    {file = "pytest_homeassistant_custom_component-0.13.295.tar.gz", hash = "sha256:c28a41433cc265d6f4a5f18c3df6fcc7a1d134142f086f794648ac9eb480c8f5"},
+    {file = "pytest_homeassistant_custom_component-0.13.296-py3-none-any.whl", hash = "sha256:2bdff6b17c73baa573a1a4efe9fbcf6666d10eea2401e7a149c8681a353922bb"},
+    {file = "pytest_homeassistant_custom_component-0.13.296.tar.gz", hash = "sha256:ef77378d0adea9b2986a65976dac65a5388582cd5e42fd82e825a70237a7c81a"},
 ]
 
 [package.dependencies]
 coverage = "7.10.6"
 freezegun = "1.5.2"
 go2rtc-client = "0.2.1"
-homeassistant = "2025.11.1"
+homeassistant = "2025.11.2"
 librt = "0.2.1"
 license-expression = "30.4.3"
 mock-open = "1.4.0"
