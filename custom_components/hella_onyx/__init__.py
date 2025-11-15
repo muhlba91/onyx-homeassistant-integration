@@ -144,11 +144,9 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
             ),
             CONF_FORCE_UPDATE: old_data.get(CONF_FORCE_UPDATE, False),
         }
-        config_entry.data = new_data
-        config_entry.options = new_options
-
-        config_entry.version = 2
-        config_entry.minor_version = 1
+        hass.config_entries.async_update_entry(
+            config_entry, data=new_data, options=new_options, version=2, minor_version=1
+        )
 
     if config_entry.version == 2:
         old_data = {**config_entry.data}
@@ -171,11 +169,9 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
             ),
             CONF_FORCE_UPDATE: old_data.get(CONF_FORCE_UPDATE, False),
         }
-        config_entry.data = new_data
-        config_entry.options = new_options
-
-        config_entry.version = 3
-        config_entry.minor_version = 1
+        hass.config_entries.async_update_entry(
+            config_entry, data=new_data, options=new_options, version=3, minor_version=1
+        )
 
     _LOGGER.info(
         "migration to version %d.%d successful",
