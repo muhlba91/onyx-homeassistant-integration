@@ -1634,14 +1634,14 @@ files = [
 
 [[package]]
 name = "go2rtc-client"
-version = "0.2.1"
+version = "0.3.0"
 description = "Python client for go2rtc"
 optional = false
 python-versions = ">=3.12.0"
 groups = ["dev"]
 files = [
-    {file = "go2rtc_client-0.2.1-py3-none-any.whl", hash = "sha256:de767a6608cecfc69cd44f54db649af0233bc92ab5c6b408d6b60515b622c620"},
-    {file = "go2rtc_client-0.2.1.tar.gz", hash = "sha256:9b60e22a0f554c39f30b92b4abaf68efe41e6942aa2f25900efae7798c9747a8"},
+    {file = "go2rtc_client-0.3.0-py3-none-any.whl", hash = "sha256:6e2b4bf9a386f2410770019d8b4e98cb2964f1d8c01b3d3c2598da4259f5d6d1"},
+    {file = "go2rtc_client-0.3.0.tar.gz", hash = "sha256:6609c7081b9858cc8cefeffb2202c48536904afed80240ed13e913cc03882a95"},
 ]
 
 [package.dependencies]
@@ -1861,14 +1861,14 @@ habluetooth = ">=3.0"
 
 [[package]]
 name = "homeassistant"
-version = "2025.11.2"
+version = "2025.11.3"
 description = "Open-source home automation platform running on Python 3."
 optional = false
 python-versions = ">=3.13.2"
 groups = ["dev"]
 files = [
-    {file = "homeassistant-2025.11.2-py3-none-any.whl", hash = "sha256:823395b05b9da96d94bd11c789c957b8f91c46ac54f5d7def9c766acd5eb44d7"},
-    {file = "homeassistant-2025.11.2.tar.gz", hash = "sha256:8f5d1ad864a715abba29832916b142ac24eab26cbf0f9a7a07040cbe53847bec"},
+    {file = "homeassistant-2025.11.3-py3-none-any.whl", hash = "sha256:00973a5d5c3f6654da47a499abf2f0c66a085b59de7522457d927bb6e2888211"},
+    {file = "homeassistant-2025.11.3.tar.gz", hash = "sha256:2b1a6338f96eb041d3f9b46d82cffd12c224b13778a5130ab176fb7b9abe6f64"},
 ]
 
 [package.dependencies]
@@ -3649,21 +3649,21 @@ pytest = ">=6.0.0"
 
 [[package]]
 name = "pytest-homeassistant-custom-component"
-version = "0.13.296"
+version = "0.13.297"
 description = "Experimental package to automatically extract test plugins for Home Assistant custom components"
 optional = false
 python-versions = ">=3.13"
 groups = ["dev"]
 files = [
-    {file = "pytest_homeassistant_custom_component-0.13.296-py3-none-any.whl", hash = "sha256:2bdff6b17c73baa573a1a4efe9fbcf6666d10eea2401e7a149c8681a353922bb"},
-    {file = "pytest_homeassistant_custom_component-0.13.296.tar.gz", hash = "sha256:ef77378d0adea9b2986a65976dac65a5388582cd5e42fd82e825a70237a7c81a"},
+    {file = "pytest_homeassistant_custom_component-0.13.297-py3-none-any.whl", hash = "sha256:3dc5d258df235cd8798c1f53bc0aef3288dd61d7c08acf847f028371c5e56f1e"},
+    {file = "pytest_homeassistant_custom_component-0.13.297.tar.gz", hash = "sha256:80c900da975dffdf4539572970c691fa27d169be396b9d263e3049285f3e8acc"},
 ]
 
 [package.dependencies]
 coverage = "7.10.6"
 freezegun = "1.5.2"
-go2rtc-client = "0.2.1"
-homeassistant = "2025.11.2"
+go2rtc-client = "0.3.0"
+homeassistant = "2025.11.3"
 librt = "0.2.1"
 license-expression = "30.4.3"
 mock-open = "1.4.0"
