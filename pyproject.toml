@@ -24,7 +24,7 @@ python = ">=3.13.2,<3.15"
 onyx-client = "^10.1.1"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.0.0"
+pytest = "^9.0.0"
 pytest-cov = { extras = ["toml"], version = "^7.0.0" }
 coverage = { extras = ["toml"], version = "^7.0.0" }
 pre-commit = "^4.0.0"
