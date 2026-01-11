@@ -9,6 +9,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import DiscoveryInfoType
 
 from onyx_client.enum.device_type import DeviceType
+from onyx_client.device.weather import Weather
+
+from custom_components.hella_onyx.api_connector import APIConnector
 
 from . import ONYX_API, ONYX_TIMEZONE
 from .const import DOMAIN
@@ -58,26 +61,7 @@ async def async_setup_entry(
     ]
     # all weather stations
     sensors = sensors + [
-        [
-            OnyxSensorWeatherHumidity(
-                api, timezone, device.name, device.device_type, device_id
-            ),
-            OnyxSensorWeatherTemperature(
-                api, timezone, device.name, device.device_type, device_id
-            ),
-            OnyxSensorWeatherAirPressure(
-                api, timezone, device.name, device.device_type, device_id
-            ),
-            OnyxSensorWeatherWindPeak(
-                api, timezone, device.name, device.device_type, device_id
-            ),
-            OnyxSensorWeatherSunBrightnessPeak(
-                api, timezone, device.name, device.device_type, device_id
-            ),
-            OnyxSensorWeatherSunBrightnessSink(
-                api, timezone, device.name, device.device_type, device_id
-            ),
-        ]
+        _collect_weather_sensors(api, timezone, device, device_id)
         for device_id, device in filter(
             lambda item: item[1].device_type == DeviceType.WEATHER, api.devices.items()
         )
@@ -86,3 +70,37 @@ async def async_setup_entry(
 
     _LOGGER.info("adding %s hella_onyx sensor entities", len(sensors))
     async_add_entities(sensors, True)
+
+
+def _collect_weather_sensors(
+    api: APIConnector, timezone: str, device: Weather, device_id: str
+):
+    sensors = [
+        OnyxSensorWeatherTemperature(
+            api, timezone, device.name, device.device_type, device_id
+        ),
+        OnyxSensorWeatherWindPeak(
+            api, timezone, device.name, device.device_type, device_id
+        ),
+        OnyxSensorWeatherSunBrightnessPeak(
+            api, timezone, device.name, device.device_type, device_id
+        ),
+        OnyxSensorWeatherSunBrightnessSink(
+            api, timezone, device.name, device.device_type, device_id
+        ),
+    ]
+
+    if device.humidity is not None:
+        sensors += (
+            OnyxSensorWeatherHumidity(
+                api, timezone, device.name, device.device_type, device_id
+            ),
+        )
+    if device.air_pressure is not None:
+        sensors += (
+            OnyxSensorWeatherAirPressure(
+                api, timezone, device.name, device.device_type, device_id
+            ),
+        )
+
+    return sensors
