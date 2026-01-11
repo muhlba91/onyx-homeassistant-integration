@@ -12,6 +12,7 @@ from onyx_client.device.light import Light
 from onyx_client.device.weather import Weather
 from onyx_client.device.shutter import Shutter
 from onyx_client.enum.device_type import DeviceType
+from onyx_client.data.numeric_value import NumericValue
 
 from custom_components.hella_onyx import (
     DOMAIN,
@@ -58,6 +59,18 @@ async def test_async_setup_entry(mock_hass):
             DeviceType.WEATHER,
             DeviceMode(DeviceType.WEATHER),
             list(),
+            humidity=NumericValue(
+                value=1,
+                minimum=0,
+                maximum=1,
+                read_only=False,
+            ),
+            air_pressure=NumericValue(
+                value=1,
+                minimum=0,
+                maximum=1,
+                read_only=False,
+            ),
         ),
         "none": Shutter(
             "none",
@@ -87,17 +100,69 @@ async def test_async_setup_entry(mock_hass):
     assert async_add_entries.data[2]._uuid == "weather"
     assert async_add_entries.data[2].unique_id == "weather/DeviceType"
     assert async_add_entries.data[3]._uuid == "weather"
-    assert async_add_entries.data[3].unique_id == "weather/Humidity"
+    assert async_add_entries.data[3].unique_id == "weather/Temperature"
     assert async_add_entries.data[4]._uuid == "weather"
-    assert async_add_entries.data[4].unique_id == "weather/Temperature"
+    assert async_add_entries.data[4].unique_id == "weather/WindPeak"
     assert async_add_entries.data[5]._uuid == "weather"
-    assert async_add_entries.data[5].unique_id == "weather/AirPressure"
+    assert async_add_entries.data[5].unique_id == "weather/SunBrightnessPeak"
     assert async_add_entries.data[6]._uuid == "weather"
-    assert async_add_entries.data[6].unique_id == "weather/WindPeak"
+    assert async_add_entries.data[6].unique_id == "weather/SunBrightnessSink"
     assert async_add_entries.data[7]._uuid == "weather"
-    assert async_add_entries.data[7].unique_id == "weather/SunBrightnessPeak"
+    assert async_add_entries.data[7].unique_id == "weather/Humidity"
     assert async_add_entries.data[8]._uuid == "weather"
-    assert async_add_entries.data[8].unique_id == "weather/SunBrightnessSink"
+    assert async_add_entries.data[8].unique_id == "weather/AirPressure"
+
+
+@patch("homeassistant.core.HomeAssistant")
+@pytest.mark.asyncio
+async def test_async_setup_entry_with_no_humidity_and_pressure(mock_hass):
+    config_entry = ConfigEntry(
+        version=1,
+        minor_version=1,
+        domain=DOMAIN,
+        title="entry",
+        data={},
+        source="source",
+        unique_id="onyx",
+        options={},
+        discovery_keys={},
+        subentries_data={},
+    )
+
+    weather = Weather(
+        "weather",
+        "name",
+        DeviceType.WEATHER,
+        DeviceMode(DeviceType.WEATHER),
+        list(),
+    )
+    api = MagicMock()
+    api.devices = {
+        "weather": weather,
+    }
+    async_add_entries = AsyncAddEntries()
+    mock_hass.data = {
+        DOMAIN: {
+            config_entry.entry_id: {
+                ONYX_API: api,
+                ONYX_TIMEZONE: "UTC",
+            }
+        }
+    }
+
+    await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
+    assert async_add_entries.called_async_add_entities
+    assert len(async_add_entries.data) == 5
+    assert async_add_entries.data[0]._uuid == "weather"
+    assert async_add_entries.data[0].unique_id == "weather/DeviceType"
+    assert async_add_entries.data[1]._uuid == "weather"
+    assert async_add_entries.data[1].unique_id == "weather/Temperature"
+    assert async_add_entries.data[2]._uuid == "weather"
+    assert async_add_entries.data[2].unique_id == "weather/WindPeak"
+    assert async_add_entries.data[3]._uuid == "weather"
+    assert async_add_entries.data[3].unique_id == "weather/SunBrightnessPeak"
+    assert async_add_entries.data[4]._uuid == "weather"
+    assert async_add_entries.data[4].unique_id == "weather/SunBrightnessSink"
 
 
 @patch("homeassistant.core.HomeAssistant")
