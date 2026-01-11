@@ -18,7 +18,7 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: ["3.13"]
-        poetry-version: [1.8.4]
+        poetry-version: [2.2.1]
 
     steps:
       - uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
