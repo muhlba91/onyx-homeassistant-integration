@@ -2163,14 +2163,14 @@ habluetooth = ">=3.0"
 
 [[package]]
 name = "homeassistant"
-version = "2026.1.0"
+version = "2026.1.1"
 description = "Open-source home automation platform running on Python 3."
 optional = false
 python-versions = ">=3.13.2"
 groups = ["dev"]
 files = [
-    {file = "homeassistant-2026.1.0-py3-none-any.whl", hash = "sha256:29148b15f12fdf398ed8290ad1c23e5241011b225d2f96febcc7390855f18061"},
-    {file = "homeassistant-2026.1.0.tar.gz", hash = "sha256:0faa7fa4c37b8ccf1eedc91794c69042f8f8559f2e7c205f1c279068262bdec6"},
+    {file = "homeassistant-2026.1.1-py3-none-any.whl", hash = "sha256:4a1f86db4a6b3de2d53a1aa2b0e847b6141e3c7ca66ff4749e759b6e1c747fc3"},
+    {file = "homeassistant-2026.1.1.tar.gz", hash = "sha256:2e5d70c1c7641ff03637c33566e13546f8cd151bba8a9132bb2e13877e2cfd4a"},
 ]
 
 [package.dependencies]
@@ -2218,8 +2218,8 @@ typing-extensions = ">=4.15.0,<5.0"
 ulid-transform = "1.5.2"
 urllib3 = ">=2.0"
 uv = "0.9.17"
-voluptuous = "0.16.0"
-voluptuous-openapi = "0.3.0"
+voluptuous = "0.15.2"
+voluptuous-openapi = "0.2.0"
 voluptuous-serialize = "2.7.0"
 webrtc-models = "0.3.0"
 yarl = "1.22.0"
@@ -4240,20 +4240,20 @@ pytest = ">=6.0.0"
 
 [[package]]
 name = "pytest-homeassistant-custom-component"
-version = "0.13.305"
+version = "0.13.306"
 description = "Experimental package to automatically extract test plugins for Home Assistant custom components"
 optional = false
 python-versions = ">=3.13"
 groups = ["dev"]
 files = [
-    {file = "pytest_homeassistant_custom_component-0.13.305-py3-none-any.whl", hash = "sha256:96da72b481773e065827a19d78ab85e423df90bcf307f4558157b66d0b3a1409"},
-    {file = "pytest_homeassistant_custom_component-0.13.305.tar.gz", hash = "sha256:d3781985c986b0d1bb534a0cabcffb58eba021deacf40810a43fe3f72f6d5427"},
+    {file = "pytest_homeassistant_custom_component-0.13.306-py3-none-any.whl", hash = "sha256:937942d53eec42e8917ba8fed5f8375a6394af9981787f9d152158cf0d138b50"},
+    {file = "pytest_homeassistant_custom_component-0.13.306.tar.gz", hash = "sha256:5c4a4c8233b2821f5e2fc1d3d0cdd17c4616b96d77ad6b500f8483eea80bb373"},
 ]
 
 [package.dependencies]
 coverage = "7.10.6"
 freezegun = "1.5.2"
-homeassistant = "2026.1.0"
+homeassistant = "2026.1.1"
 license-expression = "30.4.3"
 mock-open = "1.4.0"
 numpy = "2.3.2"
@@ -5510,26 +5510,26 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 
 [[package]]
 name = "voluptuous"
-version = "0.16.0"
+version = "0.15.2"
 description = "Python data validation library"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "voluptuous-0.16.0-py3-none-any.whl", hash = "sha256:ee342095263e1b5afbd4d418cb5adc92810eebfd07696bb033a261210df33db4"},
-    {file = "voluptuous-0.16.0.tar.gz", hash = "sha256:006535e22fed944aec17bef6e8725472476194743c87bd233e912eb463f8ff05"},
+    {file = "voluptuous-0.15.2-py3-none-any.whl", hash = "sha256:016348bc7788a9af9520b1764ebd4de0df41fe2138ebe9e06fa036bf86a65566"},
+    {file = "voluptuous-0.15.2.tar.gz", hash = "sha256:6ffcab32c4d3230b4d2af3a577c87e1908a714a11f6f95570456b1849b0279aa"},
 ]
 
 [[package]]
 name = "voluptuous-openapi"
-version = "0.3.0"
+version = "0.2.0"
 description = "Convert voluptuous schemas to OpenAPI Schema object"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "voluptuous_openapi-0.3.0-py3-none-any.whl", hash = "sha256:db35598e9fc711cbaf7d7732de160de3edf89cc7411b6febe5a132f1f54ea931"},
-    {file = "voluptuous_openapi-0.3.0.tar.gz", hash = "sha256:1ecd2386e63b59b791e0f64715e317c7018a2e5598333138bd1f28adfd348d5c"},
+    {file = "voluptuous_openapi-0.2.0-py3-none-any.whl", hash = "sha256:d51f07be8af44b11570b7366785d90daa716b7fd11ea2845803763ae551f35cf"},
+    {file = "voluptuous_openapi-0.2.0.tar.gz", hash = "sha256:2366be934c37bb5fd8ed6bd5a2a46b1079b57dfbdf8c6c02e88f4ca13e975073"},
 ]
 
 [package.dependencies]
