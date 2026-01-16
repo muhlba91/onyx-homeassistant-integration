@@ -1,6 +1,21 @@
 # Changelog
 
 
+## [12.0.3](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v12.0.2...v12.0.3) (2026-01-16)
+
+
+### Bug Fixes
+
+* **deps:** update client to 10.1.3; related to [#569](https://github.com/muhlba91/onyx-homeassistant-integration/issues/569) ([3ffd5fa](https://github.com/muhlba91/onyx-homeassistant-integration/commit/3ffd5fae5357a1377755749603d0842fa5a272d7))
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependency homeassistant to v2026.1.1 ([57e3b61](https://github.com/muhlba91/onyx-homeassistant-integration/commit/57e3b61ffb6039eb22e98e808753c7c921e7ac12))
+* **deps:** update dependency ruff to v0.14.12 ([192774e](https://github.com/muhlba91/onyx-homeassistant-integration/commit/192774eec9bdc066fc94f495b47b232febef7b02))
+* **deps:** update dependency ruff to v0.14.13 ([fad2a24](https://github.com/muhlba91/onyx-homeassistant-integration/commit/fad2a2427887d5f4ceb595eaadc74c0fb32f3eb2))
+* **deps:** update github/codeql-action action to v4.31.10 ([a204c9a](https://github.com/muhlba91/onyx-homeassistant-integration/commit/a204c9a7a88c8d39aab0717700600f15b38ca7ca))
+
 ## [12.0.2](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v12.0.1...v12.0.2) (2026-01-11)
 
 
