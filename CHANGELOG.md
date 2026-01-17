@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [12.0.4](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v12.0.3...v12.0.4) (2026-01-17)
+
+
+### Miscellaneous Chores
+
+* **deps:** update dependency homeassistant to v2026.1.2 ([27ce3cc](https://github.com/muhlba91/onyx-homeassistant-integration/commit/27ce3cc14ac05a1cb01c4c436d243baed8ecbbac))
+
 ## [12.0.3](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v12.0.2...v12.0.3) (2026-01-16)
 
 
