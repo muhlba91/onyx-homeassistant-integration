@@ -31,7 +31,7 @@ coverage = { extras = ["toml"], version = "^7.0.0" }
 pre-commit = "^4.0.0"
 pytest-asyncio = "^1.0.0"
 aioresponses = "^0.7.4"
-homeassistant = "^2026.0.0"
+homeassistant = "^2026.2.0-beta"
 ruff = "^0.14.0"
 pytest-homeassistant-custom-component = "^0.13.289"
 
