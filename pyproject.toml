@@ -21,8 +21,8 @@ classifiers = [
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">=3.13.2,<3.15"
-onyx-client = "^10.1.2"
+python = ">=3.14.2,<3.15"
+onyx-client = "^11.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0.0"
@@ -38,8 +38,12 @@ pytest-homeassistant-custom-component = "^0.13.289"
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "--strict-markers --cov=custom_components"
+asyncio_mode = "auto"
 testpaths = ["tests"]
 norecursedirs = [".git"]
+filterwarnings = [
+    "ignore:.*asyncio.get_event_loop_policy.*:DeprecationWarning",
+]
 
 [tool.coverage.run]
 relative_files = true

@@ -132,10 +132,7 @@ class APIConnector(DataUpdateCoordinator):
                 async for device in self._client().events(force_update):
                     if device is not None:
                         self.updated_device(device)
-                        asyncio.run_coroutine_threadsafe(
-                            self._updater(),
-                            self.hass.loop,
-                        )
+                        await self._updater()
             except Exception as ex:
                 _LOGGER.warning(
                     "connection reset: %s, restarting with backoff of %s seconds (%s)",

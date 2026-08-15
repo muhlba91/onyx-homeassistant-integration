@@ -3,7 +3,6 @@
 import pytest
 
 from unittest.mock import patch, MagicMock
-from aioresponses import aioresponses
 
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
@@ -25,8 +24,6 @@ from custom_components.hella_onyx.config_flow import (
     OnyxFlowHandler,
     OnyxOptionsFlowHandler,
 )
-
-from onyx_client.utils.const import API_URL
 
 
 class TestOnyxFlowHandler:
@@ -169,34 +166,31 @@ class TestOnyxFlowHandler:
     @patch(
         "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
     )
+    @patch("custom_components.hella_onyx.config_flow.authorize")
     @pytest.mark.asyncio
     async def test_async_step_user_with_code(
         self,
+        mock_authorize,
         mock_async_step_options,
         mock_async_verify_conn,
         mock_async_abort_entries_match,
     ):
         mock_async_verify_conn.return_value = True
-        with aioresponses() as mock_response:
-            mock_response.post(
-                f"{API_URL}/authorize",
-                status=200,
-                payload={
-                    "fingerprint": "finger",
-                    "token": "token",
-                },
-            )
+        mock_auth_config = MagicMock()
+        mock_auth_config.fingerprint = "finger"
+        mock_auth_config.access_token = "token"
+        mock_authorize.return_value = mock_auth_config
 
-            config_flow = OnyxFlowHandler()
-            config_flow.hass = MagicMock()
-            await config_flow.async_step_user(
-                {
-                    CONF_CODE: "code",
-                }
-            )
-            assert mock_async_abort_entries_match.called
-            assert mock_async_verify_conn.called
-            assert mock_async_step_options.called
+        config_flow = OnyxFlowHandler()
+        config_flow.hass = MagicMock()
+        await config_flow.async_step_user(
+            {
+                CONF_CODE: "code",
+            }
+        )
+        assert mock_async_abort_entries_match.called
+        assert mock_async_verify_conn.called
+        assert mock_async_step_options.called
 
     @patch(
         "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"
@@ -207,35 +201,32 @@ class TestOnyxFlowHandler:
     @patch(
         "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
     )
+    @patch("custom_components.hella_onyx.config_flow.authorize")
     @pytest.mark.asyncio
     async def test_async_step_user_with_code_and_local_address(
         self,
+        mock_authorize,
         mock_async_step_options,
         mock_async_verify_conn,
         mock_async_abort_entries_match,
     ):
         mock_async_verify_conn.return_value = True
-        with aioresponses() as mock_response:
-            mock_response.post(
-                "https://localhost/api/v3/authorize",
-                status=200,
-                payload={
-                    "fingerprint": "finger",
-                    "token": "token",
-                },
-            )
+        mock_auth_config = MagicMock()
+        mock_auth_config.fingerprint = "finger"
+        mock_auth_config.access_token = "token"
+        mock_authorize.return_value = mock_auth_config
 
-            config_flow = OnyxFlowHandler()
-            config_flow.hass = MagicMock()
-            await config_flow.async_step_user(
-                {
-                    CONF_CODE: "code",
-                    CONF_LOCAL_ADDRESS: "localhost",
-                }
-            )
-            assert mock_async_abort_entries_match.called
-            assert mock_async_verify_conn.called
-            assert mock_async_step_options.called
+        config_flow = OnyxFlowHandler()
+        config_flow.hass = MagicMock()
+        await config_flow.async_step_user(
+            {
+                CONF_CODE: "code",
+                CONF_LOCAL_ADDRESS: "localhost",
+            }
+        )
+        assert mock_async_abort_entries_match.called
+        assert mock_async_verify_conn.called
+        assert mock_async_step_options.called
 
     @patch(
         "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"
@@ -247,32 +238,30 @@ class TestOnyxFlowHandler:
         "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
     )
     @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_show_form")
+    @patch("custom_components.hella_onyx.config_flow.authorize")
     @pytest.mark.asyncio
     async def test_async_step_user_with_invalid_code(
         self,
+        mock_authorize,
         mock_async_show_form,
         mock_async_step_options,
         mock_async_verify_conn,
         mock_async_abort_entries_match,
     ):
         mock_async_verify_conn.return_value = True
-        with aioresponses() as mock_response:
-            mock_response.post(
-                f"{API_URL}/authorize",
-                status=400,
-            )
+        mock_authorize.return_value = None
 
-            config_flow = OnyxFlowHandler()
-            config_flow.hass = MagicMock()
-            await config_flow.async_step_user(
-                {
-                    CONF_CODE: "code",
-                }
-            )
-            assert not mock_async_abort_entries_match.called
-            assert not mock_async_verify_conn.called
-            assert not mock_async_step_options.called
-            assert mock_async_show_form.called
+        config_flow = OnyxFlowHandler()
+        config_flow.hass = MagicMock()
+        await config_flow.async_step_user(
+            {
+                CONF_CODE: "code",
+            }
+        )
+        assert not mock_async_abort_entries_match.called
+        assert not mock_async_verify_conn.called
+        assert not mock_async_step_options.called
+        assert mock_async_show_form.called
 
     @patch(
         "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"

@@ -17,7 +17,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: ["3.13"]
+        python-version: ["3.14"]
         poetry-version: [2.4.1]
 
     steps:
@@ -49,7 +49,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: ["3.13"]
+        python-version: ["3.14"]
         poetry-version: [2.4.1]
 
     steps:
