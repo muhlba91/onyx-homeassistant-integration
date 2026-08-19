@@ -276,6 +276,80 @@ class TestOnyxShutter:
                 assert api.device.called
                 assert mock_schedule_update_ha_state.called
 
+    def test_handle_coordinator_update_position_still_sets_state(
+        self, entity, device, api
+    ):
+        """External Onyx app: animation arrives while state is STILL → state auto-set."""
+        animation = AnimationValue(
+            start=0,
+            current_value=10,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", duration=10, delay=0, value=50
+                )
+            ],
+        )
+        device.actual_position = NumericValue(
+            value=10,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=animation,
+        )
+        device.actual_angle = NumericValue(
+            value=0,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=None,
+        )
+        device.target_position = NumericValue(
+            value=50, minimum=0, maximum=100, read_only=False, animation=None
+        )
+        api.device.return_value = device
+        assert entity._moving_state == MovingState.STILL
+        with patch.object(entity, "_start_moving_device"):
+            with patch.object(entity, "schedule_update_ha_state"):
+                entity._handle_coordinator_update()
+        # 10 → 50 is closing (increasing raw position)
+        assert entity._moving_state == MovingState.CLOSING
+
+    def test_handle_coordinator_update_angle_still_sets_state(
+        self, entity, device, api
+    ):
+        """External Onyx app: angle animation arrives while state is STILL → state auto-set."""
+        animation = AnimationValue(
+            start=0,
+            current_value=90,
+            keyframes=[
+                AnimationKeyframe(interpolation="linear", duration=10, delay=0, value=0)
+            ],
+        )
+        device.actual_position = NumericValue(
+            value=10,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=None,
+        )
+        device.actual_angle = NumericValue(
+            value=90,
+            minimum=0,
+            maximum=360,
+            read_only=False,
+            animation=animation,
+        )
+        device.target_angle = NumericValue(
+            value=0, minimum=0, maximum=360, read_only=False, animation=None
+        )
+        api.device.return_value = device
+        assert entity._moving_state == MovingState.STILL
+        with patch.object(entity, "_start_moving_device"):
+            with patch.object(entity, "schedule_update_ha_state"):
+                entity._handle_coordinator_update()
+        # 90 → 0 is opening (decreasing raw angle)
+        assert entity._moving_state == MovingState.OPENING
+
     def test_is_not_opening(self, entity):
         assert not entity.is_opening
 

@@ -58,6 +58,12 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                 self._uuid,
                 position_animation,
             )
+            if self._moving_state == MovingState.STILL:
+                target = self._device.target_position
+                if target is not None:
+                    self._calculate_and_set_state(
+                        position_animation.current_value, target.value
+                    )
             self._start_moving_device(position_animation)
 
         angle_animation = self._device.actual_angle.animation
@@ -67,6 +73,12 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                 self._uuid,
                 angle_animation,
             )
+            if self._moving_state == MovingState.STILL:
+                target = self._device.target_angle
+                if target is not None:
+                    self._calculate_and_set_state(
+                        angle_animation.current_value, target.value
+                    )
             self._start_moving_device(angle_animation)
 
         super()._handle_coordinator_update()
@@ -264,7 +276,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             interpolation_frequency = self.api.config.interpolation_frequency
             if interpolation_frequency > 0:
                 for slice in range(
-                    0, int(time_delta.total_seconds() // interpolation_frequency)
+                    1, int(time_delta.total_seconds() // interpolation_frequency) + 1
                 ):
                     utc_intermediate_time = utc_now + timedelta(
                         seconds=slice * interpolation_frequency
