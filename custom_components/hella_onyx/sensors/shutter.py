@@ -352,7 +352,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                     and current_time > angle_end_time
                 )
             ):
-                self.hass.async_create_task(self.async_stop_cover())
+                self.hass.create_task(self.async_stop_cover())
             elif (
                 position_start_time is not None and current_time > position_start_time
             ) or (angle_start_time is not None and current_time > angle_start_time):

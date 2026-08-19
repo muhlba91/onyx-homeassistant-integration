@@ -245,7 +245,7 @@ class OnyxLight(OnyxEntity, LightEntity):
         current_time = time.time()
 
         if end_time is not None and current_time > end_time:
-            self.hass.async_create_task(
+            self.hass.create_task(
                 self.api.send_device_command_action(
                     self._uuid,
                     Action.STOP,

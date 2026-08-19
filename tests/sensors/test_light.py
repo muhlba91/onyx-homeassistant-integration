@@ -452,7 +452,7 @@ class TestOnyxLight:
             entity._end_dim_device()
             assert api.device.called
             assert not mock_schedule_update_ha_state.called
-            assert entity.hass.async_create_task.called
+            assert entity.hass.create_task.called
             api.send_device_command_action.assert_called_with("uuid", Action.STOP)
 
     def test_end_dim_device_within_time(self, api, entity, device):
