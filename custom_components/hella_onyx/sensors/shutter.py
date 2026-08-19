@@ -278,7 +278,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             interpolation_frequency = self.api.config.interpolation_frequency
             if interpolation_frequency > 0:
                 for slice in range(
-                    1, int(time_delta.total_seconds() // interpolation_frequency) + 1
+                    0, int(time_delta.total_seconds() // interpolation_frequency) + 1
                 ):
                     utc_intermediate_time = utc_now + timedelta(
                         seconds=slice * interpolation_frequency
