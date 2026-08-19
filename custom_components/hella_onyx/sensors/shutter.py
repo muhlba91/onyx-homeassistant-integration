@@ -1,6 +1,5 @@
 """The ONYX shutter entity."""
 
-import asyncio
 import logging
 import time
 
@@ -112,7 +111,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         return supported_features
 
     @property
-    def current_cover_position(self) -> int:
+    def current_cover_position(self) -> int | None:
         """Return current position of cover.
 
         None is unknown, 0 is closed, 100 is fully open.
@@ -123,10 +122,12 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             self._uuid,
             position,
         )
+        if not position or not position.maximum:
+            return None
         return 100 - int(position.value / position.maximum * 100)
 
     @property
-    def current_cover_tilt_position(self) -> int:
+    def current_cover_tilt_position(self) -> int | None:
         """Return current position of cover tilt.
 
         None is unknown, 0 is closed, 100 is fully open.
@@ -137,6 +138,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             self._uuid,
             position,
         )
+        if not position or self._max_angle == 0:
+            return None
         return int(position.value / self._max_angle * 100)
 
     @property
@@ -153,79 +156,72 @@ class OnyxShutter(OnyxEntity, CoverEntity):
     def is_closed(self) -> bool:
         """Return if the cover is closed or not."""
         position = self._device.actual_position
+        if not position:
+            return False
         return position.value == position.maximum
 
-    def open_cover(self, **kwargs: Any) -> None:
+    async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
         self._set_state(MovingState.OPENING)
-        asyncio.run_coroutine_threadsafe(
-            self.api.send_device_command_action(self._uuid, Action.OPEN), self.hass.loop
-        )
+        await self.api.send_device_command_action(self._uuid, Action.OPEN)
 
-    def close_cover(self, **kwargs: Any) -> None:
+    async def async_close_cover(self, **kwargs: Any) -> None:
         """Close cover."""
         self._set_state(MovingState.CLOSING)
-        asyncio.run_coroutine_threadsafe(
-            self.api.send_device_command_action(self._uuid, Action.CLOSE),
-            self.hass.loop,
-        )
+        await self.api.send_device_command_action(self._uuid, Action.CLOSE)
 
-    def set_cover_position(self, **kwargs):
+    async def async_set_cover_position(self, **kwargs: Any) -> None:
         """Move the cover to a specific position."""
         if ATTR_POSITION in kwargs:
-            position = 100 - int(kwargs.get(ATTR_POSITION))
-            hella_position = ceil(
-                position * (self._device.target_position.maximum / 100)
+            position = 100 - int(kwargs[ATTR_POSITION])
+            target_max = (
+                self._device.target_position.maximum
+                if self._device.target_position and self._device.target_position.maximum
+                else 100
             )
+            hella_position = ceil(position * (target_max / 100))
             self._calculate_and_set_state(self._device.actual_position.value, position)
-            asyncio.run_coroutine_threadsafe(
-                self.api.send_device_command_properties(
-                    self._uuid,
-                    {
-                        "target_position": hella_position,
-                        "target_angle": self._device.target_angle.value,
-                    },
-                ),
-                self.hass.loop,
+            target_angle = (
+                self._device.target_angle.value if self._device.target_angle else 0
+            )
+            await self.api.send_device_command_properties(
+                self._uuid,
+                {
+                    "target_position": hella_position,
+                    "target_angle": target_angle,
+                },
             )
 
-    def stop_cover(self, **kwargs):
+    async def async_stop_cover(self, **kwargs: Any) -> None:
         """Stop the cover."""
         self._set_state(MovingState.STILL)
-        asyncio.run_coroutine_threadsafe(
-            self.api.send_device_command_action(self._uuid, Action.STOP), self.hass.loop
-        )
+        await self.api.send_device_command_action(self._uuid, Action.STOP)
 
-    def open_cover_tilt(self, **kwargs: Any) -> None:
+    async def async_open_cover_tilt(self, **kwargs: Any) -> None:
         """Open the cover tilt."""
         raise NotImplementedError()
 
-    def close_cover_tilt(self, **kwargs: Any) -> None:
+    async def async_close_cover_tilt(self, **kwargs: Any) -> None:
         """Close the cover tilt."""
         raise NotImplementedError()
 
-    def set_cover_tilt_position(self, **kwargs):
+    async def async_set_cover_tilt_position(self, **kwargs: Any) -> None:
         """Move the cover tilt to a specific position."""
         if ATTR_TILT_POSITION in kwargs:
-            angle = int(kwargs.get(ATTR_TILT_POSITION))
+            angle = int(kwargs[ATTR_TILT_POSITION])
             hella_angle = ceil(angle * (self._max_angle / 100))
             self._calculate_and_set_state(
                 self._device.actual_angle.value,
                 hella_angle,
             )
-            asyncio.run_coroutine_threadsafe(
-                self.api.send_device_command_properties(
-                    self._uuid, {"target_angle": hella_angle}
-                ),
-                self.hass.loop,
+            await self.api.send_device_command_properties(
+                self._uuid, {"target_angle": hella_angle}
             )
 
-    def stop_cover_tilt(self, **kwargs):
+    async def async_stop_cover_tilt(self, **kwargs: Any) -> None:
         """Stop the cover."""
         self._set_state(MovingState.STILL)
-        asyncio.run_coroutine_threadsafe(
-            self.api.send_device_command_action(self._uuid, Action.STOP), self.hass.loop
-        )
+        await self.api.send_device_command_action(self._uuid, Action.STOP)
 
     def _set_state(self, state: MovingState):
         """Set the new moving state."""
@@ -237,7 +233,12 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             _LOGGER.debug("not moving still device %s", self._uuid)
             return
 
+        if not animation.keyframes:
+            return
+
         keyframe = self._calculate_animation_duration_and_delay(animation.keyframes)
+        if keyframe is None:
+            return
 
         utc_now = utcnow()
         current_time = time.time()
@@ -351,7 +352,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                     and current_time > angle_end_time
                 )
             ):
-                self.stop_cover()
+                self.hass.async_create_task(self.async_stop_cover())
             elif (
                 position_start_time is not None and current_time > position_start_time
             ) or (angle_start_time is not None and current_time > angle_start_time):

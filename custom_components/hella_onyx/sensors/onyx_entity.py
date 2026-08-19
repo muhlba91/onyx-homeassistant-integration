@@ -1,6 +1,7 @@
 """The ONYX entity."""
 
 from homeassistant.core import callback
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from onyx_client.enum.device_type import DeviceType
@@ -38,14 +39,14 @@ class OnyxEntity(CoordinatorEntity):
         return "mdi:help"
 
     @property
-    def device_info(self):
+    def device_info(self) -> DeviceInfo:
         """Return the device information of the entity."""
-        return {
-            "identifiers": {(DOMAIN, self._uuid)},
-            "name": self._name,
-            "manufacturer": "Hella",
-            "model": self._type.string(),
-        }
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._uuid)},
+            name=self._name,
+            manufacturer="Hella",
+            model=self._type.string(),
+        )
 
     @property
     def unique_id(self):

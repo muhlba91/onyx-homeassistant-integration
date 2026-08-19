@@ -126,24 +126,30 @@ class APIConnector(DataUpdateCoordinator):
 
     async def events(self, force_update: bool = False):
         """Listen and process device events."""
-        while True:
-            backoff = int(uniform(1, MAX_BACKOFF_TIME * 60))
-            try:
-                async for device in self._client().events(force_update):
-                    if device is not None:
-                        self.updated_device(device)
-                        await self._updater()
-            except Exception as ex:
-                _LOGGER.warning(
-                    "connection reset: %s, restarting with backoff of %s seconds (%s)",
-                    ex,
-                    backoff,
-                    self._backoff,
-                )
-            if self._backoff:
-                await asyncio.sleep(backoff)
-            else:
-                break
+        try:
+            while True:
+                backoff = int(uniform(1, MAX_BACKOFF_TIME * 60))
+                try:
+                    async for device in self._client().events(force_update):
+                        if device is not None:
+                            self.updated_device(device)
+                            await self._updater()
+                except asyncio.CancelledError:
+                    _LOGGER.debug("Events background task cancelled")
+                    raise
+                except Exception as ex:
+                    _LOGGER.warning(
+                        "connection reset: %s, restarting with backoff of %s seconds (%s)",
+                        ex,
+                        backoff,
+                        self._backoff,
+                    )
+                if self._backoff:
+                    await asyncio.sleep(backoff)
+                else:
+                    break
+        except asyncio.CancelledError:
+            _LOGGER.debug("Events background task stopped on cancellation")
 
 
 class CommandException(Exception):

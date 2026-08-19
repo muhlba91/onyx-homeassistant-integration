@@ -14,11 +14,8 @@ from onyx_client.device.shutter import Shutter
 from onyx_client.enum.device_type import DeviceType
 from onyx_client.data.numeric_value import NumericValue
 
-from custom_components.hella_onyx import (
-    DOMAIN,
-    ONYX_API,
-    ONYX_TIMEZONE,
-)
+from custom_components.hella_onyx import DOMAIN
+from custom_components.hella_onyx.models import OnyxData
 from custom_components.hella_onyx.sensor import async_setup_entry
 
 
@@ -80,15 +77,8 @@ async def test_async_setup_entry(mock_hass):
             list(),
         ),
     }
+    config_entry.runtime_data = OnyxData(api=api, config=MagicMock(), timezone="UTC")
     async_add_entries = AsyncAddEntries()
-    mock_hass.data = {
-        DOMAIN: {
-            config_entry.entry_id: {
-                ONYX_API: api,
-                ONYX_TIMEZONE: "UTC",
-            }
-        }
-    }
 
     await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
     assert async_add_entries.called_async_add_entities
@@ -140,15 +130,8 @@ async def test_async_setup_entry_with_no_humidity_and_pressure(mock_hass):
     api.devices = {
         "weather": weather,
     }
+    config_entry.runtime_data = OnyxData(api=api, config=MagicMock(), timezone="UTC")
     async_add_entries = AsyncAddEntries()
-    mock_hass.data = {
-        DOMAIN: {
-            config_entry.entry_id: {
-                ONYX_API: api,
-                ONYX_TIMEZONE: "UTC",
-            }
-        }
-    }
 
     await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
     assert async_add_entries.called_async_add_entities
@@ -190,15 +173,8 @@ async def test_async_setup_entry_filter_all(mock_hass):
             list(),
         )
     }
+    config_entry.runtime_data = OnyxData(api=api, config=MagicMock(), timezone="UTC")
     async_add_entries = AsyncAddEntries()
-    mock_hass.data = {
-        DOMAIN: {
-            config_entry.entry_id: {
-                ONYX_API: api,
-                ONYX_TIMEZONE: "UTC",
-            }
-        }
-    }
 
     await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
     assert async_add_entries.called_async_add_entities

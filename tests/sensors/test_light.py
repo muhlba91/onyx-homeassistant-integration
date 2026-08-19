@@ -3,7 +3,7 @@
 import pytest
 import time
 
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 from homeassistant.components.light import (
     ColorMode,
@@ -48,6 +48,8 @@ class TestOnyxLight:
     def api(self, config):
         mock = MagicMock()
         mock.config = config
+        mock.send_device_command_action = AsyncMock()
+        mock.send_device_command_properties = AsyncMock()
         yield mock
 
     @pytest.fixture
@@ -93,7 +95,7 @@ class TestOnyxLight:
         api.device.return_value = device
         assert entity.color_mode == ColorMode.ONOFF
         assert len(entity.supported_color_modes) == 1
-        assert entity.supported_color_modes[0] == ColorMode.ONOFF
+        assert ColorMode.ONOFF in entity.supported_color_modes
         assert api.device.called
         assert brightness_supported(entity.supported_color_modes) is False
 
@@ -102,7 +104,7 @@ class TestOnyxLight:
         api.device.return_value = device
         assert dimmable_entity.color_mode == ColorMode.BRIGHTNESS
         assert len(dimmable_entity.supported_color_modes) == 1
-        assert dimmable_entity.supported_color_modes[0] == ColorMode.BRIGHTNESS
+        assert ColorMode.BRIGHTNESS in dimmable_entity.supported_color_modes
         assert api.device.called
         assert brightness_supported(dimmable_entity.supported_color_modes) is True
 
@@ -113,6 +115,21 @@ class TestOnyxLight:
         api.device.return_value = device
         assert entity.brightness == 25.5
         assert api.device.called
+
+    def test_brightness_zero_max(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=10, minimum=0, maximum=0, read_only=False
+        )
+        api.device.return_value = device
+        assert entity.brightness == 0
+
+    def test_start_dim_device_no_keyframes(self, entity):
+        animation = AnimationValue(start=0, current_value=0, keyframes=[])
+        assert entity._start_dim_device(animation) is None
+
+    def test_start_dim_device_all_none_keyframes(self, entity):
+        animation = AnimationValue(start=0, current_value=0, keyframes=[None])
+        assert entity._start_dim_device(animation) is None
 
     def test_brightness_with_animation(self, api, entity, device):
         animation = AnimationValue(
@@ -158,23 +175,31 @@ class TestOnyxLight:
         assert not entity.is_on
         assert api.device.called
 
-    @patch("asyncio.run_coroutine_threadsafe")
-    def test_turn_off(self, mock_run_coroutine_threadsafe, api, entity, device):
-        device.actual_brightness = NumericValue(
-            value=100, maximum=100, minimum=0, read_only=False
-        )
-        api.device.return_value = device
-        entity.turn_off()
-        api.send_device_command_action.assert_called_with("uuid", Action.LIGHT_OFF)
-        assert mock_run_coroutine_threadsafe.called
+    def test_is_on_no_brightness(self, entity):
+        with patch.object(
+            type(entity),
+            "_actual_brightness",
+            new_callable=PropertyMock,
+            return_value=None,
+        ):
+            assert entity.is_on is None
 
-    @patch("asyncio.run_coroutine_threadsafe")
-    def test_turn_on(self, mock_run_coroutine_threadsafe, api, entity, device):
+    @pytest.mark.asyncio
+    async def test_turn_off(self, api, entity, device):
         device.actual_brightness = NumericValue(
             value=100, maximum=100, minimum=0, read_only=False
         )
         api.device.return_value = device
-        entity.turn_on(brightness=10)
+        await entity.async_turn_off()
+        api.send_device_command_action.assert_called_with("uuid", Action.LIGHT_OFF)
+
+    @pytest.mark.asyncio
+    async def test_turn_on(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=100, maximum=100, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+        await entity.async_turn_on(brightness=10)
         api.send_device_command_properties.assert_called_with(
             "uuid",
             {
@@ -182,23 +207,19 @@ class TestOnyxLight:
                 "dim_duration": 1928,
             },
         )
-        assert mock_run_coroutine_threadsafe.called
         assert api.device.called
 
-    @patch("asyncio.run_coroutine_threadsafe")
-    def test_turn_on_no_brightness(
-        self, mock_run_coroutine_threadsafe, api, entity, device
-    ):
+    @pytest.mark.asyncio
+    async def test_turn_on_no_brightness(self, api, entity, device):
         device.actual_brightness = NumericValue(
             value=100, maximum=100, minimum=0, read_only=False
         )
         api.device.return_value = device
-        entity.turn_on()
+        await entity.async_turn_on()
         api.send_device_command_action.assert_called_with(
             "uuid",
             Action.LIGHT_ON,
         )
-        assert mock_run_coroutine_threadsafe.called
         assert not api.device.called
 
     def test__actual_brightness_no_value(self, api, entity, device):
@@ -414,8 +435,7 @@ class TestOnyxLight:
             assert not mock_end_dim_device.called
             assert config_mock.called
 
-    @patch("asyncio.run_coroutine_threadsafe")
-    def test_end_dim_device(self, mock_run_coroutine_threadsafe, api, entity, device):
+    def test_end_dim_device(self, api, entity, device):
         device.actual_brightness = NumericValue(
             value=None,
             maximum=100,
@@ -432,13 +452,10 @@ class TestOnyxLight:
             entity._end_dim_device()
             assert api.device.called
             assert not mock_schedule_update_ha_state.called
-            assert mock_run_coroutine_threadsafe.called
+            assert entity.hass.async_create_task.called
             api.send_device_command_action.assert_called_with("uuid", Action.STOP)
 
-    @patch("asyncio.run_coroutine_threadsafe")
-    def test_end_dim_device_within_time(
-        self, mock_run_coroutine_threadsafe, api, entity, device
-    ):
+    def test_end_dim_device_within_time(self, api, entity, device):
         device.actual_brightness = NumericValue(
             value=0,
             maximum=100,
@@ -461,13 +478,10 @@ class TestOnyxLight:
             entity._end_dim_device()
             assert api.device.called
             assert mock_schedule_update_ha_state.called
-            assert not mock_run_coroutine_threadsafe.called
+            assert not entity.hass.async_create_task.called
             assert entity._device.actual_brightness.value == 1
 
-    @patch("asyncio.run_coroutine_threadsafe")
-    def test_end_dim_device_within_time_using_delay(
-        self, mock_run_coroutine_threadsafe, api, entity, device
-    ):
+    def test_end_dim_device_within_time_using_delay(self, api, entity, device):
         device.actual_brightness = NumericValue(
             value=0,
             maximum=100,
@@ -490,4 +504,4 @@ class TestOnyxLight:
             entity._end_dim_device()
             assert api.device.called
             assert not mock_schedule_update_ha_state.called
-            assert not mock_run_coroutine_threadsafe.called
+            assert not entity.hass.async_create_task.called

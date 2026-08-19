@@ -20,7 +20,9 @@ class TestOnyxEntity:
 
     @pytest.fixture
     def entity(self, api):
-        yield OnyxEntity(api, "UTC", "name", DeviceType.RAFFSTORE_90, "uuid")
+        entity = OnyxEntity(api, "UTC", "name", DeviceType.RAFFSTORE_90, "uuid")
+        entity.async_write_ha_state = MagicMock()
+        yield entity
 
     def test_icon(self, entity):
         assert entity.icon == "mdi:help"
@@ -29,12 +31,11 @@ class TestOnyxEntity:
         assert entity.unique_id == "uuid/Device"
 
     def test_device_info(self, entity):
-        assert entity.device_info == {
-            "identifiers": {(DOMAIN, "uuid")},
-            "name": "name",
-            "manufacturer": "Hella",
-            "model": "raffstore_90",
-        }
+        device_info = entity.device_info
+        assert (DOMAIN, "uuid") in device_info["identifiers"]
+        assert device_info["name"] == "name"
+        assert device_info["manufacturer"] == "Hella"
+        assert device_info["model"] == "raffstore_90"
 
     def test__device(self, entity, api):
         device = Shutter(

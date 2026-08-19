@@ -2,10 +2,6 @@
 
 DOMAIN = "hella_onyx"
 
-ONYX_API = "onyx_api"
-ONYX_CONFIG = "onyx_config"
-ONYX_TIMEZONE = "onyx_timezone"
-
 CONF_FINGERPRINT = "fingerprint"
 CONF_LOCAL_ADDRESS = "local_address"
 CONF_MIN_DIM_DURATION = "min_dim_duration"

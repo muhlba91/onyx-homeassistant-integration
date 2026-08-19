@@ -1,6 +1,5 @@
 """The ONYX light entity."""
 
-import asyncio
 import logging
 import time
 
@@ -90,10 +89,11 @@ class OnyxLight(OnyxEntity, LightEntity):
     @property
     def supported_color_modes(self) -> set[ColorMode] | set[str] | None:
         """Flag supported color modes."""
-        return [self.color_mode]
+        mode = self.color_mode
+        return {mode} if mode else None
 
     @property
-    def brightness(self) -> int:
+    def brightness(self) -> int | None:
         """Return the brightness of this light between 0..255."""
         brightness = self._actual_brightness
         _LOGGER.debug(
@@ -101,14 +101,19 @@ class OnyxLight(OnyxEntity, LightEntity):
             self._uuid,
             brightness,
         )
+        if not brightness or not brightness.maximum:
+            return 0
         return brightness.value / brightness.maximum * 255
 
     @property
     def is_on(self) -> bool | None:
         """Return whether the light is turned on."""
-        return self._actual_brightness.value > 0
+        brightness = self._actual_brightness
+        if not brightness:
+            return None
+        return brightness.value > 0
 
-    def turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turns the light on."""
         brightness_attribute = kwargs.pop(ATTR_BRIGHTNESS, None)
         if brightness_attribute is None:
@@ -116,17 +121,18 @@ class OnyxLight(OnyxEntity, LightEntity):
                 "turning light %s on",
                 self._uuid,
             )
-            asyncio.run_coroutine_threadsafe(
-                self.api.send_device_command_action(
-                    self._uuid,
-                    Action.LIGHT_ON,
-                ),
-                self.hass.loop,
+            await self.api.send_device_command_action(
+                self._uuid,
+                Action.LIGHT_ON,
             )
         else:
-            hella_brightness = ceil(
-                brightness_attribute / 255 * self._device.actual_brightness.maximum
+            target_max = (
+                self._device.actual_brightness.maximum
+                if self._device.actual_brightness
+                and self._device.actual_brightness.maximum
+                else 255
             )
+            hella_brightness = ceil(brightness_attribute / 255 * target_max)
             dim_duration = self._get_dim_duration(hella_brightness)
             _LOGGER.debug(
                 "setting brightness for light %s: %s (%s ms)",
@@ -134,31 +140,32 @@ class OnyxLight(OnyxEntity, LightEntity):
                 hella_brightness,
                 dim_duration,
             )
-            asyncio.run_coroutine_threadsafe(
-                self.api.send_device_command_properties(
-                    self._uuid,
-                    {
-                        "target_brightness": hella_brightness,
-                        "dim_duration": dim_duration,
-                    },
-                ),
-                self.hass.loop,
+            await self.api.send_device_command_properties(
+                self._uuid,
+                {
+                    "target_brightness": hella_brightness,
+                    "dim_duration": dim_duration,
+                },
             )
 
-    def turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turns the light off."""
         _LOGGER.debug(
             "turning light %s off",
             self._uuid,
         )
-        asyncio.run_coroutine_threadsafe(
-            self.api.send_device_command_action(self._uuid, Action.LIGHT_OFF),
-            self.hass.loop,
-        )
+        await self.api.send_device_command_action(self._uuid, Action.LIGHT_OFF)
 
     def _start_dim_device(self, animation: AnimationValue):
         """Start the update loop."""
-        keyframe = animation.keyframes[len(animation.keyframes) - 1]
+        if not animation.keyframes:
+            return
+
+        usable_keyframes = [kf for kf in animation.keyframes if kf is not None]
+        if not usable_keyframes:
+            return
+
+        keyframe = usable_keyframes[-1]
 
         utc_now = utcnow()
         current_time = time.time()
@@ -218,11 +225,12 @@ class OnyxLight(OnyxEntity, LightEntity):
         _LOGGER.debug("ending dimming device %s", self._uuid)
 
         animation = self._actual_brightness.animation
-        keyframe = (
-            animation.keyframes[len(animation.keyframes) - 1]
-            if animation is not None and len(animation.keyframes) > 0
-            else None
+        usable_keyframes = (
+            [kf for kf in animation.keyframes if kf is not None]
+            if animation is not None and animation.keyframes
+            else []
         )
+        keyframe = usable_keyframes[-1] if usable_keyframes else None
         start_time = (
             (animation.start + keyframe.delay)
             if animation is not None and keyframe is not None
@@ -237,12 +245,11 @@ class OnyxLight(OnyxEntity, LightEntity):
         current_time = time.time()
 
         if end_time is not None and current_time > end_time:
-            asyncio.run_coroutine_threadsafe(
+            self.hass.async_create_task(
                 self.api.send_device_command_action(
                     self._uuid,
                     Action.STOP,
-                ),
-                self.hass.loop,
+                )
             )
         elif (
             start_time is not None

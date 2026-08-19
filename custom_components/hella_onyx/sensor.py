@@ -4,7 +4,6 @@ import logging
 
 from typing import Callable, Optional
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import DiscoveryInfoType
 
@@ -13,8 +12,7 @@ from onyx_client.device.weather import Weather
 
 from custom_components.hella_onyx.api_connector import APIConnector
 
-from . import ONYX_API, ONYX_TIMEZONE
-from .const import DOMAIN
+from . import OnyxConfigEntry
 from .sensors.device_type import OnyxSensorDeviceType
 from .sensors.weather import (
     OnyxSensorWeatherHumidity,
@@ -32,14 +30,13 @@ PARALLEL_UPDATES = 0
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: OnyxConfigEntry,
     async_add_entities: Callable,
     discovery_info: Optional[DiscoveryInfoType] = None,
 ):
     """Set up the ONYX platform."""
-    data = hass.data[DOMAIN][entry.entry_id]
-    api = data[ONYX_API]
-    timezone = data[ONYX_TIMEZONE]
+    api = entry.runtime_data.api
+    timezone = entry.runtime_data.timezone
 
     # all device type sensors
     sensors = [
@@ -50,11 +47,13 @@ async def async_setup_entry(
         ]
         # we only support shutters or weather stations
         for device_id, device in filter(
-            lambda item: item[1].device_type is not None
-            and (
-                item[1].device_type.is_shutter()
-                or item[1].device_type.is_light()
-                or item[1].device_type == DeviceType.WEATHER
+            lambda item: (
+                item[1].device_type is not None
+                and (
+                    item[1].device_type.is_shutter()
+                    or item[1].device_type.is_light()
+                    or item[1].device_type == DeviceType.WEATHER
+                )
             ),
             api.devices.items(),
         )

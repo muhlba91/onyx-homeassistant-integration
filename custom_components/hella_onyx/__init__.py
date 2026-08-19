@@ -1,6 +1,5 @@
 """The ONYX.CENTER integration."""
 
-import asyncio
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -14,6 +13,7 @@ from homeassistant.core import HomeAssistant
 
 from .api_connector import APIConnector
 from .configuration import Configuration
+from .models import OnyxData
 from .const import (
     CONF_FINGERPRINT,
     CONF_INTERPOLATION_FREQUENCY,
@@ -27,9 +27,6 @@ from .const import (
     DEFAULT_ADDITIONAL_DELAY,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
-    ONYX_API,
-    ONYX_CONFIG,
-    ONYX_TIMEZONE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,11 +37,11 @@ PLATFORMS = [
     Platform.SENSOR,
 ]
 
+type OnyxConfigEntry = ConfigEntry[OnyxData]
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+
+async def async_setup_entry(hass: HomeAssistant, entry: OnyxConfigEntry) -> bool:
     """Set up ONYX from a config entry."""
-    hass.data.setdefault(DOMAIN, {})
-
     fingerprint = entry.data[CONF_FINGERPRINT]
     token = entry.data[CONF_ACCESS_TOKEN]
     local_address = entry.options.get(CONF_LOCAL_ADDRESS, None)
@@ -87,12 +84,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     await onyx_api.async_config_entry_first_refresh()
     onyx_timezone = await onyx_api.get_timezone()
 
-    hass.data[DOMAIN][entry.entry_id] = {
-        ONYX_API: onyx_api,
-        ONYX_CONFIG: onyx_config,
-        ONYX_TIMEZONE: onyx_timezone,
-    }
-    hass.async_create_background_task(onyx_api.events(force_update), name=DOMAIN)
+    entry.runtime_data = OnyxData(
+        api=onyx_api,
+        config=onyx_config,
+        timezone=onyx_timezone,
+    )
+
+    event_task = hass.async_create_background_task(
+        onyx_api.events(force_update), name=f"{DOMAIN}_{entry.entry_id}_events"
+    )
+    entry.async_on_unload(event_task.cancel)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
@@ -100,25 +101,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     return True
 
 
-async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry):
+async def async_reload_entry(hass: HomeAssistant, entry: OnyxConfigEntry) -> None:
     """Reload the config entry when it changed."""
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
+async def async_unload_entry(hass: HomeAssistant, entry: OnyxConfigEntry) -> bool:
     """Unload a config entry."""
-    unload_ok = all(
-        await asyncio.gather(
-            *[
-                hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in PLATFORMS
-            ]
-        )
-    )
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
-
-    return unload_ok
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
 async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:

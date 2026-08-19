@@ -1,9 +1,13 @@
 """The ONYX device type sensor."""
 
+from typing import Optional
+
+from homeassistant.components.sensor import SensorEntity
+
 from ..sensors.onyx_entity import OnyxEntity
 
 
-class OnyxSensorDeviceType(OnyxEntity):
+class OnyxSensorDeviceType(OnyxEntity, SensorEntity):
     """ONYX Device Type Sensor."""
 
     @property
@@ -22,6 +26,8 @@ class OnyxSensorDeviceType(OnyxEntity):
         return "mdi:cellphone-link"
 
     @property
-    def state(self) -> str:
+    def native_value(self) -> Optional[str]:
         """Return the current value."""
-        return self._device.device_type.string()
+        if self._device.device_type is not None:
+            return self._device.device_type.string()
+        return None

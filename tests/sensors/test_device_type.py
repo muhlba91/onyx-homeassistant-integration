@@ -42,5 +42,11 @@ class TestOnyxSensorDeviceType:
 
     def test_state(self, api, entity, device):
         api.device.return_value = device
-        assert entity.state == DeviceType.RAFFSTORE_90.string()
+        assert entity.native_value == DeviceType.RAFFSTORE_90.string()
+        assert api.device.called
+
+    def test_state_none(self, api, entity, device):
+        device.device_type = None
+        api.device.return_value = device
+        assert entity.native_value is None
         assert api.device.called

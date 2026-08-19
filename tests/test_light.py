@@ -11,11 +11,8 @@ from onyx_client.device.light import Light
 from onyx_client.device.shutter import Shutter
 from onyx_client.enum.device_type import DeviceType
 
-from custom_components.hella_onyx import (
-    DOMAIN,
-    ONYX_API,
-    ONYX_TIMEZONE,
-)
+from custom_components.hella_onyx import DOMAIN
+from custom_components.hella_onyx.models import OnyxData
 from custom_components.hella_onyx.light import async_setup_entry
 
 
@@ -58,15 +55,8 @@ async def test_async_setup_entry(mock_hass):
             list(),
         ),
     }
+    config_entry.runtime_data = OnyxData(api=api, config=MagicMock(), timezone="UTC")
     async_add_entries = AsyncAddEntries()
-    mock_hass.data = {
-        DOMAIN: {
-            config_entry.entry_id: {
-                ONYX_API: api,
-                ONYX_TIMEZONE: "UTC",
-            }
-        }
-    }
 
     await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
     assert async_add_entries.called_async_add_entities
@@ -101,15 +91,8 @@ async def test_async_setup_entry_filter_all(mock_hass):
             )
         }
     }
+    config_entry.runtime_data = OnyxData(api=api, config=MagicMock(), timezone="UTC")
     async_add_entries = AsyncAddEntries()
-    mock_hass.data = {
-        DOMAIN: {
-            config_entry.entry_id: {
-                ONYX_API: api,
-                ONYX_TIMEZONE: "UTC",
-            }
-        }
-    }
 
     await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
     assert async_add_entries.called_async_add_entities

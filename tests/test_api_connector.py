@@ -1,5 +1,6 @@
 """Test for the ONYX API Connector."""
 
+import asyncio
 import pytest
 
 from unittest.mock import MagicMock, patch
@@ -258,6 +259,38 @@ class TestAPIConnector:
                     assert client.is_called
                     assert mock_updated_device.called
                     assert mock_updater.called
+
+    @pytest.mark.asyncio
+    async def test_events_connection_error_raises(self, api):
+        """Exception from the async generator hits the inner except Exception handler."""
+
+        async def failing_events(force_update: bool):
+            raise ConnectionError("stream lost")
+            yield  # pragma: no cover – makes this an async generator
+
+        mock_client = MagicMock()
+        mock_client.events = failing_events
+
+        with patch.object(api, "_client", return_value=mock_client):
+            api._backoff = False
+            # Must complete without propagating the connection error
+            await api.events()
+
+    @pytest.mark.asyncio
+    async def test_events_cancelled_inner(self, api):
+        """CancelledError from the async generator hits both CancelledError handlers."""
+
+        async def cancelled_events(force_update: bool):
+            raise asyncio.CancelledError()
+            yield  # pragma: no cover – makes this an async generator
+
+        mock_client = MagicMock()
+        mock_client.events = cancelled_events
+
+        with patch.object(api, "_client", return_value=mock_client):
+            api._backoff = False
+            # Must complete without propagating CancelledError — outer handler absorbs it
+            await api.events()
 
     @pytest.mark.asyncio
     async def test_events_backoff(self, api, client):
