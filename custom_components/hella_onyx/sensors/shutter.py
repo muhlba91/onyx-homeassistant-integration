@@ -193,6 +193,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             )
             hella_position = ceil(position * (target_max / 100))
             self._calculate_and_set_state(self._device.actual_position.value, position)
+            self.schedule_update_ha_state()
             target_angle = (
                 self._device.target_angle.value if self._device.target_angle else 0
             )
@@ -226,6 +227,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                 self._device.actual_angle.value,
                 hella_angle,
             )
+            self.schedule_update_ha_state()
             await self.api.send_device_command_properties(
                 self._uuid, {"target_angle": hella_angle}
             )
