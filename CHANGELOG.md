@@ -1,6 +1,19 @@
 # Changelog
 
 
+## [13.1.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v13.0.0...v13.1.0) (2026-08-22)
+
+
+### Features
+
+* add mutmut testing ([341c5cb](https://github.com/muhlba91/onyx-homeassistant-integration/commit/341c5cb8cad0de3efb00be40d6d456cc3e1d988f))
+* guard weather sensors to only create them if they exist ([f49a34f](https://github.com/muhlba91/onyx-homeassistant-integration/commit/f49a34f4371d0a18e1a54099ff9b258f4af6ed1e))
+
+
+### Bug Fixes
+
+* fix minor bugs ([2100727](https://github.com/muhlba91/onyx-homeassistant-integration/commit/2100727abe63910b2e7f6ba116c210196f6ea8d2))
+
 ## [13.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v12.0.3...v13.0.0) (2026-08-19)
 
 
