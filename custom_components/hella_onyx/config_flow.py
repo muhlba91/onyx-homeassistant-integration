@@ -73,10 +73,10 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             data.update(user_input)
 
-            fingerprint = user_input.get(CONF_FINGERPRINT, None)
-            token = user_input.get(CONF_ACCESS_TOKEN, None)
-            code = user_input.get(CONF_CODE, None)
-            local_address = user_input.get(CONF_LOCAL_ADDRESS, None)
+            fingerprint = user_input.get(CONF_FINGERPRINT)
+            token = user_input.get(CONF_ACCESS_TOKEN)
+            code = user_input.get(CONF_CODE)
+            local_address = user_input.get(CONF_LOCAL_ADDRESS)
 
             options.update(self._options)
             options[CONF_LOCAL_ADDRESS] = local_address
@@ -124,6 +124,7 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user",
+            # pragma: no mutate start
             data_schema=vol.Schema(
                 {
                     vol.Optional(CONF_CODE): selector.TextSelector(
@@ -153,16 +154,16 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
                     ),
                 }
             ),
+            # pragma: no mutate end
             errors=errors,
         )
 
     async def async_step_options(self, user_input=None):
         """Handle an options flow initiated by the user."""
         errors = {}
-        options = {}
 
         if user_input is not None:
-            local_address = user_input.get(CONF_LOCAL_ADDRESS, None)
+            local_address = user_input.get(CONF_LOCAL_ADDRESS)
             scan_interval = user_input[CONF_SCAN_INTERVAL]
             additional_delay = max(
                 MIN_ADDITIONAL_DELAY, user_input[CONF_ADDITIONAL_DELAY]
@@ -216,6 +217,7 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
         ).verify()
 
 
+# pragma: no mutate start
 class OnyxOptionsFlowHandler(OptionsFlow):
     """Handle a option flow for ONYX."""
 
@@ -239,6 +241,10 @@ class OnyxOptionsFlowHandler(OptionsFlow):
         )
 
 
+# pragma: no mutate end
+
+
+# pragma: no mutate start
 def _get_options_schema(data: dict | None = None):
     data = data if data is not None else {}
     return vol.Schema(
@@ -302,3 +308,6 @@ def _get_options_schema(data: dict | None = None):
             ): selector.BooleanSelector(),
         }
     )
+
+
+# pragma: no mutate end

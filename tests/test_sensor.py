@@ -106,25 +106,45 @@ async def test_async_setup_entry(mock_hass):
 
     await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
     assert async_add_entries.called_async_add_entities
+    assert async_add_entries.update_before_add is True
     assert len(async_add_entries.data) == 9
+    for entry in async_add_entries.data:
+        assert entry.api == api
+        assert entry.timezone == "UTC"
+        assert entry._type is not None
     assert async_add_entries.data[0]._uuid == "shutter"
     assert async_add_entries.data[0].unique_id == "shutter/DeviceType"
+    assert async_add_entries.data[0]._name == "name"
     assert async_add_entries.data[1]._uuid == "light"
     assert async_add_entries.data[1].unique_id == "light/DeviceType"
+    assert async_add_entries.data[1]._name == "name"
     assert async_add_entries.data[2]._uuid == "weather"
     assert async_add_entries.data[2].unique_id == "weather/DeviceType"
+    assert async_add_entries.data[2]._name == "name"
+    assert async_add_entries.data[3].unique_id == "weather/Temperature"
+    assert async_add_entries.data[4].unique_id == "weather/Humidity"
+    assert async_add_entries.data[5].unique_id == "weather/AirPressure"
+    assert async_add_entries.data[6].unique_id == "weather/WindPeak"
+    assert async_add_entries.data[7].unique_id == "weather/SunBrightnessPeak"
+    assert async_add_entries.data[8].unique_id == "weather/SunBrightnessSink"
     assert async_add_entries.data[3]._uuid == "weather"
     assert async_add_entries.data[3].unique_id == "weather/Temperature"
+    assert async_add_entries.data[3]._name == "name"
     assert async_add_entries.data[4]._uuid == "weather"
     assert async_add_entries.data[4].unique_id == "weather/Humidity"
+    assert async_add_entries.data[4]._name == "name"
     assert async_add_entries.data[5]._uuid == "weather"
     assert async_add_entries.data[5].unique_id == "weather/AirPressure"
+    assert async_add_entries.data[5]._name == "name"
     assert async_add_entries.data[6]._uuid == "weather"
     assert async_add_entries.data[6].unique_id == "weather/WindPeak"
+    assert async_add_entries.data[6]._name == "name"
     assert async_add_entries.data[7]._uuid == "weather"
     assert async_add_entries.data[7].unique_id == "weather/SunBrightnessPeak"
+    assert async_add_entries.data[7]._name == "name"
     assert async_add_entries.data[8]._uuid == "weather"
     assert async_add_entries.data[8].unique_id == "weather/SunBrightnessSink"
+    assert async_add_entries.data[8]._name == "name"
 
 
 @patch("homeassistant.core.HomeAssistant")
@@ -234,7 +254,9 @@ class AsyncAddEntries:
     def __init__(self):
         self.called_async_add_entities = False
         self.data = list()
+        self.update_before_add = None
 
     def call(self, data, boolean):
         self.data = data
         self.called_async_add_entities = True
+        self.update_before_add = boolean

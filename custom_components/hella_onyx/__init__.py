@@ -44,7 +44,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: OnyxConfigEntry) -> bool
     """Set up ONYX from a config entry."""
     fingerprint = entry.data[CONF_FINGERPRINT]
     token = entry.data[CONF_ACCESS_TOKEN]
-    local_address = entry.options.get(CONF_LOCAL_ADDRESS, None)
+    local_address = entry.options.get(CONF_LOCAL_ADDRESS)
     scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     interpolation_frequency = entry.options.get(
         CONF_INTERPOLATION_FREQUENCY, DEFAULT_INTERPOLATION_FREQUENCY
@@ -146,7 +146,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
             CONF_ACCESS_TOKEN: old_data.get(CONF_ACCESS_TOKEN),
         }
         new_options = {
-            CONF_LOCAL_ADDRESS: old_data.get(CONF_LOCAL_ADDRESS, None),
+            CONF_LOCAL_ADDRESS: old_data.get(CONF_LOCAL_ADDRESS),
             CONF_SCAN_INTERVAL: old_data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
             CONF_INTERPOLATION_FREQUENCY: old_data.get(
                 CONF_INTERPOLATION_FREQUENCY, DEFAULT_INTERPOLATION_FREQUENCY

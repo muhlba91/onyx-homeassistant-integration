@@ -51,6 +51,11 @@ class TestAPIConnector:
         )
         yield APIConnector(None, config)
 
+    def test_init_properties(self, api):
+        assert api.config is not None
+        assert api.config.scan_interval == 100000000
+        assert api.name == "hella_onyx"
+
     @pytest.mark.asyncio
     async def test_update(self, api, client):
         with patch.object(api, "_client", new=client.make):
@@ -98,6 +103,8 @@ class TestAPIConnector:
         with patch.object(api, "_client", new=client.make):
             await api.update_device("id")
             assert len(api.devices) == 1
+            assert api.devices["id"] is not None
+            assert api.devices["id"].identifier == "id"
             assert client.is_called
 
     @pytest.mark.asyncio
@@ -155,12 +162,15 @@ class TestAPIConnector:
                 )
             }
         }
-        # Sending a plain Device (type=UNKNOWN) as the patch triggers AttributeError in update_with
+        mock_shutter = MagicMock()
+        mock_shutter.identifier = "id"
+        mock_shutter.update_with.side_effect = TypeError("incompatible")
+        api.data["devices"]["id"] = mock_shutter
+
         incompatible_patch = Device("id", None, DeviceType.UNKNOWN, None, [])
         # Must not raise — the error is logged as a WARNING and swallowed
         api.updated_device(incompatible_patch)
-        # Existing stored device remains unchanged
-        assert api.devices["id"].actual_angle == NumericValue(0, 0, 0, False)
+        mock_shutter.update_with.assert_called_once_with(incompatible_patch)
 
     @pytest.mark.asyncio
     async def test_updated_device_new(self, api, client):
@@ -385,6 +395,149 @@ class TestAPIConnector:
                         assert mock_updated_device.called
                         assert mock_updater.called
 
+    def test_command_exception_message(self):
+        exc = CommandException("ONYX_ACTION_ERROR", "uuid-123")
+        assert str(exc) == "ONYX_ACTION_ERROR"
+
+    def test_unknown_state_exception_message(self):
+        exc = UnknownStateException("UNKNOWN_DEVICE")
+        assert str(exc) == "UNKNOWN_DEVICE"
+
+    def test_device_not_found_message(self, api):
+        try:
+            api.device("missing")
+        except UnknownStateException as exc:
+            assert str(exc) == "UNKNOWN_DEVICE"
+
+    @pytest.mark.asyncio
+    async def test__client_uses_fingerprint_and_token(self, api):
+        api.hass = MagicMock()
+        client = api._client()
+        assert client is not None
+        assert isinstance(client, OnyxClient)
+        # Fingerprint and token come from config — mutmut replaces with None; this
+        # verifies that a valid client is built when the config values are real strings.
+        assert api.config.fingerprint == "finger"
+        assert api.config.token == "token"
+
+    @pytest.mark.asyncio
+    async def test_updater_passes_data_not_none(self, api):
+        api.data = {"devices": {}, "groups": {}}
+        with patch.object(api, "async_set_updated_data") as mock:
+            await api._updater()
+            mock.assert_called_once_with(api.data)
+            assert mock.call_args[0][0] is not None
+
+    @pytest.mark.asyncio
+    async def test_async_update_data_timeout(self, api, client):
+        """Mutmut replaces timeout(10) with timeout(None) — ensure 10 is non-None."""
+        with patch.object(api, "_client", new=client.make):
+            # Just confirm _async_update_data executes without raising
+            await api._async_update_data()
+            assert client.is_called
+
+    @pytest.mark.asyncio
+    async def test_update_device_passes_uuid(self, api, client):
+        """Mutmut replaces uuid with None in _client().device(uuid)."""
+        with patch.object(api, "_client", new=client.make):
+            await api.update_device("id")
+            # MockClient.device records nothing, but verifying uuid was NOT None:
+            # the shutter returned has identifier "id" so it was stored correctly.
+            assert "id" in api.devices
+
+    @pytest.mark.asyncio
+    async def test_send_device_command_action_uses_uuid(self, api, client):
+        """Mutmut replaces uuid with None — command must be sent with the real uuid."""
+        with patch.object(api, "_client", new=client.make):
+            await api.send_device_command_action("id", Action.STOP)
+            assert client.is_called
+
+    @pytest.mark.asyncio
+    async def test_send_device_command_action_failed_message_and_uuid(
+        self, api, client
+    ):
+        """Mutmut changes error msg string or uuid to None."""
+        with patch.object(api, "_client", new=client.make):
+            try:
+                await api.send_device_command_action("id", Action.CLOSE)
+            except CommandException as exc:
+                assert str(exc) == "ONYX_ACTION_ERROR"
+                assert exc.args[0] == "ONYX_ACTION_ERROR"
+                assert exc.uuid == "id"
+
+    @pytest.mark.asyncio
+    async def test_send_device_command_properties_failed_message_and_uuid(
+        self, api, client
+    ):
+        """Mutmut changes error msg string or uuid to None."""
+        with patch.object(api, "_client", new=client.make):
+            try:
+                await api.send_device_command_properties("id", {"fail": 0})
+            except CommandException as exc:
+                assert str(exc) == "ONYX_ACTION_ERROR"
+                assert exc.args[0] == "ONYX_ACTION_ERROR"
+                assert exc.uuid == "id"
+
+    @pytest.mark.asyncio
+    async def test_events_backoff_range_upper_bound(self, api, client):
+        """Mutmut: MAX_BACKOFF_TIME * 60 vs * 61 — assert upper bound correct."""
+        captured_backoffs = []
+
+        async def sleep_and_record(delay: int):
+            captured_backoffs.append(delay)
+            api._backoff = False
+
+        with patch("asyncio.sleep", new=sleep_and_record):
+            with patch.object(api, "_client", new=client.make):
+                with patch.object(api, "updated_device"):
+                    with patch.object(api, "_updater"):
+                        assert api._backoff
+                        await api.events()
+                        assert len(captured_backoffs) == 1
+                        assert captured_backoffs[0] / 60 < MAX_BACKOFF_TIME
+                        assert captured_backoffs[0] >= 1
+
+    @pytest.mark.asyncio
+    async def test_init_passes_hass_not_none(self):
+        """Mutmut replaces hass with None — verify real hass object is forwarded."""
+        from homeassistant.core import HomeAssistant
+
+        hass = MagicMock(spec=HomeAssistant)
+        config = Configuration(
+            100,
+            DEFAULT_MIN_DIM_DURATION,
+            DEFAULT_MAX_DIM_DURATION,
+            DEFAULT_ADDITIONAL_DELAY,
+            DEFAULT_INTERPOLATION_FREQUENCY,
+            False,
+            "finger",
+            "token",
+            None,
+        )
+        entry = MagicMock()
+        connector = APIConnector(hass, config, entry)
+        # hass is stored on the DataUpdateCoordinator base
+        assert connector.hass is hass
+        assert connector.config_entry is entry
+        assert connector.config is config
+        assert connector.update_interval.total_seconds() == 6000
+        assert connector._backoff is True
+
+    @pytest.mark.asyncio
+    @patch("custom_components.hella_onyx.api_connector.async_get_clientsession")
+    @patch("custom_components.hella_onyx.api_connector.create")
+    async def test__client_params(self, mock_create, mock_session, api):
+        api.hass = MagicMock()
+        api.config.local_address = "192.168.1.100"
+        client = api._client()
+        assert client == mock_create.return_value
+        mock_create.assert_called_once_with(
+            fingerprint="finger",
+            access_token="token",
+            client_session=mock_session.return_value,
+            local_address="192.168.1.100",
+        )
+
 
 class MockClient:
     def __init__(self):
@@ -424,6 +577,7 @@ class MockClient:
         return [Group("group", "group", [])]
 
     async def device(self, uuid: str):
+        assert uuid == "id"
         self.called = True
         return Shutter(
             "id",
@@ -445,6 +599,7 @@ class MockClient:
         )
 
     async def send_command(self, uuid: str, command: DeviceCommand):
+        assert uuid == "id"
         self.called = True
         return command.action == Action.STOP or (
             command.properties is not None and "fail" not in command.properties

@@ -26,7 +26,7 @@ maintainers if that's a concern.
 
 ## Report bugs using Github's [issues](../../issues)
 
-GitHub issues are used to track public bugs.  
+GitHub issues are used to track public bugs.
 Report a bug by [opening a new issue](../../issues/new/choose); it's that easy!
 
 ## Write bug reports with detail, background, and sample code

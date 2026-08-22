@@ -12,7 +12,7 @@ authors = [
 ]
 readme = "README.md"
 repository = "https://github.com/muhlba91/onyx-homeassistant-integration"
-keywords = ["hella", "onxy", "homeassistant"]
+keywords = ["hella", "onyx", "homeassistant"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
@@ -22,7 +22,7 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.14.2,<3.15"
-onyx-client = "^11.0.1"
+onyx-client = "^11.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0.0"
@@ -34,6 +34,7 @@ aioresponses = "^0.7.4"
 homeassistant = "^2026.2.0-beta.0"
 ruff = "^0.15.0"
 pytest-homeassistant-custom-component = "^0.13.289"
+mutmut = "^3.7.0"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -58,3 +59,34 @@ exclude_lines = [
 ]
 fail_under = 95
 show_missing = true
+
+[tool.mutmut]
+source_paths = ["custom_components/hella_onyx"]
+pytest_add_cli_args = ["--no-cov"]
+pytest_add_cli_args_test_selection = ["tests"]
+do_not_mutate_patterns = [
+    "_LOGGER\\.",
+    ".*__str__.*",
+    "vol\\.Schema",
+    "vol\\.Optional",
+    "selector\\.",
+    "asyncio\\.timeout",
+    "async_track_point_in_utc_time",
+    "Debouncer",
+    "async_on_unload",
+    "add_update_listener",
+    "async_create_background_task",
+    "async_forward_entry_setups",
+    "asyncio\\.sleep",
+    "is_dimming",
+    "is_moving",
+    "time\\.time\\(\\)",
+    "utcnow\\(\\)",
+    "interpolate\\(",
+    "create_task",
+    "schedule_update_ha_state",
+    "_backoff",
+    "MAX_BACKOFF_TIME",
+    "random\\.uniform",
+    "super\\(\\)\\.__init__",
+]

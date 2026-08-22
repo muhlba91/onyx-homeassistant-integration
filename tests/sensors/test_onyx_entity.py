@@ -25,6 +25,14 @@ class TestOnyxEntity:
         entity.async_write_ha_state = MagicMock()
         yield entity
 
+    def test_init_properties(self, entity, api):
+        assert entity.coordinator == api
+        assert entity.api == api
+        assert entity.timezone == "UTC"
+        assert entity._name == "name"
+        assert entity._type == DeviceType.RAFFSTORE_90
+        assert entity._uuid == "uuid"
+
     def test_icon(self, entity):
         assert entity.icon == "mdi:help"
 

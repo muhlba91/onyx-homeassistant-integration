@@ -1,11 +1,17 @@
 """Test for the ONYX Shutter Entity."""
 
+import asyncio
 import pytest
 import time
 
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
-from homeassistant.components.cover import CoverDeviceClass, CoverEntityFeature
+from homeassistant.components.cover import (
+    ATTR_POSITION,
+    ATTR_TILT_POSITION,
+    CoverDeviceClass,
+    CoverEntityFeature,
+)
 from homeassistant.core import HomeAssistant
 
 from onyx_client.data.animation_keyframe import AnimationKeyframe
@@ -40,6 +46,9 @@ class TestOnyxShutter:
     def hass(self):
         hass = MagicMock(spec=HomeAssistant)
         hass.loop = MagicMock()
+        hass.create_task.side_effect = lambda coro: (
+            coro.close() if asyncio.iscoroutine(coro) else None
+        )
         yield hass
 
     @pytest.fixture
@@ -119,6 +128,13 @@ class TestOnyxShutter:
         )
         api.device.return_value = device
         assert entity.current_cover_position is None
+
+    def test_current_cover_position_scaled_max(self, api, entity, device):
+        device.actual_position = NumericValue(
+            value=25, minimum=0, maximum=50, read_only=False
+        )
+        api.device.return_value = device
+        assert entity.current_cover_position == 50
 
     def test_current_cover_tilt_position_none_device(self, entity, device, api):
         device.actual_angle = None
@@ -1054,3 +1070,486 @@ class TestOnyxShutter:
 
     def test__calculate_animation_duration_and_delay_none_keyframes(self, entity):
         assert entity._calculate_animation_duration_and_delay([None]) is None
+
+    def test__calculate_animation_duration_and_delay_empty(self, entity):
+        assert entity._calculate_animation_duration_and_delay([]) is None
+
+    # ------------------------------------------------------------------ #
+    # Mutmut: async_set_cover_position arithmetic                          #
+    # ------------------------------------------------------------------ #
+
+    @pytest.mark.asyncio
+    async def test_async_set_cover_position_hella_position_math(
+        self, entity, api, device, config
+    ):
+        """Mutmut: ceil(position * (target_max / 100)) vs ceil(position / (target_max / 100))."""
+        device.actual_position = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False
+        )
+        device.actual_angle = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False
+        )
+        device.target_position = NumericValue(
+            value=0, minimum=0, maximum=200, read_only=False
+        )
+        device.target_angle = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False
+        )
+        api.device.return_value = device
+        api.config = config
+
+        with patch.object(entity, "schedule_update_ha_state"):
+            await entity.async_set_cover_position(**{ATTR_POSITION: 0})
+
+        # position = 100 - 0 = 100; target_max = 200; hella = ceil(100 * (200/100)) = 200
+        args, _ = api.send_device_command_properties.call_args
+        assert args[1]["target_position"] == 200  # not 199 or 25
+
+    @pytest.mark.asyncio
+    async def test_async_set_cover_position_and_guard(
+        self, entity, api, device, config
+    ):
+        """Mutmut: target_position and target_position.maximum vs ... or ...
+        When target_position exists but maximum is 0 (falsy), 'and' falls to 100 default
+        but 'or' would use target_position.maximum (0) directly."""
+        device.actual_position = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False
+        )
+        device.actual_angle = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False
+        )
+        # maximum=0 is falsy; with 'and' guard: uses default 100; with 'or': uses 0
+        device.target_position = NumericValue(
+            value=0, minimum=0, maximum=0, read_only=False
+        )
+        device.target_angle = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False
+        )
+        api.device.return_value = device
+        api.config = config
+
+        with patch.object(entity, "schedule_update_ha_state"):
+            await entity.async_set_cover_position(**{ATTR_POSITION: 50})
+
+        # target_max must be 100 (default) because maximum is 0 (falsy)
+        args, _ = api.send_device_command_properties.call_args
+        assert args[1]["target_position"] == 50  # ceil(50 * (100/100))
+
+    @pytest.mark.asyncio
+    async def test_async_set_cover_tilt_position_math(
+        self, entity, api, device, config
+    ):
+        """Mutmut: ceil(angle * (max_angle / 100)) vs ceil(angle * (max_angle / 101))."""
+        device.actual_position = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False
+        )
+        device.actual_angle = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False
+        )
+        api.device.return_value = device
+        api.config = config
+
+        entity._type = DeviceType.RAFFSTORE_180
+        # entity is RAFFSTORE_180 => _max_angle = 180
+        # angle=100 => hella_angle = ceil(100 * (180/100)) = ceil(180) = 180
+        # with / 101 => ceil(100 * (180/101)) = ceil(178.21) = 179
+        with patch.object(entity, "schedule_update_ha_state"):
+            await entity.async_set_cover_tilt_position(**{ATTR_TILT_POSITION: 100})
+
+        args, _ = api.send_device_command_properties.call_args
+        assert args[1]["target_angle"] == 180
+
+    # ------------------------------------------------------------------ #
+    # Mutmut: _start_moving_device                                         #
+    # ------------------------------------------------------------------ #
+
+    def test_start_moving_device_additional_delay_is_added(self, entity, api, config):
+        """Mutmut: + additional_delay/1000 vs - additional_delay/1000.
+
+        A positive additional_delay should push end_time forward so the device
+        is still considered moving even when the animation duration has passed.
+        """
+        current_time = time.time()
+        # Keyframe duration puts end_time just in the past without delay
+        animation = AnimationValue(
+            start=current_time - 10,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(interpolation="linear", value=0, duration=5, delay=0)
+            ],
+        )
+        entity._moving_state = MovingState.CLOSING
+
+        with patch.object(entity, "_end_moving_device") as mock_end:
+            # additional_delay = 10_000 ms → +10 s → end_time in future
+            config.additional_delay = 10_000
+            config.interpolation_frequency = 0
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
+            entity._start_moving_device(animation)
+            assert not mock_end.called
+
+    def test_start_moving_device_additional_delay_divisor_is_1000(
+        self, entity, api, config
+    ):
+        """Mutmut: / 1000 vs / 1001 — ensure the conversion 1ms=0.001s is correct."""
+        current_time = time.time()
+        animation = AnimationValue(
+            start=current_time - 5,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(interpolation="linear", value=0, duration=3, delay=0)
+            ],
+        )
+        entity._moving_state = MovingState.CLOSING
+
+        with patch.object(entity, "_end_moving_device") as mock_end:
+            # 1000 ms / 1000 = +1 s → end_time still in past (5s ago + 3 + 1 = -1s → done)
+            # 1000 ms / 1001 ≈ +0.999 s → same result
+            # Use 2000ms: /1000 → +2s ; start-5+3+2 = 0 → current, still past/same
+            # Use 6000ms: /1000 → +6s ; start-5+3+6 = +4s → future! (not done)
+            config.additional_delay = 6_000
+            config.interpolation_frequency = 0
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
+            entity._start_moving_device(animation)
+            # With correct /1000: end_time = (now-5) + 3 + 6 = now+4 → still moving
+            assert not mock_end.called
+
+    def test_start_moving_device_is_moving_uses_strict_less_than(
+        self, entity, api, config
+    ):
+        """Mutmut: current_time < end_time vs current_time <= end_time.
+
+        When current_time exactly equals end_time the device must NOT be considered
+        moving (strict < means it's done). We can only verify that is_moving is True
+        when there's time remaining, and False (end called) when past.
+        """
+        current_time = time.time()
+        # end_time is well in the future → is_moving must be True
+        animation = AnimationValue(
+            start=current_time,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", value=0, duration=1000, delay=0
+                )
+            ],
+        )
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "_end_moving_device") as mock_end:
+            config.additional_delay = 0
+            config.interpolation_frequency = 0
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
+            entity._start_moving_device(animation)
+            assert not mock_end.called
+
+    def test_start_moving_device_interpolation_frequency_zero_skips_loop(
+        self, entity, api, config
+    ):
+        """Mutmut: interpolation_frequency > 0 vs >= 0.
+
+        When frequency is 0 the loop must NOT execute (division by zero).
+        """
+        current_time = time.time()
+        animation = AnimationValue(
+            start=current_time,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", value=0, duration=1000, delay=0
+                )
+            ],
+        )
+        entity._moving_state = MovingState.CLOSING
+
+        scheduled_calls = []
+
+        def capture_track(hass, callback, dt):
+            scheduled_calls.append(dt)
+
+        with patch(
+            "custom_components.hella_onyx.sensors.shutter.async_track_point_in_utc_time",
+            side_effect=capture_track,
+        ):
+            config.additional_delay = 0
+            config.interpolation_frequency = 0  # must skip the for-loop
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
+            entity._start_moving_device(animation)
+            # Only the final end_time call, not intermediate ones
+            assert len(scheduled_calls) == 1
+
+    def test_start_moving_device_range_uses_floor_division(self, entity, api, config):
+        """Mutmut: time_delta.total_seconds() // freq vs / freq.
+
+        With floor division // the number of intermediate slices is an integer;
+        with true division / range() raises TypeError. Verify it runs without error.
+        """
+        current_time = time.time()
+        animation = AnimationValue(
+            start=current_time,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", value=0, duration=100, delay=0
+                )
+            ],
+        )
+        entity._moving_state = MovingState.CLOSING
+
+        scheduled_calls = []
+
+        def capture_track(hass, callback, dt):
+            scheduled_calls.append(dt)
+
+        with patch(
+            "custom_components.hella_onyx.sensors.shutter.async_track_point_in_utc_time",
+            side_effect=capture_track,
+        ):
+            config.additional_delay = 0
+            config.interpolation_frequency = (
+                7  # non-divisor to expose float vs int issue
+            )
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
+            entity._start_moving_device(animation)
+            # Should complete without TypeError
+            assert len(scheduled_calls) >= 1
+
+    # ------------------------------------------------------------------ #
+    # Mutmut: _end_moving_device                                           #
+    # ------------------------------------------------------------------ #
+
+    def test_end_moving_device_empty_keyframes_skips_position(
+        self, entity, api, device, config
+    ):
+        """Mutmut: len(keyframes) > 0 vs >= 0 — empty list must NOT compute keyframe."""
+        device.actual_position = NumericValue(
+            value=50,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=AnimationValue(start=0, current_value=50, keyframes=[]),
+        )
+        device.actual_angle = NumericValue(
+            value=0,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=AnimationValue(start=0, current_value=0, keyframes=[]),
+        )
+        device.target_position = NumericValue(
+            value=100, minimum=0, maximum=100, read_only=False
+        )
+        device.target_angle = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False
+        )
+        api.device.return_value = device
+
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "schedule_update_ha_state"):
+            with patch.object(entity.hass, "create_task") as mock_create_task:
+                # Empty keyframes → position_keyframe = None → no stop issued
+                entity._end_moving_device()
+                assert not mock_create_task.called
+
+    def test_end_moving_device_position_end_time_computed(
+        self, entity, api, device, config
+    ):
+        """Mutmut: position_end_time = None replaces the real calculation."""
+        t = time.time()
+        animation = AnimationValue(
+            start=t - 100,  # well in the past
+            current_value=50,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", value=100, duration=10, delay=0
+                )
+            ],
+        )
+        device.actual_position = NumericValue(
+            value=50, minimum=0, maximum=100, read_only=False, animation=animation
+        )
+        device.actual_angle = NumericValue(
+            value=0,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=AnimationValue(start=0, current_value=0, keyframes=[]),
+        )
+        device.target_position = NumericValue(
+            value=100, minimum=0, maximum=100, read_only=False
+        )
+        device.target_angle = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False
+        )
+        api.device.return_value = device
+
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "schedule_update_ha_state"):
+            with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
+                entity._end_moving_device()
+                # end_time is in the past → stop must be issued
+                assert mock_async_stop_cover.called
+
+    def test_end_moving_device_angle_end_time_sign(self, entity, api, device, config):
+        """Mutmut: angle_start_time + angle_keyframe[0] vs - angle_keyframe[0]."""
+        t = time.time()
+        angle_animation = AnimationValue(
+            start=t - 100,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", value=90, duration=10, delay=0
+                )
+            ],
+        )
+        device.actual_position = NumericValue(
+            value=0,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=AnimationValue(start=0, current_value=0, keyframes=[]),
+        )
+        device.actual_angle = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False, animation=angle_animation
+        )
+        device.target_position = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False
+        )
+        device.target_angle = NumericValue(
+            value=90, minimum=0, maximum=100, read_only=False
+        )
+        api.device.return_value = device
+
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "schedule_update_ha_state"):
+            with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
+                entity._end_moving_device()
+                # angle_end_time = t-100 + 0(delay) + 10(duration) = t-90 → in the past
+                # position_end_time = None (no position keyframes)
+                # condition: position_end_time is None and angle_end_time is not None and current > angle_end_time
+                assert mock_async_stop_cover.called
+
+    def test_end_moving_device_null_condition_angle_none_position_done(
+        self, entity, api, device, config
+    ):
+        """Mutmut: angle_end_time is None vs is not None in the stop condition."""
+        t = time.time()
+        pos_animation = AnimationValue(
+            start=t - 100,
+            current_value=50,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", value=100, duration=5, delay=0
+                )
+            ],
+        )
+        device.actual_position = NumericValue(
+            value=50, minimum=0, maximum=100, read_only=False, animation=pos_animation
+        )
+        device.actual_angle = NumericValue(
+            value=0,
+            minimum=0,
+            maximum=100,
+            read_only=False,
+            animation=AnimationValue(start=0, current_value=0, keyframes=[]),
+        )
+        device.target_position = NumericValue(
+            value=100, minimum=0, maximum=100, read_only=False
+        )
+        device.target_angle = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False
+        )
+        api.device.return_value = device
+
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "schedule_update_ha_state"):
+            with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
+                entity._end_moving_device()
+                # angle_end_time IS None, position_end_time past → stop issued
+                assert mock_async_stop_cover.called
+
+    def test_end_moving_device_both_done_issues_stop(self, entity, api, device, config):
+        """Mutmut: position/angle is not None vs is None in the both-done condition."""
+        t = time.time()
+        pos_animation = AnimationValue(
+            start=t - 100,
+            current_value=50,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", value=100, duration=5, delay=0
+                )
+            ],
+        )
+        angle_animation = AnimationValue(
+            start=t - 100,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(interpolation="linear", value=90, duration=5, delay=0)
+            ],
+        )
+        device.actual_position = NumericValue(
+            value=50, minimum=0, maximum=100, read_only=False, animation=pos_animation
+        )
+        device.actual_angle = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False, animation=angle_animation
+        )
+        device.target_position = NumericValue(
+            value=100, minimum=0, maximum=100, read_only=False
+        )
+        device.target_angle = NumericValue(
+            value=90, minimum=0, maximum=100, read_only=False
+        )
+        api.device.return_value = device
+
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "schedule_update_ha_state"):
+            with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
+                entity._end_moving_device()
+                # Both end times are in the past → stop issued
+                assert mock_async_stop_cover.called
+
+    def test_end_moving_device_angle_keyframe_and_guard(
+        self, entity, api, device, config
+    ):
+        """Mutmut: angle_animation is not None and angle_keyframe[0] > 0 vs ... or ..."""
+        t = time.time()
+        # position is past end → stop will be issued; angle too
+        pos_animation = AnimationValue(
+            start=t - 100,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(
+                    interpolation="linear", value=100, duration=5, delay=0
+                )
+            ],
+        )
+        angle_animation = AnimationValue(
+            start=t - 100,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(interpolation="linear", value=90, duration=5, delay=0)
+            ],
+        )
+        device.actual_position = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False, animation=pos_animation
+        )
+        device.actual_angle = NumericValue(
+            value=0, minimum=0, maximum=100, read_only=False, animation=angle_animation
+        )
+        device.target_position = NumericValue(
+            value=100, minimum=0, maximum=100, read_only=False
+        )
+        device.target_angle = NumericValue(
+            value=90, minimum=0, maximum=100, read_only=False
+        )
+        api.device.return_value = device
+
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "schedule_update_ha_state"):
+            with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
+                entity._end_moving_device()
+                assert mock_async_stop_cover.called

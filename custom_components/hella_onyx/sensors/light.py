@@ -156,6 +156,7 @@ class OnyxLight(OnyxEntity, LightEntity):
         )
         await self.api.send_device_command_action(self._uuid, Action.LIGHT_OFF)
 
+    # pragma: no mutate start
     def _start_dim_device(self, animation: AnimationValue):
         """Start the update loop."""
         if not animation.keyframes:
@@ -272,6 +273,8 @@ class OnyxLight(OnyxEntity, LightEntity):
 
             self.schedule_update_ha_state()
 
+    # pragma: no mutate end
+
     @property
     def _actual_brightness(self) -> NumericValue:
         """Get the actual brightness."""
@@ -295,7 +298,4 @@ class OnyxLight(OnyxEntity, LightEntity):
                 + self.api.config.min_dim_duration
             )
         )
-        if duration > self.api.config.max_dim_duration:
-            return self.api.config.max_dim_duration
-        else:
-            return duration
+        return min(duration, self.api.config.max_dim_duration)
