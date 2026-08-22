@@ -1,5 +1,6 @@
 """Test for the ONYX Light Entity."""
 
+import asyncio
 import pytest
 import time
 
@@ -56,6 +57,9 @@ class TestOnyxLight:
     def hass(self):
         hass = MagicMock(spec=HomeAssistant)
         hass.loop = MagicMock()
+        hass.create_task.side_effect = lambda coro: (
+            coro.close() if asyncio.iscoroutine(coro) else None
+        )
         yield hass
 
     @pytest.fixture
@@ -122,6 +126,32 @@ class TestOnyxLight:
         )
         api.device.return_value = device
         assert entity.brightness == 0
+
+    @pytest.mark.asyncio
+    async def test_async_turn_on_with_custom_max(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=0, minimum=0, maximum=500, read_only=False
+        )
+        api.device.return_value = device
+        await entity.async_turn_on(brightness=255)
+        api.send_device_command_properties.assert_called_once()
+        args, _ = api.send_device_command_properties.call_args
+        assert args[0] == "uuid"
+        assert args[1]["target_brightness"] == 500
+
+    @pytest.mark.asyncio
+    async def test_async_turn_on_without_actual_brightness_fallback(
+        self, api, entity, device
+    ):
+        device.actual_brightness = NumericValue(
+            value=10, minimum=0, maximum=255, read_only=False
+        )
+        api.device.return_value = device
+        await entity.async_turn_on(brightness=128)
+        api.send_device_command_properties.assert_called_once()
+        args, _ = api.send_device_command_properties.call_args
+        assert args[0] == "uuid"
+        assert args[1]["target_brightness"] == 128
 
     def test_start_dim_device_no_keyframes(self, entity):
         animation = AnimationValue(start=0, current_value=0, keyframes=[])
@@ -505,3 +535,133 @@ class TestOnyxLight:
             assert api.device.called
             assert not mock_schedule_update_ha_state.called
             assert not entity.hass.async_create_task.called
+
+    # ------------------------------------------------------------------ #
+    # Mutmut: async_turn_on — and guard for actual_brightness              #
+    # ------------------------------------------------------------------ #
+
+    @pytest.mark.asyncio
+    async def test_turn_on_brightness_and_guard_none_maximum(self, api, entity, device):
+        """Mutmut: actual_brightness and actual_brightness.maximum vs ... or ...
+
+        When actual_brightness exists but maximum is 0 (falsy), 'and' falls to
+        default 255; 'or' would use actual_brightness.maximum (0) directly, making
+        hella_brightness=0 for any input.
+        Mock _get_dim_duration to isolate the target_max computation.
+        """
+        device.actual_brightness = NumericValue(
+            value=0, maximum=0, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+
+        with patch.object(entity, "_get_dim_duration", return_value=1000):
+            await entity.async_turn_on(brightness=255)
+
+        # With 'and': target_max = 255 (default) → hella = ceil(255/255*255) = 255
+        # With 'or':  target_max = 0 → ceil(255/255*0) = 0
+        args, _ = api.send_device_command_properties.call_args
+        assert args[1]["target_brightness"] == 255
+
+    @pytest.mark.asyncio
+    async def test_turn_on_brightness_with_valid_maximum(self, api, entity, device):
+        """Mutmut: ensure actual_brightness.maximum is used when truthy."""
+        device.actual_brightness = NumericValue(
+            value=0, maximum=200, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+
+        with patch.object(entity, "_get_dim_duration", return_value=1000):
+            await entity.async_turn_on(brightness=255)
+
+        # target_max = 200; hella = ceil(255/255*200) = 200
+        args, _ = api.send_device_command_properties.call_args
+        assert args[1]["target_brightness"] == 200
+
+    # ------------------------------------------------------------------ #
+    # Mutmut: _start_dim_device — additional_delay arithmetic              #
+    # ------------------------------------------------------------------ #
+
+    def test_start_dim_device_additional_delay_is_added(self, entity, api, config):
+        """Mutmut: + additional_delay/1000 vs - additional_delay/1000."""
+        current_time = time.time()
+        animation = AnimationValue(
+            start=current_time - 5,
+            current_value=0,
+            keyframes=[
+                AnimationKeyframe(interpolation="linear", value=0, duration=3, delay=0)
+            ],
+        )
+        # Without extra delay: end_time = (now-5)+3 = now-2 → done
+        # With 6000ms delay: end_time = now-5+3+6 = now+4 → still moving
+        with patch.object(entity, "_end_dim_device") as mock_end:
+            config.additional_delay = 6_000
+            config.interpolation_frequency = 0
+            config_mock = PropertyMock(return_value=config)
+            type(api).config = config_mock
+            entity._start_dim_device(animation)
+            assert not mock_end.called
+
+    # ------------------------------------------------------------------ #
+    # Mutmut: _end_dim_device — animation is not None and animation.keyframes
+    # vs ... or ...                                                        #
+    # ------------------------------------------------------------------ #
+
+    def test_end_dim_device_none_animation_yields_empty_keyframes(
+        self, api, entity, device
+    ):
+        """Mutmut: animation is not None or animation.keyframes (NoneType.keyframes crash)."""
+        device.actual_brightness = NumericValue(
+            value=0,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+            animation=None,
+        )
+        api.device.return_value = device
+
+        with patch.object(entity, "schedule_update_ha_state"):
+            with patch.object(entity.hass, "create_task"):
+                # Must not raise AttributeError for None.keyframes
+                entity._end_dim_device()
+
+    # ------------------------------------------------------------------ #
+    # Mutmut: _get_dim_duration — > vs >= for max_dim_duration             #
+    # ------------------------------------------------------------------ #
+
+    def test_get_dim_duration_at_max_returns_max(self, entity, api, device, config):
+        """Mutmut: duration > max vs duration >= max.
+
+        Use target much larger than brightness range so computed duration far exceeds
+        max_dim_duration. Result must be capped at max_dim_duration.
+        """
+        device.actual_brightness = NumericValue(
+            value=0, maximum=1, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+
+        config.min_dim_duration = 0
+        config.max_dim_duration = 100
+        config_mock = PropertyMock(return_value=config)
+        type(api).config = config_mock
+
+        # abs(10000 - 0) / 1 * (100 - 0) + 0 = 1_000_000 >> 100 → capped to 100
+        result = entity._get_dim_duration(10000)
+        assert result == 100
+
+    def test_get_dim_duration_below_max_returns_computed(
+        self, entity, api, device, config
+    ):
+        """Mutmut: ensure values strictly below max are not capped."""
+        device.actual_brightness = NumericValue(
+            value=0, maximum=1000, minimum=0, read_only=False
+        )
+        api.device.return_value = device
+
+        config.min_dim_duration = 0
+        config.max_dim_duration = 100000  # very high cap
+        config_mock = PropertyMock(return_value=config)
+        type(api).config = config_mock
+
+        # abs(1 - 0) / 1000 * 100000 = 100 → well below cap
+        result = entity._get_dim_duration(1)
+        assert result < 100000

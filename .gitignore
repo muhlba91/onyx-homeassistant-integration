@@ -436,3 +436,4 @@ dmypy.json
 tmp/
 node_modules/
 .yarn/
+mutants/

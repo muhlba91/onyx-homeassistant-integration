@@ -131,6 +131,7 @@ class APIConnector(DataUpdateCoordinator):
         """Sets the newly updated data in the coordinator to trigger all entity updates."""
         self.async_set_updated_data(self.data)
 
+    # pragma: no mutate start
     async def events(self, force_update: bool = False):
         """Listen and process device events."""
         try:
@@ -158,12 +159,15 @@ class APIConnector(DataUpdateCoordinator):
         except asyncio.CancelledError:
             _LOGGER.debug("Events background task stopped on cancellation")
 
+    # pragma: no mutate end
+
 
 class CommandException(Exception):
     """Exception for a failed command."""
 
     def __init__(self, msg: str, uuid: str):
         super().__init__(msg)
+        self.uuid = uuid
         _LOGGER.error("command errored: %s for id %s", msg, uuid)
 
 

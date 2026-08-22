@@ -130,6 +130,14 @@ poetry run pytest
 pytest
 ```
 
+Run mutation testing with `mutmut` by:
+
+```bash
+poetry run mutmut run
+# check results
+poetry run mutmut results
+```
+
 ### Linting and Code Style
 
 The project uses [ruff](https://github.com/astral-sh/ruff) for automated code linting and fixing, also using [pre-commit](https://pre-commit.com/).

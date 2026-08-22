@@ -243,6 +243,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         """Set the new moving state."""
         self._moving_state = state
 
+    # pragma: no mutate start
     def _start_moving_device(self, animation: AnimationValue):
         """Start the update loop."""
         if self._moving_state == MovingState.STILL:
@@ -402,6 +403,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                     self._device.actual_angle.value = update
 
             self.schedule_update_ha_state()
+
+    # pragma: no mutate end
 
     def _calculate_and_set_state(self, actual: int, new_value: int):
         """Calculate and set the new moving state."""

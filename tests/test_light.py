@@ -60,8 +60,14 @@ async def test_async_setup_entry(mock_hass):
 
     await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
     assert async_add_entries.called_async_add_entities
+    assert async_add_entries.update_before_add is True
     assert len(async_add_entries.data) == 1
-    assert async_add_entries.data[0]._uuid == "light"
+    entity = async_add_entries.data[0]
+    assert entity._uuid == "light"
+    assert entity._name == "name"
+    assert entity._type == DeviceType.BASIC_LIGHT
+    assert entity.api == api
+    assert entity.timezone == "UTC"
 
 
 @patch("homeassistant.core.HomeAssistant")
@@ -103,7 +109,9 @@ class AsyncAddEntries:
     def __init__(self):
         self.called_async_add_entities = False
         self.data = list()
+        self.update_before_add = None
 
     def call(self, data, boolean):
         self.data = data
         self.called_async_add_entities = True
+        self.update_before_add = boolean
