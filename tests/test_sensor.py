@@ -56,6 +56,12 @@ async def test_async_setup_entry(mock_hass):
             DeviceType.WEATHER,
             DeviceMode(DeviceType.WEATHER),
             list(),
+            temperature=NumericValue(
+                value=1,
+                minimum=0,
+                maximum=1,
+                read_only=False,
+            ),
             humidity=NumericValue(
                 value=1,
                 minimum=0,
@@ -63,6 +69,24 @@ async def test_async_setup_entry(mock_hass):
                 read_only=False,
             ),
             air_pressure=NumericValue(
+                value=1,
+                minimum=0,
+                maximum=1,
+                read_only=False,
+            ),
+            wind_peak=NumericValue(
+                value=1,
+                minimum=0,
+                maximum=1,
+                read_only=False,
+            ),
+            sun_brightness_peak=NumericValue(
+                value=1,
+                minimum=0,
+                maximum=1,
+                read_only=False,
+            ),
+            sun_brightness_sink=NumericValue(
                 value=1,
                 minimum=0,
                 maximum=1,
@@ -92,15 +116,15 @@ async def test_async_setup_entry(mock_hass):
     assert async_add_entries.data[3]._uuid == "weather"
     assert async_add_entries.data[3].unique_id == "weather/Temperature"
     assert async_add_entries.data[4]._uuid == "weather"
-    assert async_add_entries.data[4].unique_id == "weather/WindPeak"
+    assert async_add_entries.data[4].unique_id == "weather/Humidity"
     assert async_add_entries.data[5]._uuid == "weather"
-    assert async_add_entries.data[5].unique_id == "weather/SunBrightnessPeak"
+    assert async_add_entries.data[5].unique_id == "weather/AirPressure"
     assert async_add_entries.data[6]._uuid == "weather"
-    assert async_add_entries.data[6].unique_id == "weather/SunBrightnessSink"
+    assert async_add_entries.data[6].unique_id == "weather/WindPeak"
     assert async_add_entries.data[7]._uuid == "weather"
-    assert async_add_entries.data[7].unique_id == "weather/Humidity"
+    assert async_add_entries.data[7].unique_id == "weather/SunBrightnessPeak"
     assert async_add_entries.data[8]._uuid == "weather"
-    assert async_add_entries.data[8].unique_id == "weather/AirPressure"
+    assert async_add_entries.data[8].unique_id == "weather/SunBrightnessSink"
 
 
 @patch("homeassistant.core.HomeAssistant")
@@ -125,6 +149,30 @@ async def test_async_setup_entry_with_no_humidity_and_pressure(mock_hass):
         DeviceType.WEATHER,
         DeviceMode(DeviceType.WEATHER),
         list(),
+        temperature=NumericValue(
+            value=1,
+            minimum=0,
+            maximum=1,
+            read_only=False,
+        ),
+        wind_peak=NumericValue(
+            value=1,
+            minimum=0,
+            maximum=1,
+            read_only=False,
+        ),
+        sun_brightness_peak=NumericValue(
+            value=1,
+            minimum=0,
+            maximum=1,
+            read_only=False,
+        ),
+        sun_brightness_sink=NumericValue(
+            value=1,
+            minimum=0,
+            maximum=1,
+            read_only=False,
+        ),
     )
     api = MagicMock()
     api.devices = {
@@ -146,6 +194,7 @@ async def test_async_setup_entry_with_no_humidity_and_pressure(mock_hass):
     assert async_add_entries.data[3].unique_id == "weather/SunBrightnessPeak"
     assert async_add_entries.data[4]._uuid == "weather"
     assert async_add_entries.data[4].unique_id == "weather/SunBrightnessSink"
+    # no humidity, no air_pressure sensors expected
 
 
 @patch("homeassistant.core.HomeAssistant")

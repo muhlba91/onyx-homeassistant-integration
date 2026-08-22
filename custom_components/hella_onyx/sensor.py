@@ -74,32 +74,43 @@ async def async_setup_entry(
 def _collect_weather_sensors(
     api: APIConnector, timezone: str, device: Weather, device_id: str
 ):
-    sensors = [
-        OnyxSensorWeatherTemperature(
-            api, timezone, device.name, device.device_type, device_id
-        ),
-        OnyxSensorWeatherWindPeak(
-            api, timezone, device.name, device.device_type, device_id
-        ),
-        OnyxSensorWeatherSunBrightnessPeak(
-            api, timezone, device.name, device.device_type, device_id
-        ),
-        OnyxSensorWeatherSunBrightnessSink(
-            api, timezone, device.name, device.device_type, device_id
-        ),
-    ]
+    sensors = []
 
+    if device.temperature is not None:
+        sensors += [
+            OnyxSensorWeatherTemperature(
+                api, timezone, device.name, device.device_type, device_id
+            ),
+        ]
     if device.humidity is not None:
-        sensors += (
+        sensors += [
             OnyxSensorWeatherHumidity(
                 api, timezone, device.name, device.device_type, device_id
             ),
-        )
+        ]
     if device.air_pressure is not None:
-        sensors += (
+        sensors += [
             OnyxSensorWeatherAirPressure(
                 api, timezone, device.name, device.device_type, device_id
             ),
-        )
+        ]
+    if device.wind_peak is not None:
+        sensors += [
+            OnyxSensorWeatherWindPeak(
+                api, timezone, device.name, device.device_type, device_id
+            ),
+        ]
+    if device.sun_brightness_peak is not None:
+        sensors += [
+            OnyxSensorWeatherSunBrightnessPeak(
+                api, timezone, device.name, device.device_type, device_id
+            ),
+        ]
+    if device.sun_brightness_sink is not None:
+        sensors += [
+            OnyxSensorWeatherSunBrightnessSink(
+                api, timezone, device.name, device.device_type, device_id
+            ),
+        ]
 
     return sensors
