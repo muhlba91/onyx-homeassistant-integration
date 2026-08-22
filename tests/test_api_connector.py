@@ -10,6 +10,7 @@ from onyx_client.data.numeric_value import NumericValue
 from onyx_client.data.date_information import DateInformation
 from onyx_client.data.device_command import DeviceCommand
 from onyx_client.data.device_mode import DeviceMode
+from onyx_client.device.device import Device
 from onyx_client.device.shutter import Shutter
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
@@ -140,6 +141,27 @@ class TestAPIConnector:
         )
         assert api.devices["id"].actual_angle == actual_angle
 
+    def test_updated_device_attribute_error(self, api):
+        api.data = {
+            "devices": {
+                "id": Shutter(
+                    "id",
+                    "name",
+                    DeviceType.RAFFSTORE_90,
+                    DeviceMode(DeviceType.RAFFSTORE_90),
+                    list(Action),
+                    actual_angle=NumericValue(0, 0, 0, False),
+                    actual_position=NumericValue(0, 0, 0, False),
+                )
+            }
+        }
+        # Sending a plain Device (type=UNKNOWN) as the patch triggers AttributeError in update_with
+        incompatible_patch = Device("id", None, DeviceType.UNKNOWN, None, [])
+        # Must not raise — the error is logged as a WARNING and swallowed
+        api.updated_device(incompatible_patch)
+        # Existing stored device remains unchanged
+        assert api.devices["id"].actual_angle == NumericValue(0, 0, 0, False)
+
     @pytest.mark.asyncio
     async def test_updated_device_new(self, api, client):
         api.data = {
@@ -259,6 +281,59 @@ class TestAPIConnector:
                     assert client.is_called
                     assert mock_updated_device.called
                     assert mock_updater.called
+
+    @pytest.mark.asyncio
+    async def test_events_update_with_attribute_error(self, api):
+        """Events loop must NOT reconnect when update_with raises AttributeError.
+
+        Reproduces the 'Device' object has no attribute 'wind_peak' scenario:
+        the stored device is a Shutter but the SSE stream emits a plain Device patch.
+        The error is caught inside updated_device() and the loop continues without
+        triggering a connection reset / backoff.
+        """
+        api.data = {
+            "devices": {
+                "id": Shutter(
+                    "id",
+                    "name",
+                    DeviceType.RAFFSTORE_90,
+                    DeviceMode(DeviceType.RAFFSTORE_90),
+                    list(Action),
+                    actual_angle=NumericValue(0, 0, 0, False),
+                    actual_position=NumericValue(0, 0, 0, False),
+                )
+            }
+        }
+
+        async def events_with_incompatible_patch(force_update: bool):
+            # Emit a plain Device — this would previously cause AttributeError in update_with
+            yield Device("id", None, DeviceType.UNKNOWN, None, [])
+
+        mock_client = MagicMock()
+        mock_client.events = events_with_incompatible_patch
+
+        connection_reset_logged = []
+
+        def capture_warning(msg, *args, **kwargs):
+            if "connection reset" in msg:
+                connection_reset_logged.append(msg)
+
+        with patch.object(api, "_client", return_value=mock_client):
+            with patch.object(api, "_updater"):
+                api._backoff = False
+                import logging
+
+                with patch.object(
+                    logging.getLogger("custom_components.hella_onyx.api_connector"),
+                    "warning",
+                    side_effect=capture_warning,
+                ):
+                    await api.events()
+
+        # No connection-reset warning must have been emitted
+        assert len(connection_reset_logged) == 0
+        # The stored shutter is still intact
+        assert api.devices["id"].actual_angle == NumericValue(0, 0, 0, False)
 
     @pytest.mark.asyncio
     async def test_events_connection_error_raises(self, api):

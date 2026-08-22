@@ -10,6 +10,7 @@ from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
 from custom_components.hella_onyx import DOMAIN
+from custom_components.hella_onyx.api_connector import UnknownStateException
 from custom_components.hella_onyx.sensors.onyx_entity import OnyxEntity
 
 
@@ -47,3 +48,8 @@ class TestOnyxEntity:
         )
         api.device.return_value = device
         assert entity._device == device
+
+    def test__device_unknown_state_returns_none(self, entity, api):
+        """When the UUID is no longer in the coordinator, _device returns None."""
+        api.device.side_effect = UnknownStateException("UNKNOWN_DEVICE")
+        assert entity._device is None

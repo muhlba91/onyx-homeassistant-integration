@@ -104,7 +104,14 @@ class APIConnector(DataUpdateCoordinator):
         """Update the given device."""
         _LOGGER.debug("received device update %s (%s)", device.identifier, device)
         if device.identifier in self.devices:
-            self.devices[device.identifier].update_with(device)
+            try:
+                self.devices[device.identifier].update_with(device)
+            except (AttributeError, TypeError) as ex:
+                _LOGGER.warning(
+                    "skipping update for device %s: incompatible update patch (%s)",
+                    device.identifier,
+                    ex,
+                )
 
     async def send_device_command_action(self, uuid: str, action: Action):
         _LOGGER.info("executing %s for device %s", action.string(), uuid)
