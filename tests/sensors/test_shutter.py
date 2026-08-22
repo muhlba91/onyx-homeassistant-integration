@@ -176,6 +176,20 @@ class TestOnyxShutter:
         assert entity.current_cover_tilt_position == 11
         assert api.device.called
 
+    def test_handle_coordinator_update_none_device(self, entity, api):
+        with patch.object(
+            type(entity), "_device", new_callable=PropertyMock, return_value=None
+        ):
+            with patch.object(
+                entity, "schedule_update_ha_state"
+            ) as mock_schedule_update_ha_state:
+                with patch.object(
+                    entity, "_start_moving_device"
+                ) as mock_start_moving_device:
+                    entity._handle_coordinator_update()
+                    mock_start_moving_device.assert_not_called()
+                    mock_schedule_update_ha_state.assert_not_called()
+
     def test_handle_coordinator_update_position(self, entity, device, api):
         animation = AnimationValue(
             start=0,

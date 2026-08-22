@@ -51,7 +51,13 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        position_animation = self._device.actual_position.animation
+        device = self._device
+        if device is None:
+            return
+
+        position_animation = (
+            device.actual_position.animation if device.actual_position else None
+        )
         if position_animation is not None and len(position_animation.keyframes) > 0:
             _LOGGER.debug(
                 "received position_animation for shutter %s: %s",
@@ -59,14 +65,14 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                 position_animation,
             )
             if self._moving_state == MovingState.STILL:
-                target = self._device.target_position
+                target = device.target_position
                 if target is not None:
                     self._calculate_and_set_state(
                         position_animation.current_value, target.value
                     )
             self._start_moving_device(position_animation)
 
-        angle_animation = self._device.actual_angle.animation
+        angle_animation = device.actual_angle.animation if device.actual_angle else None
         if angle_animation is not None and len(angle_animation.keyframes) > 0:
             _LOGGER.debug(
                 "received angle_animation for shutter %s: %s",
@@ -74,7 +80,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                 angle_animation,
             )
             if self._moving_state == MovingState.STILL:
-                target = self._device.target_angle
+                target = device.target_angle
                 if target is not None:
                     self._calculate_and_set_state(
                         angle_animation.current_value, target.value
@@ -113,11 +119,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             | CoverEntityFeature.SET_POSITION
         )
 
-        if (
-            self._type
-            in (DeviceType.RAFFSTORE_90, DeviceType.RAFFSTORE_180)
-            is not None
-        ):
+        if self._type in (DeviceType.RAFFSTORE_90, DeviceType.RAFFSTORE_180):
             supported_features |= CoverEntityFeature.SET_TILT_POSITION
 
         return supported_features

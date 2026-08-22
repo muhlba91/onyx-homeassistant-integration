@@ -1,13 +1,17 @@
 """The ONYX entity."""
 
+import logging
+
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from onyx_client.enum.device_type import DeviceType
 
-from ..api_connector import APIConnector
+from ..api_connector import APIConnector, UnknownStateException
 from ..const import DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class OnyxEntity(CoordinatorEntity):
@@ -55,5 +59,12 @@ class OnyxEntity(CoordinatorEntity):
 
     @property
     def _device(self):
-        """Get the underlying device."""
-        return self.api.device(self._uuid)
+        """Get the underlying device, or None if it is no longer known."""
+        try:
+            return self.api.device(self._uuid)
+        except UnknownStateException:
+            _LOGGER.warning(
+                "device %s is no longer available; skipping state update",
+                self._uuid,
+            )
+            return None
