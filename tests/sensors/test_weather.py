@@ -13,6 +13,7 @@ from homeassistant.const import (
 )
 from onyx_client.data.device_mode import DeviceMode
 from onyx_client.data.numeric_value import NumericValue
+from onyx_client.device.tag_sun import TagSun
 from onyx_client.device.weather import Weather
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
@@ -20,6 +21,7 @@ from onyx_client.enum.device_type import DeviceType
 from custom_components.hella_onyx.sensors.weather import (
     OnyxSensorWeatherAirPressure,
     OnyxSensorWeatherHumidity,
+    OnyxSensorWeatherSunBrightness,
     OnyxSensorWeatherSunBrightnessPeak,
     OnyxSensorWeatherSunBrightnessSink,
     OnyxSensorWeatherTemperature,
@@ -369,4 +371,58 @@ class TestOnyxSensorWeatherSunBrightnessSink:
     def test_state(self, api, entity, device):
         api.device.return_value = device
         assert entity.state == 2
+        assert api.device.called
+
+
+class TestOnyxSensorWeatherSunBrightness:
+    @pytest.fixture
+    def api(self):
+        yield MagicMock()
+
+    @pytest.fixture
+    def hass(self):
+        yield MagicMock()
+
+    @pytest.fixture
+    def device(self):
+        yield TagSun(
+            "id",
+            "name",
+            DeviceType.TAG_SUN,
+            DeviceMode(DeviceType.TAG_SUN),
+            list(Action),
+            NumericValue(1000, 0, 150000, True),  # sun brightness
+            NumericValue(2000, 0, 150000, True),  # sun brightness peak
+            NumericValue(500, 0, 150000, True),  # sun brightness sink
+        )
+
+    @pytest.fixture
+    def entity(self, api, hass):
+        sensor = OnyxSensorWeatherSunBrightness(
+            api, "UTC", "name", DeviceType.TAG_SUN, "uuid"
+        )
+        sensor.hass = hass
+        yield sensor
+
+    def test_icon(self, entity):
+        assert entity.icon == "mdi:white-balance-sunny"
+
+    def test_name(self, entity):
+        assert entity.name == "name Sun Brightness"
+
+    def test_unique_id(self, entity):
+        assert entity.unique_id == "uuid/SunBrightness"
+
+    def test_device_class(self, entity):
+        assert entity.device_class == SensorDeviceClass.ILLUMINANCE
+
+    def test_suggested_display_precision(self, entity):
+        assert entity.suggested_display_precision == 0
+
+    def test_unit_of_measurement(self, entity):
+        assert entity.unit_of_measurement == LIGHT_LUX
+
+    def test_state(self, api, entity, device):
+        api.device.return_value = device
+        assert entity.state == 1000
         assert api.device.called

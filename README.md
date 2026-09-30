@@ -13,6 +13,7 @@ This component creates an integration that provides the following entities to co
 - **raffstore/shutter** entities
 - **(dimmable) light** entities
 - **weather station** sensor entities
+- **tag** (ONYX.TAG sun / temperature) sensor entities
 
 ---
 
@@ -100,6 +101,7 @@ Once configured, the integration creates entities for:
 | Sensor (Weather Temperature) | The temperature of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Air Pressure) | The air pressure of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Wind Peak) | The wind peak of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Sensor (Weather Sun Brightness) | The current sun brightness of a sun tag. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Sun Brightness Peak) | The sun brightness peak of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Sun Brightness Sink) | The sun brightness sink of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 
@@ -107,6 +109,7 @@ The **following ONYX devices** are **only community tested** due to the lack of 
 
 - Light (thank you [@clostermannshof](https://github.com/clostermannshof))
 - Weather Station (thank you [@mrogin-technic](https://github.com/mrogin-technic))
+- Tags (sun, temperature)
 
 ---
 
