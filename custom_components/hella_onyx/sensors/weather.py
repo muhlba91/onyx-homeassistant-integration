@@ -171,6 +171,45 @@ class OnyxSensorWeatherWindPeak(OnyxEntity, SensorEntity):
         return self._device.wind_peak.value / 1000
 
 
+class OnyxSensorWeatherSunBrightness(OnyxEntity, SensorEntity):
+    """ONYX Sun Brightness Sensor (current value, reported by sun tags)."""
+
+    @property
+    def name(self) -> str:
+        """Return the display name of the sensor."""
+        return f"{self._name} Sun Brightness"
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique id of the sensor."""
+        return f"{self._uuid}/SunBrightness"
+
+    @property
+    def icon(self) -> str:
+        """Icon to use in the frontend, if any."""
+        return "mdi:white-balance-sunny"
+
+    @property
+    def device_class(self) -> str | None:
+        """Return the class of this device, from component device class."""
+        return SensorDeviceClass.ILLUMINANCE
+
+    @property
+    def suggested_display_precision(self) -> int:
+        """Return the native number of decimal digits for display."""
+        return 0
+
+    @property
+    def native_unit_of_measurement(self) -> str | None:
+        """Return the native unit of this measurement."""
+        return LIGHT_LUX
+
+    @property
+    def native_value(self) -> float:
+        """Return the current value."""
+        return self._device.sun_brightness.value
+
+
 class OnyxSensorWeatherSunBrightnessPeak(OnyxEntity, SensorEntity):
     """ONYX Weather Sun Brightness Peak Sensor."""
 

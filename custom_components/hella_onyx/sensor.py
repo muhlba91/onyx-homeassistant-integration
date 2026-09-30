@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import DiscoveryInfoType
-from onyx_client.device.weather import Weather
+from onyx_client.device.device import Device
 from onyx_client.enum.device_type import DeviceType
 
 from custom_components.hella_onyx.api_connector import APIConnector
@@ -15,6 +15,7 @@ from .sensors.device_type import OnyxSensorDeviceType
 from .sensors.weather import (
     OnyxSensorWeatherAirPressure,
     OnyxSensorWeatherHumidity,
+    OnyxSensorWeatherSunBrightness,
     OnyxSensorWeatherSunBrightnessPeak,
     OnyxSensorWeatherSunBrightnessSink,
     OnyxSensorWeatherTemperature,
@@ -43,7 +44,7 @@ async def async_setup_entry(
                 api, timezone, device.name, device.device_type, device_id
             ),
         ]
-        # we only support shutters or weather stations
+        # we only support shutters, lights, weather stations and tags
         for device_id, device in filter(
             lambda item: (
                 item[1].device_type is not None
@@ -51,16 +52,24 @@ async def async_setup_entry(
                     item[1].device_type.is_shutter()
                     or item[1].device_type.is_light()
                     or item[1].device_type == DeviceType.WEATHER
+                    or item[1].device_type.is_tag()
                 )
             ),
             api.devices.items(),
         )
     ]
-    # all weather stations
+    # all weather stations and tags (they report a subset of the weather values)
     sensors = sensors + [
         _collect_weather_sensors(api, timezone, device, device_id)
         for device_id, device in filter(
-            lambda item: item[1].device_type == DeviceType.WEATHER, api.devices.items()
+            lambda item: (
+                item[1].device_type is not None
+                and (
+                    item[1].device_type == DeviceType.WEATHER
+                    or item[1].device_type.is_tag()
+                )
+            ),
+            api.devices.items(),
         )
     ]
     sensors = [item for sublist in sensors for item in sublist]
@@ -70,43 +79,49 @@ async def async_setup_entry(
 
 
 def _collect_weather_sensors(
-    api: APIConnector, timezone: str, device: Weather, device_id: str
+    api: APIConnector, timezone: str, device: Device, device_id: str
 ):
     sensors = []
 
-    if device.temperature is not None:
+    if getattr(device, "temperature", None) is not None:
         sensors.append(
             OnyxSensorWeatherTemperature(
                 api, timezone, device.name, device.device_type, device_id
             )
         )
-    if device.humidity is not None:
+    if getattr(device, "humidity", None) is not None:
         sensors.append(
             OnyxSensorWeatherHumidity(
                 api, timezone, device.name, device.device_type, device_id
             )
         )
-    if device.air_pressure is not None:
+    if getattr(device, "air_pressure", None) is not None:
         sensors.append(
             OnyxSensorWeatherAirPressure(
                 api, timezone, device.name, device.device_type, device_id
             )
         )
-    if device.wind_peak is not None:
+    if getattr(device, "wind_peak", None) is not None:
         sensors.append(
             OnyxSensorWeatherWindPeak(
                 api, timezone, device.name, device.device_type, device_id
             )
         )
-    if device.sun_brightness_peak is not None:
+    if getattr(device, "sun_brightness_peak", None) is not None:
         sensors.append(
             OnyxSensorWeatherSunBrightnessPeak(
                 api, timezone, device.name, device.device_type, device_id
             )
         )
-    if device.sun_brightness_sink is not None:
+    if getattr(device, "sun_brightness_sink", None) is not None:
         sensors.append(
             OnyxSensorWeatherSunBrightnessSink(
+                api, timezone, device.name, device.device_type, device_id
+            )
+        )
+    if getattr(device, "sun_brightness", None) is not None:
+        sensors.append(
+            OnyxSensorWeatherSunBrightness(
                 api, timezone, device.name, device.device_type, device_id
             )
         )

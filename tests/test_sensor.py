@@ -9,6 +9,8 @@ from onyx_client.data.numeric_value import NumericValue
 from onyx_client.device.device import Device
 from onyx_client.device.light import Light
 from onyx_client.device.shutter import Shutter
+from onyx_client.device.tag_sun import TagSun
+from onyx_client.device.tag_temperature import TagTemperature
 from onyx_client.device.weather import Weather
 from onyx_client.enum.device_type import DeviceType
 
@@ -217,6 +219,64 @@ async def test_async_setup_entry_with_no_humidity_and_pressure(mock_hass):
 
 @patch("homeassistant.core.HomeAssistant")
 @pytest.mark.asyncio
+async def test_async_setup_entry_tags(mock_hass):
+    config_entry = ConfigEntry(
+        version=1,
+        minor_version=1,
+        domain=DOMAIN,
+        title="entry",
+        data={},
+        source="source",
+        unique_id="onyx",
+        options={},
+        discovery_keys={},
+        subentries_data={},
+    )
+    api = MagicMock()
+    api.devices = {
+        "sun": TagSun(
+            "sun",
+            "name",
+            DeviceType.TAG_SUN,
+            DeviceMode(DeviceType.TAG_SUN),
+            [],
+            NumericValue(1000, 0, 150000, True),
+            NumericValue(2000, 0, 150000, True),
+            NumericValue(500, 0, 150000, True),
+        ),
+        "temperature": TagTemperature(
+            "temperature",
+            "name",
+            DeviceType.TAG_TEMPERATURE,
+            DeviceMode(DeviceType.TAG_TEMPERATURE),
+            [],
+            NumericValue(214, -400, 1000, True),
+            NumericValue(53, 0, 100, True),
+        ),
+    }
+    config_entry.runtime_data = OnyxData(api=api, config=MagicMock(), timezone="UTC")
+    async_add_entries = AsyncAddEntries()
+
+    await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
+    assert async_add_entries.called_async_add_entities
+    assert [entry.unique_id for entry in async_add_entries.data] == [
+        "sun/DeviceType",
+        "temperature/DeviceType",
+        "sun/SunBrightnessPeak",
+        "sun/SunBrightnessSink",
+        "sun/SunBrightness",
+        "temperature/Temperature",
+        "temperature/Humidity",
+    ]
+    for entry in async_add_entries.data:
+        assert entry.api == api
+        assert entry.timezone == "UTC"
+        assert entry._type is not None
+        assert entry._name == "name"
+
+
+@patch("homeassistant.core.HomeAssistant")
+@pytest.mark.asyncio
 async def test_async_setup_entry_filter_all(mock_hass):
     config_entry = ConfigEntry(
         version=1,
@@ -238,7 +298,9 @@ async def test_async_setup_entry_filter_all(mock_hass):
             DeviceType.CLICK,
             DeviceMode(DeviceType.CLICK),
             [],
-        )
+        ),
+        # unsupported type that exposes weather-like attributes: must be filtered
+        "unknown": MagicMock(device_type=DeviceType.CLICK),
     }
     config_entry.runtime_data = OnyxData(api=api, config=MagicMock(), timezone="UTC")
     async_add_entries = AsyncAddEntries()
