@@ -192,6 +192,28 @@ class TestOnyxShutter:
         assert entity.current_cover_tilt_position == 11
         assert api.device.called
 
+    @pytest.mark.parametrize(
+        "value,expected", [(-50, 100), (0, 100), (100, 0), (500, 0)]
+    )
+    def test_current_cover_position_clamped(self, api, entity, device, value, expected):
+        device.actual_position = NumericValue(
+            value=value, minimum=0, maximum=100, read_only=False
+        )
+        api.device.return_value = device
+        assert entity.current_cover_position == expected
+
+    @pytest.mark.parametrize(
+        "value,expected", [(-3254, 0), (0, 0), (90, 100), (1800, 100)]
+    )
+    def test_current_cover_tilt_position_clamped(
+        self, api, entity, device, value, expected
+    ):
+        device.actual_angle = NumericValue(
+            value=value, minimum=0, maximum=90, read_only=False
+        )
+        api.device.return_value = device
+        assert entity.current_cover_tilt_position == expected
+
     def test_handle_coordinator_update_none_device(self, entity, api):
         with patch.object(
             type(entity), "_device", new_callable=PropertyMock, return_value=None
@@ -858,6 +880,143 @@ class TestOnyxShutter:
                 assert not mock_async_stop_cover.called
                 assert mock_schedule_update_ha_state.called
                 assert entity._device.actual_position.value == 0
+
+    def _moving_device(self, device, angle_animation, position_animation):
+        device.actual_angle = NumericValue(
+            value=0, maximum=90, minimum=0, read_only=False, animation=angle_animation
+        )
+        device.target_angle = NumericValue(
+            value=90, maximum=90, minimum=0, read_only=False
+        )
+        device.actual_position = NumericValue(
+            value=0,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+            animation=position_animation,
+        )
+        device.target_position = NumericValue(
+            value=100, maximum=100, minimum=0, read_only=False
+        )
+
+    def test__end_moving_device_angle_finished_position_running(
+        self, entity, api, device
+    ):
+        now = time.time()
+        self._moving_device(
+            device,
+            AnimationValue(
+                now - 30,
+                0,
+                [
+                    AnimationKeyframe(
+                        interpolation="linear", duration=1.5, delay=0, value=90
+                    )
+                ],
+            ),
+            AnimationValue(
+                now - 10,
+                0,
+                [
+                    AnimationKeyframe(
+                        interpolation="linear", duration=100, delay=0, value=100
+                    )
+                ],
+            ),
+        )
+        api.device.return_value = device
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
+            with patch.object(entity, "schedule_update_ha_state"):
+                entity._end_moving_device()
+                assert not mock_async_stop_cover.called
+                assert entity._device.actual_angle.value == 90
+                assert 10 <= entity._device.actual_position.value <= 11
+                assert entity.current_cover_tilt_position == 100
+
+    def test__end_moving_device_angle_not_started_position_running(
+        self, entity, api, device
+    ):
+        now = time.time()
+        self._moving_device(
+            device,
+            AnimationValue(
+                now,
+                0,
+                [
+                    AnimationKeyframe(
+                        interpolation="linear", duration=1.5, delay=50, value=90
+                    )
+                ],
+            ),
+            AnimationValue(
+                now - 10,
+                0,
+                [
+                    AnimationKeyframe(
+                        interpolation="linear", duration=100, delay=0, value=100
+                    )
+                ],
+            ),
+        )
+        api.device.return_value = device
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
+            with patch.object(entity, "schedule_update_ha_state"):
+                entity._end_moving_device()
+                assert not mock_async_stop_cover.called
+                assert entity._device.actual_angle.value == 0
+                assert 10 <= entity._device.actual_position.value <= 11
+                assert entity.current_cover_tilt_position == 0
+
+    def test__end_moving_device_position_keyframes_none_angle_running(
+        self, entity, api, device
+    ):
+        now = time.time()
+        self._moving_device(
+            device,
+            AnimationValue(
+                now - 10,
+                0,
+                [
+                    AnimationKeyframe(
+                        interpolation="linear", duration=100, delay=0, value=90
+                    )
+                ],
+            ),
+            AnimationValue(now - 10, 0, [None]),
+        )
+        api.device.return_value = device
+        entity._moving_state = MovingState.CLOSING
+        with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
+            with patch.object(entity, "schedule_update_ha_state"):
+                entity._end_moving_device()
+                assert not mock_async_stop_cover.called
+                assert 9 <= entity._device.actual_angle.value <= 10
+                assert entity._device.actual_position.value == 0
+
+    def test__interpolate_animation_none_animation(self, entity):
+        keyframe = (10, 0)
+        assert entity._interpolate_animation(None, keyframe, 50, 5) is None
+
+    def test__interpolate_animation_none_keyframe(self, entity):
+        animation = AnimationValue(0, 0, [])
+        assert entity._interpolate_animation(animation, None, 50, 5) is None
+
+    def test__interpolate_animation_zero_duration(self, entity):
+        animation = AnimationValue(0, 0, [])
+        assert entity._interpolate_animation(animation, (0, 0), 50, 5) is None
+
+    def test__interpolate_animation_short_duration(self, entity):
+        animation = AnimationValue(0, 0, [])
+        assert entity._interpolate_animation(animation, (1, 0), 50, 0.5) == 25
+        assert entity._interpolate_animation(animation, (0.5, 0), 50, 0.25) == 25
+
+    def test__interpolate_animation(self, entity):
+        animation = AnimationValue(100, 0, [])
+        assert entity._interpolate_animation(animation, (10, 2), 50, 107) == 25
+        assert entity._interpolate_animation(animation, (10, 2), 50, 101) == 0
+        assert entity._interpolate_animation(animation, (10, 2), 50, 500) == 50
 
     def test__end_moving_device_only_position(self, entity, api, device):
         device.actual_position = NumericValue(

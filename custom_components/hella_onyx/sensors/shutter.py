@@ -138,7 +138,9 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         )
         if not position or not position.maximum:
             return None
-        return 100 - int(position.value / position.maximum * 100)
+        return self._clamp_percentage(
+            100 - int(position.value / position.maximum * 100)
+        )
 
     @property
     def current_cover_tilt_position(self) -> int | None:
@@ -154,7 +156,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         )
         if not position or self._max_angle == 0:
             return None
-        return int(position.value / self._max_angle * 100)
+        return self._clamp_percentage(int(position.value / self._max_angle * 100))
 
     @property
     def is_opening(self) -> bool:
@@ -373,34 +375,32 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             elif (
                 position_start_time is not None and current_time > position_start_time
             ) or (angle_start_time is not None and current_time > angle_start_time):
-                if position_animation is not None and position_keyframe[0] > 0:
-                    update = interpolate(
-                        position_animation.current_value,
-                        self._device.target_position.value,
-                        position_keyframe[0],
-                        current_time,
-                        position_start_time,
-                    )
+                position_update = self._interpolate_animation(
+                    position_animation,
+                    position_keyframe,
+                    self._device.target_position.value,
+                    current_time,
+                )
+                if position_update is not None:
                     _LOGGER.debug(
                         "interpolating actual_position update for device %s: %d",
                         self._uuid,
-                        update,
+                        position_update,
                     )
-                    self._device.actual_position.value = update
-                if angle_animation is not None and angle_keyframe[0] > 0:
-                    update = interpolate(
-                        angle_animation.current_value,
-                        self._device.target_angle.value,
-                        angle_keyframe[0],
-                        current_time,
-                        angle_start_time,
-                    )
+                    self._device.actual_position.value = position_update
+                angle_update = self._interpolate_animation(
+                    angle_animation,
+                    angle_keyframe,
+                    self._device.target_angle.value,
+                    current_time,
+                )
+                if angle_update is not None:
                     _LOGGER.debug(
                         "interpolating actual_angle update for device %s: %d",
                         self._uuid,
-                        update,
+                        angle_update,
                     )
-                    self._device.actual_angle.value = update
+                    self._device.actual_angle.value = angle_update
 
             self.schedule_update_ha_state()
 
@@ -420,6 +420,29 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             return 180
         else:
             return 100
+
+    @staticmethod
+    def _clamp_percentage(value: int) -> int:
+        """Clamp the value to a valid percentage."""
+        return max(0, min(100, value))
+
+    @staticmethod
+    def _interpolate_animation(
+        animation: AnimationValue | None,
+        keyframe: tuple | None,
+        target: int,
+        current_time: float,
+    ) -> int | None:
+        """Interpolate a single animation, or None if there is nothing to interpolate."""
+        if animation is None or keyframe is None or keyframe[0] <= 0:
+            return None
+        return interpolate(
+            animation.current_value,
+            target,
+            keyframe[0],
+            current_time,
+            animation.start + keyframe[1],
+        )
 
     @staticmethod
     def _calculate_state(actual: int, new_value: int) -> MovingState:
