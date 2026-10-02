@@ -1,15 +1,13 @@
 """API connector for the ONYX integration."""
 
-import logging
 import asyncio
-
+import logging
 from datetime import timedelta
 from random import uniform
 
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-
+from homeassistant.helpers.debounce import Debouncer
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from onyx_client.client import create
 from onyx_client.data.device_command import DeviceCommand
 from onyx_client.enum.action import Action
@@ -145,7 +143,7 @@ class APIConnector(DataUpdateCoordinator):
                 except asyncio.CancelledError:
                     _LOGGER.debug("Events background task cancelled")
                     raise
-                except Exception as ex:
+                except Exception as ex:  # noqa: BLE001
                     _LOGGER.warning(
                         "connection reset: %s, restarting with backoff of %s seconds (%s)",
                         ex,

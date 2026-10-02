@@ -1,19 +1,17 @@
 """Test for the ONYX Light Entity."""
 
-import pytest
-
 from unittest.mock import MagicMock, patch
 
+import pytest
 from homeassistant.config_entries import ConfigEntry
-
 from onyx_client.data.device_mode import DeviceMode
 from onyx_client.device.light import Light
 from onyx_client.device.shutter import Shutter
 from onyx_client.enum.device_type import DeviceType
 
 from custom_components.hella_onyx import DOMAIN
-from custom_components.hella_onyx.models import OnyxData
 from custom_components.hella_onyx.light import async_setup_entry
+from custom_components.hella_onyx.models import OnyxData
 
 
 @patch("homeassistant.core.HomeAssistant")
@@ -38,21 +36,21 @@ async def test_async_setup_entry(mock_hass):
             "name",
             DeviceType.RAFFSTORE_90,
             DeviceMode(DeviceType.RAFFSTORE_90),
-            list(),
+            [],
         ),
         "light": Light(
             "light",
             "name",
             DeviceType.BASIC_LIGHT,
             DeviceMode(DeviceType.BASIC_LIGHT),
-            list(),
+            [],
         ),
         "none": Shutter(
             "none",
             "name",
             None,
             None,
-            list(),
+            [],
         ),
     }
     config_entry.runtime_data = OnyxData(api=api, config=MagicMock(), timezone="UTC")
@@ -93,7 +91,7 @@ async def test_async_setup_entry_filter_all(mock_hass):
                 "name",
                 DeviceType.RAFFSTORE_90,
                 DeviceMode(DeviceType.RAFFSTORE_90),
-                list(),
+                [],
             )
         }
     }
@@ -108,7 +106,7 @@ async def test_async_setup_entry_filter_all(mock_hass):
 class AsyncAddEntries:
     def __init__(self):
         self.called_async_add_entities = False
-        self.data = list()
+        self.data = []
         self.update_before_add = None
 
     def call(self, data, boolean):

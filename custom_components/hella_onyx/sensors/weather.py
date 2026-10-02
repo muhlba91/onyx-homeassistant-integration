@@ -1,17 +1,15 @@
 """The ONYX weather sensors."""
 
-from typing import Optional
-
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
 )
 from homeassistant.const import (
-    UnitOfTemperature,
-    UnitOfPressure,
-    UnitOfSpeed,
     LIGHT_LUX,
     PERCENTAGE,
+    UnitOfPressure,
+    UnitOfSpeed,
+    UnitOfTemperature,
 )
 
 from ..sensors.onyx_entity import OnyxEntity
@@ -36,7 +34,7 @@ class OnyxSensorWeatherHumidity(OnyxEntity, SensorEntity):
         return "mdi:water-percent"
 
     @property
-    def device_class(self) -> Optional[str]:
+    def device_class(self) -> str | None:
         """Return the class of this device, from component device class."""
         return SensorDeviceClass.HUMIDITY
 
@@ -46,7 +44,7 @@ class OnyxSensorWeatherHumidity(OnyxEntity, SensorEntity):
         return 0
 
     @property
-    def native_unit_of_measurement(self) -> Optional[str]:
+    def native_unit_of_measurement(self) -> str | None:
         """Return the native unit of this measurement."""
         return PERCENTAGE
 
@@ -75,7 +73,7 @@ class OnyxSensorWeatherTemperature(OnyxEntity, SensorEntity):
         return "mdi:thermometer"
 
     @property
-    def device_class(self) -> Optional[str]:
+    def device_class(self) -> str | None:
         """Return the class of this device, from component device class."""
         return SensorDeviceClass.TEMPERATURE
 
@@ -85,7 +83,7 @@ class OnyxSensorWeatherTemperature(OnyxEntity, SensorEntity):
         return 1
 
     @property
-    def native_unit_of_measurement(self) -> Optional[str]:
+    def native_unit_of_measurement(self) -> str | None:
         """Return the native unit of this measurement."""
         return UnitOfTemperature.CELSIUS
 
@@ -114,7 +112,7 @@ class OnyxSensorWeatherAirPressure(OnyxEntity, SensorEntity):
         return "mdi:gauge"
 
     @property
-    def device_class(self) -> Optional[str]:
+    def device_class(self) -> str | None:
         """Return the class of this device, from component device class."""
         return SensorDeviceClass.ATMOSPHERIC_PRESSURE
 
@@ -124,7 +122,7 @@ class OnyxSensorWeatherAirPressure(OnyxEntity, SensorEntity):
         return 1
 
     @property
-    def native_unit_of_measurement(self) -> Optional[str]:
+    def native_unit_of_measurement(self) -> str | None:
         """Return the native unit of this measurement."""
         return UnitOfPressure.HPA
 
@@ -153,7 +151,7 @@ class OnyxSensorWeatherWindPeak(OnyxEntity, SensorEntity):
         return "mdi:weather-windy"
 
     @property
-    def device_class(self) -> Optional[str]:
+    def device_class(self) -> str | None:
         """Return the class of this device, from component device class."""
         return SensorDeviceClass.WIND_SPEED
 
@@ -163,7 +161,7 @@ class OnyxSensorWeatherWindPeak(OnyxEntity, SensorEntity):
         return 1
 
     @property
-    def native_unit_of_measurement(self) -> Optional[str]:
+    def native_unit_of_measurement(self) -> str | None:
         """Return the native unit of this measurement."""
         return UnitOfSpeed.METERS_PER_SECOND
 
@@ -192,7 +190,7 @@ class OnyxSensorWeatherSunBrightnessPeak(OnyxEntity, SensorEntity):
         return "mdi:weather-sunset-up"
 
     @property
-    def device_class(self) -> Optional[str]:
+    def device_class(self) -> str | None:
         """Return the class of this device, from component device class."""
         return SensorDeviceClass.ILLUMINANCE
 
@@ -202,7 +200,7 @@ class OnyxSensorWeatherSunBrightnessPeak(OnyxEntity, SensorEntity):
         return 0
 
     @property
-    def native_unit_of_measurement(self) -> Optional[str]:
+    def native_unit_of_measurement(self) -> str | None:
         """Return the native unit of this measurement."""
         return LIGHT_LUX
 
@@ -231,7 +229,7 @@ class OnyxSensorWeatherSunBrightnessSink(OnyxEntity, SensorEntity):
         return "mdi:weather-sunset-down"
 
     @property
-    def device_class(self) -> Optional[str]:
+    def device_class(self) -> str | None:
         """Return the class of this device, from component device class."""
         return SensorDeviceClass.ILLUMINANCE
 
@@ -241,7 +239,7 @@ class OnyxSensorWeatherSunBrightnessSink(OnyxEntity, SensorEntity):
         return 0
 
     @property
-    def native_unit_of_measurement(self) -> Optional[str]:
+    def native_unit_of_measurement(self) -> str | None:
         """Return the native unit of this measurement."""
         return LIGHT_LUX
 

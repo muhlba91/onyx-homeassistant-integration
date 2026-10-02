@@ -5,7 +5,6 @@ import logging
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-
 from onyx_client.enum.device_type import DeviceType
 
 from ..api_connector import APIConnector, UnknownStateException

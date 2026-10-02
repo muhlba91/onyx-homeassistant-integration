@@ -1,40 +1,39 @@
 """Test for the ONYX Config Flow."""
 
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
+
 import pytest
-
-from unittest.mock import AsyncMock, MagicMock, patch, ANY
-
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
     CONF_CODE,
-    CONF_SCAN_INTERVAL,
     CONF_FORCE_UPDATE,
+    CONF_SCAN_INTERVAL,
 )
-from homeassistant.config_entries import ConfigEntry
 
-from custom_components.hella_onyx.const import (
-    CONF_FINGERPRINT,
-    CONF_INTERPOLATION_FREQUENCY,
-    CONF_LOCAL_ADDRESS,
-    CONF_MIN_DIM_DURATION,
-    CONF_MAX_DIM_DURATION,
-    CONF_ADDITIONAL_DELAY,
-    DEFAULT_SCAN_INTERVAL,
-    DEFAULT_MIN_DIM_DURATION,
-    DEFAULT_MAX_DIM_DURATION,
-    DEFAULT_ADDITIONAL_DELAY,
-    DEFAULT_INTERPOLATION_FREQUENCY,
-    MIN_DIM_DURATION,
-    MAX_DIM_DURATION,
-    MIN_ADDITIONAL_DELAY,
-    MAX_ADDITIONAL_DELAY,
-    MIN_INTERPOLATION_FREQUENCY,
-    MAX_INTERPOLATION_FREQUENCY,
-)
 from custom_components.hella_onyx.config_flow import (
     OnyxFlowHandler,
     OnyxOptionsFlowHandler,
     _get_options_schema,
+)
+from custom_components.hella_onyx.const import (
+    CONF_ADDITIONAL_DELAY,
+    CONF_FINGERPRINT,
+    CONF_INTERPOLATION_FREQUENCY,
+    CONF_LOCAL_ADDRESS,
+    CONF_MAX_DIM_DURATION,
+    CONF_MIN_DIM_DURATION,
+    DEFAULT_ADDITIONAL_DELAY,
+    DEFAULT_INTERPOLATION_FREQUENCY,
+    DEFAULT_MAX_DIM_DURATION,
+    DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_SCAN_INTERVAL,
+    MAX_ADDITIONAL_DELAY,
+    MAX_DIM_DURATION,
+    MAX_INTERPOLATION_FREQUENCY,
+    MIN_ADDITIONAL_DELAY,
+    MIN_DIM_DURATION,
+    MIN_INTERPOLATION_FREQUENCY,
 )
 
 
@@ -395,7 +394,7 @@ class TestOnyxFlowHandler:
         assert mock_async_step_options.called
         kwargs = mock_async_step_options.call_args.kwargs
         assert kwargs["step_id"] == "options"
-        schema_keys = {k.schema: k for k in kwargs["data_schema"].schema.keys()}
+        schema_keys = {k.schema: k for k in kwargs["data_schema"].schema}
         assert CONF_SCAN_INTERVAL in schema_keys
         assert CONF_LOCAL_ADDRESS in schema_keys
         assert schema_keys[CONF_LOCAL_ADDRESS].default() == "192.168.1.99"

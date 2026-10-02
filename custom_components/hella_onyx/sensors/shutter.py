@@ -2,14 +2,12 @@
 
 import logging
 import time
-
 from datetime import timedelta
 from functools import reduce
-from operator import add
 from math import ceil
-from typing import Any, Optional
+from operator import add
+from typing import Any
 
-from homeassistant.core import callback
 from homeassistant.components.cover import (
     ATTR_POSITION,
     ATTR_TILT_POSITION,
@@ -17,11 +15,11 @@ from homeassistant.components.cover import (
     CoverEntity,
     CoverEntityFeature,
 )
+from homeassistant.core import callback
 from homeassistant.helpers.event import (
     async_track_point_in_utc_time,
 )
 from homeassistant.util import utcnow
-
 from onyx_client.data.animation_value import AnimationValue
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
@@ -105,7 +103,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         return f"{self._uuid}/Shutter"
 
     @property
-    def device_class(self) -> Optional[str]:
+    def device_class(self) -> str | None:
         """Return the class of this device, from component device class."""
         return CoverDeviceClass.SHUTTER
 
@@ -283,7 +281,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             interpolation_frequency = self.api.config.interpolation_frequency
             if interpolation_frequency > 0:
                 for slice in range(
-                    0, int(time_delta.total_seconds() // interpolation_frequency) + 1
+                    int(time_delta.total_seconds() // interpolation_frequency) + 1
                 ):
                     utc_intermediate_time = utc_now + timedelta(
                         seconds=slice * interpolation_frequency

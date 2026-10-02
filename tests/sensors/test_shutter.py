@@ -1,11 +1,10 @@
 """Test for the ONYX Shutter Entity."""
 
 import asyncio
-import pytest
 import time
-
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
+import pytest
 from homeassistant.components.cover import (
     ATTR_POSITION,
     ATTR_TILT_POSITION,
@@ -13,7 +12,6 @@ from homeassistant.components.cover import (
     CoverEntityFeature,
 )
 from homeassistant.core import HomeAssistant
-
 from onyx_client.data.animation_keyframe import AnimationKeyframe
 from onyx_client.data.animation_value import AnimationValue
 from onyx_client.data.device_mode import DeviceMode
@@ -22,14 +20,14 @@ from onyx_client.device.shutter import Shutter
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
-from custom_components.hella_onyx.const import (
-    DEFAULT_INTERPOLATION_FREQUENCY,
-    DEFAULT_MIN_DIM_DURATION,
-    DEFAULT_MAX_DIM_DURATION,
-    DEFAULT_SCAN_INTERVAL,
-    DEFAULT_ADDITIONAL_DELAY,
-)
 from custom_components.hella_onyx.configuration import Configuration
+from custom_components.hella_onyx.const import (
+    DEFAULT_ADDITIONAL_DELAY,
+    DEFAULT_INTERPOLATION_FREQUENCY,
+    DEFAULT_MAX_DIM_DURATION,
+    DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_SCAN_INTERVAL,
+)
 from custom_components.hella_onyx.cover import OnyxShutter
 from custom_components.hella_onyx.enum.moving_state import MovingState
 
@@ -215,18 +213,18 @@ class TestOnyxShutter:
         assert entity.current_cover_tilt_position == expected
 
     def test_handle_coordinator_update_none_device(self, entity, api):
-        with patch.object(
-            type(entity), "_device", new_callable=PropertyMock, return_value=None
-        ):
-            with patch.object(
+        with (
+            patch.object(
+                type(entity), "_device", new_callable=PropertyMock, return_value=None
+            ),
+            patch.object(
                 entity, "schedule_update_ha_state"
-            ) as mock_schedule_update_ha_state:
-                with patch.object(
-                    entity, "_start_moving_device"
-                ) as mock_start_moving_device:
-                    entity._handle_coordinator_update()
-                    mock_start_moving_device.assert_not_called()
-                    mock_schedule_update_ha_state.assert_not_called()
+            ) as mock_schedule_update_ha_state,
+            patch.object(entity, "_start_moving_device") as mock_start_moving_device,
+        ):
+            entity._handle_coordinator_update()
+            mock_start_moving_device.assert_not_called()
+            mock_schedule_update_ha_state.assert_not_called()
 
     def test_handle_coordinator_update_position(self, entity, device, api):
         animation = AnimationValue(
@@ -253,16 +251,16 @@ class TestOnyxShutter:
             animation=None,
         )
         api.device.return_value = device
-        with patch.object(
-            entity, "schedule_update_ha_state"
-        ) as mock_schedule_update_ha_state:
-            with patch.object(
-                entity, "_start_moving_device"
-            ) as mock_start_moving_device:
-                entity._handle_coordinator_update()
-                mock_start_moving_device.assert_called_with(animation)
-                assert api.device.called
-                assert mock_schedule_update_ha_state.called
+        with (
+            patch.object(
+                entity, "schedule_update_ha_state"
+            ) as mock_schedule_update_ha_state,
+            patch.object(entity, "_start_moving_device") as mock_start_moving_device,
+        ):
+            entity._handle_coordinator_update()
+            mock_start_moving_device.assert_called_with(animation)
+            assert api.device.called
+            assert mock_schedule_update_ha_state.called
 
     def test_handle_coordinator_update_angle(self, entity, device, api):
         animation = AnimationValue(
@@ -289,16 +287,16 @@ class TestOnyxShutter:
             animation=animation,
         )
         api.device.return_value = device
-        with patch.object(
-            entity, "schedule_update_ha_state"
-        ) as mock_schedule_update_ha_state:
-            with patch.object(
-                entity, "_start_moving_device"
-            ) as mock_start_moving_device:
-                entity._handle_coordinator_update()
-                mock_start_moving_device.assert_called_with(animation)
-                assert api.device.called
-                assert mock_schedule_update_ha_state.called
+        with (
+            patch.object(
+                entity, "schedule_update_ha_state"
+            ) as mock_schedule_update_ha_state,
+            patch.object(entity, "_start_moving_device") as mock_start_moving_device,
+        ):
+            entity._handle_coordinator_update()
+            mock_start_moving_device.assert_called_with(animation)
+            assert api.device.called
+            assert mock_schedule_update_ha_state.called
 
     def test_handle_coordinator_update_no_animation(self, entity, device, api):
         animation = None
@@ -317,16 +315,16 @@ class TestOnyxShutter:
             animation=None,
         )
         api.device.return_value = device
-        with patch.object(
-            entity, "schedule_update_ha_state"
-        ) as mock_schedule_update_ha_state:
-            with patch.object(
-                entity, "_start_moving_device"
-            ) as mock_start_moving_device:
-                entity._handle_coordinator_update()
-                mock_start_moving_device.assert_not_called
-                assert api.device.called
-                assert mock_schedule_update_ha_state.called
+        with (
+            patch.object(
+                entity, "schedule_update_ha_state"
+            ) as mock_schedule_update_ha_state,
+            patch.object(entity, "_start_moving_device") as mock_start_moving_device,
+        ):
+            entity._handle_coordinator_update()
+            mock_start_moving_device.assert_not_called()
+            assert api.device.called
+            assert mock_schedule_update_ha_state.called
 
     def test_handle_coordinator_update_position_still_sets_state(
         self, entity, device, api
@@ -360,9 +358,11 @@ class TestOnyxShutter:
         )
         api.device.return_value = device
         assert entity._moving_state == MovingState.STILL
-        with patch.object(entity, "_start_moving_device"):
-            with patch.object(entity, "schedule_update_ha_state"):
-                entity._handle_coordinator_update()
+        with (
+            patch.object(entity, "_start_moving_device"),
+            patch.object(entity, "schedule_update_ha_state"),
+        ):
+            entity._handle_coordinator_update()
         # 10 → 50 is closing (increasing raw position)
         assert entity._moving_state == MovingState.CLOSING
 
@@ -396,9 +396,11 @@ class TestOnyxShutter:
         )
         api.device.return_value = device
         assert entity._moving_state == MovingState.STILL
-        with patch.object(entity, "_start_moving_device"):
-            with patch.object(entity, "schedule_update_ha_state"):
-                entity._handle_coordinator_update()
+        with (
+            patch.object(entity, "_start_moving_device"),
+            patch.object(entity, "schedule_update_ha_state"),
+        ):
+            entity._handle_coordinator_update()
         # 90 → 0 is opening (decreasing raw angle)
         assert entity._moving_state == MovingState.OPENING
 
@@ -795,13 +797,15 @@ class TestOnyxShutter:
         entity._device.actual_angle.animation = AnimationValue(
             time.time() - 1000, 10, [AnimationKeyframe("linear", 0, 100, 90)]
         )
-        with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-            with patch.object(
+        with (
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+            patch.object(
                 entity, "schedule_update_ha_state"
-            ) as mock_schedule_update_ha_state:
-                entity._end_moving_device()
-                assert mock_async_stop_cover.called
-                assert mock_schedule_update_ha_state.called
+            ) as mock_schedule_update_ha_state,
+        ):
+            entity._end_moving_device()
+            assert mock_async_stop_cover.called
+            assert mock_schedule_update_ha_state.called
 
     def test__end_moving_device_within_time(self, entity, api, device):
         device.actual_angle = NumericValue(
@@ -836,16 +840,18 @@ class TestOnyxShutter:
         )
         api.device.return_value = device
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-            with patch.object(
+        with (
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+            patch.object(
                 entity, "schedule_update_ha_state"
-            ) as mock_schedule_update_ha_state:
-                entity._end_moving_device()
-                assert api.device.called
-                assert not mock_async_stop_cover.called
-                assert mock_schedule_update_ha_state.called
-                assert entity._device.actual_angle.value == 1
-                assert entity._device.actual_position.value == 1
+            ) as mock_schedule_update_ha_state,
+        ):
+            entity._end_moving_device()
+            assert api.device.called
+            assert not mock_async_stop_cover.called
+            assert mock_schedule_update_ha_state.called
+            assert entity._device.actual_angle.value == 1
+            assert entity._device.actual_position.value == 1
 
     def test__end_moving_device_within_time_using_delay(self, entity, api, device):
         device.actual_position = NumericValue(
@@ -871,15 +877,17 @@ class TestOnyxShutter:
         )
         api.device.return_value = device
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-            with patch.object(
+        with (
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+            patch.object(
                 entity, "schedule_update_ha_state"
-            ) as mock_schedule_update_ha_state:
-                entity._end_moving_device()
-                assert api.device.called
-                assert not mock_async_stop_cover.called
-                assert mock_schedule_update_ha_state.called
-                assert entity._device.actual_position.value == 0
+            ) as mock_schedule_update_ha_state,
+        ):
+            entity._end_moving_device()
+            assert api.device.called
+            assert not mock_async_stop_cover.called
+            assert mock_schedule_update_ha_state.called
+            assert entity._device.actual_position.value == 0
 
     def _moving_device(self, device, angle_animation, position_animation):
         device.actual_angle = NumericValue(
@@ -926,13 +934,15 @@ class TestOnyxShutter:
         )
         api.device.return_value = device
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-            with patch.object(entity, "schedule_update_ha_state"):
-                entity._end_moving_device()
-                assert not mock_async_stop_cover.called
-                assert entity._device.actual_angle.value == 90
-                assert 10 <= entity._device.actual_position.value <= 11
-                assert entity.current_cover_tilt_position == 100
+        with (
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+            patch.object(entity, "schedule_update_ha_state"),
+        ):
+            entity._end_moving_device()
+            assert not mock_async_stop_cover.called
+            assert entity._device.actual_angle.value == 90
+            assert 10 <= entity._device.actual_position.value <= 11
+            assert entity.current_cover_tilt_position == 100
 
     def test__end_moving_device_angle_not_started_position_running(
         self, entity, api, device
@@ -961,13 +971,15 @@ class TestOnyxShutter:
         )
         api.device.return_value = device
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-            with patch.object(entity, "schedule_update_ha_state"):
-                entity._end_moving_device()
-                assert not mock_async_stop_cover.called
-                assert entity._device.actual_angle.value == 0
-                assert 10 <= entity._device.actual_position.value <= 11
-                assert entity.current_cover_tilt_position == 0
+        with (
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+            patch.object(entity, "schedule_update_ha_state"),
+        ):
+            entity._end_moving_device()
+            assert not mock_async_stop_cover.called
+            assert entity._device.actual_angle.value == 0
+            assert 10 <= entity._device.actual_position.value <= 11
+            assert entity.current_cover_tilt_position == 0
 
     def test__end_moving_device_position_keyframes_none_angle_running(
         self, entity, api, device
@@ -988,12 +1000,14 @@ class TestOnyxShutter:
         )
         api.device.return_value = device
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-            with patch.object(entity, "schedule_update_ha_state"):
-                entity._end_moving_device()
-                assert not mock_async_stop_cover.called
-                assert 9 <= entity._device.actual_angle.value <= 10
-                assert entity._device.actual_position.value == 0
+        with (
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+            patch.object(entity, "schedule_update_ha_state"),
+        ):
+            entity._end_moving_device()
+            assert not mock_async_stop_cover.called
+            assert 9 <= entity._device.actual_angle.value <= 10
+            assert entity._device.actual_position.value == 0
 
     def test__interpolate_animation_none_animation(self, entity):
         keyframe = (10, 0)
@@ -1042,15 +1056,17 @@ class TestOnyxShutter:
         )
         api.device.return_value = device
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-            with patch.object(
+        with (
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+            patch.object(
                 entity, "schedule_update_ha_state"
-            ) as mock_schedule_update_ha_state:
-                entity._end_moving_device()
-                assert api.device.called
-                assert not mock_async_stop_cover.called
-                assert mock_schedule_update_ha_state.called
-                assert entity._device.actual_position.value == 0
+            ) as mock_schedule_update_ha_state,
+        ):
+            entity._end_moving_device()
+            assert api.device.called
+            assert not mock_async_stop_cover.called
+            assert mock_schedule_update_ha_state.called
+            assert entity._device.actual_position.value == 0
 
     def test__end_moving_device_only_angle(self, entity, api, device):
         device.actual_angle = NumericValue(
@@ -1076,15 +1092,17 @@ class TestOnyxShutter:
         )
         api.device.return_value = device
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-            with patch.object(
+        with (
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+            patch.object(
                 entity, "schedule_update_ha_state"
-            ) as mock_schedule_update_ha_state:
-                entity._end_moving_device()
-                assert api.device.called
-                assert not mock_async_stop_cover.called
-                assert mock_schedule_update_ha_state.called
-                assert entity._device.actual_angle.value == 0
+            ) as mock_schedule_update_ha_state,
+        ):
+            entity._end_moving_device()
+            assert api.device.called
+            assert not mock_async_stop_cover.called
+            assert mock_schedule_update_ha_state.called
+            assert entity._device.actual_angle.value == 0
 
     def test__end_moving_device_position_none(self, entity, api, device):
         device.actual_position = NumericValue(
@@ -1108,15 +1126,17 @@ class TestOnyxShutter:
         )
         api.device.return_value = device
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-            with patch.object(
+        with (
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+            patch.object(
                 entity, "schedule_update_ha_state"
-            ) as mock_schedule_update_ha_state:
-                entity._end_moving_device()
-                assert api.device.called
-                assert not mock_async_stop_cover.called
-                assert mock_schedule_update_ha_state.called
-                assert entity._device.actual_angle.value == 0
+            ) as mock_schedule_update_ha_state,
+        ):
+            entity._end_moving_device()
+            assert api.device.called
+            assert not mock_async_stop_cover.called
+            assert mock_schedule_update_ha_state.called
+            assert entity._device.actual_angle.value == 0
 
     def test__end_moving_device_angle_none(self, entity, api, device):
         device.actual_angle = NumericValue(
@@ -1140,58 +1160,68 @@ class TestOnyxShutter:
         )
         api.device.return_value = device
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-            with patch.object(
+        with (
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+            patch.object(
                 entity, "schedule_update_ha_state"
-            ) as mock_schedule_update_ha_state:
-                entity._end_moving_device()
-                assert api.device.called
-                assert not mock_async_stop_cover.called
-                assert mock_schedule_update_ha_state.called
-                assert entity._device.actual_angle.value == 0
+            ) as mock_schedule_update_ha_state,
+        ):
+            entity._end_moving_device()
+            assert api.device.called
+            assert not mock_async_stop_cover.called
+            assert mock_schedule_update_ha_state.called
+            assert entity._device.actual_angle.value == 0
 
     def test__end_moving_device_still(self, entity):
-        with patch.object(
-            entity, "async_stop_cover", new_callable=MagicMock
-        ) as mock_async_stop_cover:
-            with patch.object(
+        with (
+            patch.object(
+                entity, "async_stop_cover", new_callable=MagicMock
+            ) as mock_async_stop_cover,
+            patch.object(
                 entity, "schedule_update_ha_state"
-            ) as mock_schedule_update_ha_state:
-                entity._end_moving_device()
-                assert not mock_async_stop_cover.called
-                assert not mock_schedule_update_ha_state.called
+            ) as mock_schedule_update_ha_state,
+        ):
+            entity._end_moving_device()
+            assert not mock_async_stop_cover.called
+            assert not mock_schedule_update_ha_state.called
 
     def test__calculate_and_set_state_CLOSING(self, entity, device, api):
         device.drivetime_down = NumericValue(
             value=50, maximum=100, minimum=0, read_only=False
         )
         api.device.return_value = device
-        with patch.object(entity, "_set_state") as mock_set_state:
-            with patch.object(entity, "_calculate_state") as mock_calculate_state:
-                mock_calculate_state.return_value = MovingState.CLOSING
-                entity._calculate_and_set_state(10, 100)
-                mock_calculate_state.assert_called_once_with(10, 100)
-                mock_set_state.assert_called_once_with(MovingState.CLOSING)
+        with (
+            patch.object(entity, "_set_state") as mock_set_state,
+            patch.object(entity, "_calculate_state") as mock_calculate_state,
+        ):
+            mock_calculate_state.return_value = MovingState.CLOSING
+            entity._calculate_and_set_state(10, 100)
+            mock_calculate_state.assert_called_once_with(10, 100)
+            mock_set_state.assert_called_once_with(MovingState.CLOSING)
 
     def test__calculate_and_set_state_OPENING(self, entity, device, api):
         device.drivetime_up = NumericValue(
             value=50, maximum=100, minimum=0, read_only=False
         )
         api.device.return_value = device
-        with patch.object(entity, "_set_state") as mock_set_state:
-            with patch.object(entity, "_calculate_state") as mock_calculate_state:
-                mock_calculate_state.return_value = MovingState.OPENING
-                entity._calculate_and_set_state(100, 10)
-                mock_calculate_state.assert_called_once_with(100, 10)
-                mock_set_state.assert_called_once_with(MovingState.OPENING)
+        with (
+            patch.object(entity, "_set_state") as mock_set_state,
+            patch.object(entity, "_calculate_state") as mock_calculate_state,
+        ):
+            mock_calculate_state.return_value = MovingState.OPENING
+            entity._calculate_and_set_state(100, 10)
+            mock_calculate_state.assert_called_once_with(100, 10)
+            mock_set_state.assert_called_once_with(MovingState.OPENING)
 
     def test__calculate_and_set_state_tilt(self, entity):
-        with patch.object(entity, "_set_state") as mock_set_state:
-            with patch.object(entity, "_calculate_state") as mock_calculate_state:
-                mock_calculate_state.return_value = MovingState.CLOSING
-                entity._calculate_and_set_state(10, 100)
-                mock_calculate_state.assert_called_once_with(10, 100)
-                mock_set_state.assert_called_once_with(MovingState.CLOSING)
+        with (
+            patch.object(entity, "_set_state") as mock_set_state,
+            patch.object(entity, "_calculate_state") as mock_calculate_state,
+        ):
+            mock_calculate_state.return_value = MovingState.CLOSING
+            entity._calculate_and_set_state(10, 100)
+            mock_calculate_state.assert_called_once_with(10, 100)
+            mock_set_state.assert_called_once_with(MovingState.CLOSING)
 
     def test__max_angle(self, entity):
         assert entity._max_angle == 90
@@ -1508,11 +1538,12 @@ class TestOnyxShutter:
         api.device.return_value = device
 
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "schedule_update_ha_state"):
-            with patch.object(entity.hass, "create_task") as mock_create_task:
-                # Empty keyframes → position_keyframe = None → no stop issued
-                entity._end_moving_device()
-                assert not mock_create_task.called
+        with (
+            patch.object(entity, "schedule_update_ha_state"),
+            patch.object(entity.hass, "create_task") as mock_create_task,
+        ):
+            entity._end_moving_device()
+            assert not mock_create_task.called
 
     def test_end_moving_device_position_end_time_computed(
         self, entity, api, device, config
@@ -1547,11 +1578,13 @@ class TestOnyxShutter:
         api.device.return_value = device
 
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "schedule_update_ha_state"):
-            with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-                entity._end_moving_device()
-                # end_time is in the past → stop must be issued
-                assert mock_async_stop_cover.called
+        with (
+            patch.object(entity, "schedule_update_ha_state"),
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+        ):
+            entity._end_moving_device()
+            # end_time is in the past → stop must be issued
+            assert mock_async_stop_cover.called
 
     def test_end_moving_device_angle_end_time_sign(self, entity, api, device, config):
         """Mutmut: angle_start_time + angle_keyframe[0] vs - angle_keyframe[0]."""
@@ -1584,13 +1617,15 @@ class TestOnyxShutter:
         api.device.return_value = device
 
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "schedule_update_ha_state"):
-            with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-                entity._end_moving_device()
-                # angle_end_time = t-100 + 0(delay) + 10(duration) = t-90 → in the past
-                # position_end_time = None (no position keyframes)
-                # condition: position_end_time is None and angle_end_time is not None and current > angle_end_time
-                assert mock_async_stop_cover.called
+        with (
+            patch.object(entity, "schedule_update_ha_state"),
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+        ):
+            entity._end_moving_device()
+            # angle_end_time = t-100 + 0(delay) + 10(duration) = t-90 → in the past
+            # position_end_time = None (no position keyframes)
+            # condition: position_end_time is None and angle_end_time is not None and current > angle_end_time
+            assert mock_async_stop_cover.called
 
     def test_end_moving_device_null_condition_angle_none_position_done(
         self, entity, api, device, config
@@ -1625,11 +1660,13 @@ class TestOnyxShutter:
         api.device.return_value = device
 
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "schedule_update_ha_state"):
-            with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-                entity._end_moving_device()
-                # angle_end_time IS None, position_end_time past → stop issued
-                assert mock_async_stop_cover.called
+        with (
+            patch.object(entity, "schedule_update_ha_state"),
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+        ):
+            entity._end_moving_device()
+            # angle_end_time IS None, position_end_time past → stop issued
+            assert mock_async_stop_cover.called
 
     def test_end_moving_device_both_done_issues_stop(self, entity, api, device, config):
         """Mutmut: position/angle is not None vs is None in the both-done condition."""
@@ -1665,11 +1702,13 @@ class TestOnyxShutter:
         api.device.return_value = device
 
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "schedule_update_ha_state"):
-            with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-                entity._end_moving_device()
-                # Both end times are in the past → stop issued
-                assert mock_async_stop_cover.called
+        with (
+            patch.object(entity, "schedule_update_ha_state"),
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+        ):
+            entity._end_moving_device()
+            # Both end times are in the past → stop issued
+            assert mock_async_stop_cover.called
 
     def test_end_moving_device_angle_keyframe_and_guard(
         self, entity, api, device, config
@@ -1708,7 +1747,9 @@ class TestOnyxShutter:
         api.device.return_value = device
 
         entity._moving_state = MovingState.CLOSING
-        with patch.object(entity, "schedule_update_ha_state"):
-            with patch.object(entity, "async_stop_cover") as mock_async_stop_cover:
-                entity._end_moving_device()
-                assert mock_async_stop_cover.called
+        with (
+            patch.object(entity, "schedule_update_ha_state"),
+            patch.object(entity, "async_stop_cover") as mock_async_stop_cover,
+        ):
+            entity._end_moving_device()
+            assert mock_async_stop_cover.called

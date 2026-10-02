@@ -1,15 +1,14 @@
 """Test for the ONYX API Connector."""
 
 import asyncio
-import pytest
-
 from unittest.mock import MagicMock, patch
 
+import pytest
 from onyx_client.client import OnyxClient
-from onyx_client.data.numeric_value import NumericValue
 from onyx_client.data.date_information import DateInformation
 from onyx_client.data.device_command import DeviceCommand
 from onyx_client.data.device_mode import DeviceMode
+from onyx_client.data.numeric_value import NumericValue
 from onyx_client.device.device import Device
 from onyx_client.device.shutter import Shutter
 from onyx_client.enum.action import Action
@@ -17,17 +16,17 @@ from onyx_client.enum.device_type import DeviceType
 from onyx_client.group.group import Group
 
 from custom_components.hella_onyx import APIConnector
-from custom_components.hella_onyx.const import (
-    DEFAULT_INTERPOLATION_FREQUENCY,
-    DEFAULT_MIN_DIM_DURATION,
-    DEFAULT_MAX_DIM_DURATION,
-    DEFAULT_ADDITIONAL_DELAY,
-)
-from custom_components.hella_onyx.configuration import Configuration
 from custom_components.hella_onyx.api_connector import (
+    MAX_BACKOFF_TIME,
     CommandException,
     UnknownStateException,
-    MAX_BACKOFF_TIME,
+)
+from custom_components.hella_onyx.configuration import Configuration
+from custom_components.hella_onyx.const import (
+    DEFAULT_ADDITIONAL_DELAY,
+    DEFAULT_INTERPOLATION_FREQUENCY,
+    DEFAULT_MAX_DIM_DURATION,
+    DEFAULT_MIN_DIM_DURATION,
 )
 
 
@@ -235,62 +234,72 @@ class TestAPIConnector:
     @pytest.mark.asyncio
     async def test_events(self, api, client):
         api._backoff = False
-        with patch.object(api, "_client", new=client.make):
-            with patch.object(api, "updated_device") as mock_updated_device:
-                with patch.object(api, "_updater") as mock_updater:
-                    await api.events()
-                    assert client.is_called
-                    assert not client.is_force_update
-                    assert mock_updated_device.called
-                    assert mock_updater.called
+        with (
+            patch.object(api, "_client", new=client.make),
+            patch.object(api, "updated_device") as mock_updated_device,
+            patch.object(api, "_updater") as mock_updater,
+        ):
+            await api.events()
+            assert client.is_called
+            assert not client.is_force_update
+            assert mock_updated_device.called
+            assert mock_updater.called
 
     @pytest.mark.asyncio
     async def test_events_force_update(self, api, client):
         api._backoff = False
-        with patch.object(api, "_client", new=client.make):
-            with patch.object(api, "updated_device") as mock_updated_device:
-                with patch.object(api, "_updater") as mock_updater:
-                    await api.events(True)
-                    assert client.is_called
-                    assert client.is_force_update
-                    assert mock_updated_device.called
-                    assert mock_updater.called
+        with (
+            patch.object(api, "_client", new=client.make),
+            patch.object(api, "updated_device") as mock_updated_device,
+            patch.object(api, "_updater") as mock_updater,
+        ):
+            await api.events(True)
+            assert client.is_called
+            assert client.is_force_update
+            assert mock_updated_device.called
+            assert mock_updater.called
 
     @pytest.mark.asyncio
     async def test_events_invalid_device(self, api, client):
         api._backoff = False
         api.fail_device = True
-        with patch.object(api, "_client", new=client.make):
-            with patch.object(api, "updated_device") as mock_updated_device:
-                with patch.object(api, "_updater") as mock_updater:
-                    await api.events()
-                    assert client.is_called
-                    assert mock_updated_device.called
-                    assert mock_updater.called
+        with (
+            patch.object(api, "_client", new=client.make),
+            patch.object(api, "updated_device") as mock_updated_device,
+            patch.object(api, "_updater") as mock_updater,
+        ):
+            await api.events()
+            assert client.is_called
+            assert mock_updated_device.called
+            assert mock_updater.called
 
     @pytest.mark.asyncio
     async def test_events_none_device(self, api, client):
         api._backoff = False
         api.none_device = True
-        with patch.object(api, "_client", new=client.make):
-            with patch.object(api, "updated_device") as mock_updated_device:
-                with patch.object(api, "_updater") as mock_updater:
-                    await api.events()
-                    assert client.is_called
-                    assert mock_updated_device.called
-                    assert mock_updater.called
+        with (
+            patch.object(api, "_client", new=client.make),
+            patch.object(api, "updated_device") as mock_updated_device,
+            patch.object(api, "_updater") as mock_updater,
+        ):
+            await api.events()
+            assert client.is_called
+            assert mock_updated_device.called
+            assert mock_updater.called
 
     @pytest.mark.asyncio
     async def test_events_connection_error(self, api, client):
         api._backoff = False
         api.fail = True
-        with patch.object(api, "_client", new=client.make):
-            with patch.object(api, "updated_device") as mock_updated_device:
-                with patch.object(api, "_updater") as mock_updater:
-                    await api.events()
-                    assert client.is_called
-                    assert mock_updated_device.called
-                    assert mock_updater.called
+        with (
+            patch.object(api, "_client", new=client.make),
+            patch.object(api, "updated_device") as mock_updated_device,
+            patch.object(api, "_updater") as mock_updater,
+        ):
+            await api.events()
+            assert client.is_called
+            assert mock_updated_device.called
+            assert mock_updater.called
 
     @pytest.mark.asyncio
     async def test_events_update_with_attribute_error(self, api):
@@ -328,17 +337,19 @@ class TestAPIConnector:
             if "connection reset" in msg:
                 connection_reset_logged.append(msg)
 
-        with patch.object(api, "_client", return_value=mock_client):
-            with patch.object(api, "_updater"):
-                api._backoff = False
-                import logging
+        with (
+            patch.object(api, "_client", return_value=mock_client),
+            patch.object(api, "_updater"),
+        ):
+            api._backoff = False
+            import logging
 
-                with patch.object(
-                    logging.getLogger("custom_components.hella_onyx.api_connector"),
-                    "warning",
-                    side_effect=capture_warning,
-                ):
-                    await api.events()
+            with patch.object(
+                logging.getLogger("custom_components.hella_onyx.api_connector"),
+                "warning",
+                side_effect=capture_warning,
+            ):
+                await api.events()
 
         # No connection-reset warning must have been emitted
         assert len(connection_reset_logged) == 0
@@ -384,16 +395,18 @@ class TestAPIConnector:
             assert backoff / 60 < MAX_BACKOFF_TIME
             api._backoff = False
 
-        with patch("asyncio.sleep", new=sleep_called):
-            with patch.object(api, "_client", new=client.make):
-                with patch.object(api, "updated_device") as mock_updated_device:
-                    with patch.object(api, "_updater") as mock_updater:
-                        assert api._backoff
-                        await api.events()
-                        assert client.is_called
-                        assert not api._backoff
-                        assert mock_updated_device.called
-                        assert mock_updater.called
+        with (
+            patch("asyncio.sleep", new=sleep_called),
+            patch.object(api, "_client", new=client.make),
+            patch.object(api, "updated_device") as mock_updated_device,
+            patch.object(api, "_updater") as mock_updater,
+        ):
+            assert api._backoff
+            await api.events()
+            assert client.is_called
+            assert not api._backoff
+            assert mock_updated_device.called
+            assert mock_updater.called
 
     def test_command_exception_message(self):
         exc = CommandException("ONYX_ACTION_ERROR", "uuid-123")
@@ -487,15 +500,17 @@ class TestAPIConnector:
             captured_backoffs.append(delay)
             api._backoff = False
 
-        with patch("asyncio.sleep", new=sleep_and_record):
-            with patch.object(api, "_client", new=client.make):
-                with patch.object(api, "updated_device"):
-                    with patch.object(api, "_updater"):
-                        assert api._backoff
-                        await api.events()
-                        assert len(captured_backoffs) == 1
-                        assert captured_backoffs[0] / 60 < MAX_BACKOFF_TIME
-                        assert captured_backoffs[0] >= 1
+        with (
+            patch("asyncio.sleep", new=sleep_and_record),
+            patch.object(api, "_client", new=client.make),
+            patch.object(api, "updated_device"),
+            patch.object(api, "_updater"),
+        ):
+            assert api._backoff
+            await api.events()
+            assert len(captured_backoffs) == 1
+            assert captured_backoffs[0] / 60 < MAX_BACKOFF_TIME
+            assert captured_backoffs[0] >= 1
 
     @pytest.mark.asyncio
     async def test_init_passes_hass_not_none(self):
@@ -613,4 +628,3 @@ class MockClient:
 class MockClientNoDate(MockClient):
     async def date_information(self):
         self.called = True
-        return None
