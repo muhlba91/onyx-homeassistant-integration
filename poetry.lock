@@ -3134,14 +3134,14 @@ files = [
 
 [[package]]
 name = "onyx-client"
-version = "11.1.0"
+version = "11.2.0"
 description = "HTTP Client for Hella's ONYX.CENTER API."
 optional = false
 python-versions = "<3.15,>=3.14"
 groups = ["main"]
 files = [
-    {file = "onyx_client-11.1.0-py3-none-any.whl", hash = "sha256:7ce7a710825f11f6a2af2625dde125a0c2f40650bdca8da712d9c06575d63e46"},
-    {file = "onyx_client-11.1.0.tar.gz", hash = "sha256:e78c9e5eb8774f840bb3dfff37a066ab08c5c7ebb3c7684e8938a5e464806ba2"},
+    {file = "onyx_client-11.2.0-py3-none-any.whl", hash = "sha256:d2c665596989c1a9a2a33ff473d39d2383178b3d290cff30af76fa2432333ea4"},
+    {file = "onyx_client-11.2.0.tar.gz", hash = "sha256:52884e80bee6387e68e30b8d4bea96789f1adcbfa15577ff53ce3c38d025860e"},
 ]
 
 [package.dependencies]
