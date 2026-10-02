@@ -1,35 +1,35 @@
 """Test for ONYX integration init, setup and teardown."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
-    CONF_SCAN_INTERVAL,
     CONF_FORCE_UPDATE,
+    CONF_SCAN_INTERVAL,
 )
 
 from custom_components.hella_onyx import (
     DOMAIN,
+    PLATFORMS,
+    async_migrate_entry,
+    async_reload_entry,
     async_setup_entry,
     async_unload_entry,
-    async_reload_entry,
-    async_migrate_entry,
-    PLATFORMS,
 )
 from custom_components.hella_onyx.const import (
-    CONF_FINGERPRINT,
-    CONF_LOCAL_ADDRESS,
-    CONF_MIN_DIM_DURATION,
-    CONF_MAX_DIM_DURATION,
     CONF_ADDITIONAL_DELAY,
+    CONF_FINGERPRINT,
     CONF_INTERPOLATION_FREQUENCY,
-    DEFAULT_SCAN_INTERVAL,
-    DEFAULT_MIN_DIM_DURATION,
-    DEFAULT_MAX_DIM_DURATION,
-    DEFAULT_INTERPOLATION_FREQUENCY,
+    CONF_LOCAL_ADDRESS,
+    CONF_MAX_DIM_DURATION,
+    CONF_MIN_DIM_DURATION,
     DEFAULT_ADDITIONAL_DELAY,
+    DEFAULT_INTERPOLATION_FREQUENCY,
+    DEFAULT_MAX_DIM_DURATION,
+    DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_SCAN_INTERVAL,
 )
 from custom_components.hella_onyx.models import OnyxData
 
@@ -83,7 +83,7 @@ async def test_async_setup_entry_and_unload(
     result = await async_setup_entry(hass, mock_config_entry)
     assert result is True
     mock_api_connector_class.assert_called_once()
-    call_args, call_kwargs = mock_api_connector_class.call_args
+    call_args, _call_kwargs = mock_api_connector_class.call_args
     assert call_args[0] == hass
     config = call_args[1]
     assert config.fingerprint == "fingerprint_123"
@@ -299,7 +299,7 @@ async def test_async_setup_entry_scan_interval_key_used(
 
     await async_setup_entry(hass, mock_config_entry)
 
-    _, call_kwargs = mock_api_connector_class.call_args
+    _, _call_kwargs = mock_api_connector_class.call_args
     config = mock_api_connector_class.call_args[0][1]
     # scan_interval must reflect the value from the config entry, not the default
     assert config.scan_interval == 120

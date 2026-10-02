@@ -1,26 +1,24 @@
 """The ONYX sensors."""
 
 import logging
-
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import DiscoveryInfoType
-
-from onyx_client.enum.device_type import DeviceType
 from onyx_client.device.weather import Weather
+from onyx_client.enum.device_type import DeviceType
 
 from custom_components.hella_onyx.api_connector import APIConnector
 
 from . import OnyxConfigEntry
 from .sensors.device_type import OnyxSensorDeviceType
 from .sensors.weather import (
-    OnyxSensorWeatherHumidity,
-    OnyxSensorWeatherTemperature,
     OnyxSensorWeatherAirPressure,
-    OnyxSensorWeatherWindPeak,
+    OnyxSensorWeatherHumidity,
     OnyxSensorWeatherSunBrightnessPeak,
     OnyxSensorWeatherSunBrightnessSink,
+    OnyxSensorWeatherTemperature,
+    OnyxSensorWeatherWindPeak,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,7 +30,7 @@ async def async_setup_entry(
     hass: HomeAssistant,
     entry: OnyxConfigEntry,
     async_add_entities: Callable,
-    discovery_info: Optional[DiscoveryInfoType] = None,
+    discovery_info: DiscoveryInfoType | None = None,
 ):
     """Set up the ONYX platform."""
     api = entry.runtime_data.api

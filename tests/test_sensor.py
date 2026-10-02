@@ -1,18 +1,16 @@
 """Test for the ONYX Sensors."""
 
-import pytest
-
 from unittest.mock import MagicMock, patch
 
+import pytest
 from homeassistant.config_entries import ConfigEntry
-
 from onyx_client.data.device_mode import DeviceMode
+from onyx_client.data.numeric_value import NumericValue
 from onyx_client.device.device import Device
 from onyx_client.device.light import Light
-from onyx_client.device.weather import Weather
 from onyx_client.device.shutter import Shutter
+from onyx_client.device.weather import Weather
 from onyx_client.enum.device_type import DeviceType
-from onyx_client.data.numeric_value import NumericValue
 
 from custom_components.hella_onyx import DOMAIN
 from custom_components.hella_onyx.models import OnyxData
@@ -41,21 +39,21 @@ async def test_async_setup_entry(mock_hass):
             "name",
             DeviceType.RAFFSTORE_90,
             DeviceMode(DeviceType.RAFFSTORE_90),
-            list(),
+            [],
         ),
         "light": Light(
             "light",
             "name",
             DeviceType.BASIC_LIGHT,
             DeviceMode(DeviceType.BASIC_LIGHT),
-            list(),
+            [],
         ),
         "weather": Weather(
             "weather",
             "name",
             DeviceType.WEATHER,
             DeviceMode(DeviceType.WEATHER),
-            list(),
+            [],
             temperature=NumericValue(
                 value=1,
                 minimum=0,
@@ -98,7 +96,7 @@ async def test_async_setup_entry(mock_hass):
             "name",
             None,
             None,
-            list(),
+            [],
         ),
     }
     config_entry.runtime_data = OnyxData(api=api, config=MagicMock(), timezone="UTC")
@@ -168,7 +166,7 @@ async def test_async_setup_entry_with_no_humidity_and_pressure(mock_hass):
         "name",
         DeviceType.WEATHER,
         DeviceMode(DeviceType.WEATHER),
-        list(),
+        [],
         temperature=NumericValue(
             value=1,
             minimum=0,
@@ -239,7 +237,7 @@ async def test_async_setup_entry_filter_all(mock_hass):
             "name",
             DeviceType.CLICK,
             DeviceMode(DeviceType.CLICK),
-            list(),
+            [],
         )
     }
     config_entry.runtime_data = OnyxData(api=api, config=MagicMock(), timezone="UTC")
@@ -253,7 +251,7 @@ async def test_async_setup_entry_filter_all(mock_hass):
 class AsyncAddEntries:
     def __init__(self):
         self.called_async_add_entities = False
-        self.data = list()
+        self.data = []
         self.update_before_add = None
 
     def call(self, data, boolean):

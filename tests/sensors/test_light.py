@@ -1,32 +1,30 @@
 """Test for the ONYX Light Entity."""
 
 import asyncio
-import pytest
 import time
-
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
+import pytest
 from homeassistant.components.light import (
     ColorMode,
     brightness_supported,
 )
 from homeassistant.core import HomeAssistant
-
-from onyx_client.data.numeric_value import NumericValue
-from onyx_client.data.animation_value import AnimationValue
 from onyx_client.data.animation_keyframe import AnimationKeyframe
+from onyx_client.data.animation_value import AnimationValue
+from onyx_client.data.numeric_value import NumericValue
 from onyx_client.device.light import Light
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
-from custom_components.hella_onyx.const import (
-    DEFAULT_INTERPOLATION_FREQUENCY,
-    DEFAULT_MIN_DIM_DURATION,
-    DEFAULT_MAX_DIM_DURATION,
-    DEFAULT_SCAN_INTERVAL,
-    DEFAULT_ADDITIONAL_DELAY,
-)
 from custom_components.hella_onyx.configuration import Configuration
+from custom_components.hella_onyx.const import (
+    DEFAULT_ADDITIONAL_DELAY,
+    DEFAULT_INTERPOLATION_FREQUENCY,
+    DEFAULT_MAX_DIM_DURATION,
+    DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_SCAN_INTERVAL,
+)
 from custom_components.hella_onyx.light import OnyxLight
 
 
@@ -352,14 +350,16 @@ class TestOnyxLight:
             animation=animation,
         )
         api.device.return_value = device
-        with patch.object(
-            entity, "schedule_update_ha_state"
-        ) as mock_schedule_update_ha_state:
-            with patch.object(entity, "_start_dim_device") as mock_start_dim_device:
-                entity._handle_coordinator_update()
-                mock_start_dim_device.assert_called_with(animation)
-                assert api.device.called
-                assert mock_schedule_update_ha_state.called
+        with (
+            patch.object(
+                entity, "schedule_update_ha_state"
+            ) as mock_schedule_update_ha_state,
+            patch.object(entity, "_start_dim_device") as mock_start_dim_device,
+        ):
+            entity._handle_coordinator_update()
+            mock_start_dim_device.assert_called_with(animation)
+            assert api.device.called
+            assert mock_schedule_update_ha_state.called
 
     def test_handle_coordinator_update_no_animation(self, entity, device, api):
         animation = None
@@ -371,14 +371,16 @@ class TestOnyxLight:
             animation=animation,
         )
         api.device.return_value = device
-        with patch.object(
-            entity, "schedule_update_ha_state"
-        ) as mock_schedule_update_ha_state:
-            with patch.object(entity, "_start_dim_device") as mock_start_dim_device:
-                entity._handle_coordinator_update()
-                mock_start_dim_device.assert_not_called
-                assert api.device.called
-                assert mock_schedule_update_ha_state.called
+        with (
+            patch.object(
+                entity, "schedule_update_ha_state"
+            ) as mock_schedule_update_ha_state,
+            patch.object(entity, "_start_dim_device") as mock_start_dim_device,
+        ):
+            entity._handle_coordinator_update()
+            mock_start_dim_device.assert_not_called()
+            assert api.device.called
+            assert mock_schedule_update_ha_state.called
 
     def test_start_dim_device_within_time(self, entity):
         current_time = time.time()
@@ -619,10 +621,11 @@ class TestOnyxLight:
         )
         api.device.return_value = device
 
-        with patch.object(entity, "schedule_update_ha_state"):
-            with patch.object(entity.hass, "create_task"):
-                # Must not raise AttributeError for None.keyframes
-                entity._end_dim_device()
+        with (
+            patch.object(entity, "schedule_update_ha_state"),
+            patch.object(entity.hass, "create_task"),
+        ):
+            entity._end_dim_device()
 
     # ------------------------------------------------------------------ #
     # Mutmut: _get_dim_duration — > vs >= for max_dim_duration             #

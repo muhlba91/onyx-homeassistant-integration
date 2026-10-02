@@ -1,8 +1,7 @@
 """The ONYX light entity."""
 
 import logging
-
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import DiscoveryInfoType
@@ -19,7 +18,7 @@ async def async_setup_entry(
     hass: HomeAssistant,
     entry: OnyxConfigEntry,
     async_add_entities: Callable,
-    discovery_info: Optional[DiscoveryInfoType] = None,
+    discovery_info: DiscoveryInfoType | None = None,
 ):
     """Set up the ONYX light platform."""
     api = entry.runtime_data.api

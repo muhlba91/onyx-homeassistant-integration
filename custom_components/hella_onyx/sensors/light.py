@@ -2,27 +2,25 @@
 
 import logging
 import time
-
 from datetime import timedelta
 from math import ceil
 from typing import Any
 
-from homeassistant.core import callback
 from homeassistant.components.light import (
-    LightEntity,
-    ColorMode,
-    LightEntityFeature,
     ATTR_BRIGHTNESS,
+    ColorMode,
+    LightEntity,
+    LightEntityFeature,
 )
+from homeassistant.core import callback
 from homeassistant.helpers.event import (
     async_track_point_in_utc_time,
 )
 from homeassistant.util import utcnow
-
 from onyx_client.data.animation_value import AnimationValue
+from onyx_client.data.numeric_value import NumericValue
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
-from onyx_client.data.numeric_value import NumericValue
 
 from ..api_connector import APIConnector
 from ..sensors.onyx_entity import OnyxEntity
@@ -192,7 +190,7 @@ class OnyxLight(OnyxEntity, LightEntity):
             interpolation_frequency = self.api.config.interpolation_frequency
             if interpolation_frequency > 0:
                 for slice in range(
-                    0, int(time_delta.total_seconds() // interpolation_frequency)
+                    int(time_delta.total_seconds() // interpolation_frequency)
                 ):
                     utc_intermediate_time = utc_now + timedelta(
                         seconds=slice * interpolation_frequency

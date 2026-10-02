@@ -5,29 +5,29 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
-    CONF_SCAN_INTERVAL,
     CONF_FORCE_UPDATE,
+    CONF_SCAN_INTERVAL,
     Platform,
 )
 from homeassistant.core import HomeAssistant
 
 from .api_connector import APIConnector
 from .configuration import Configuration
-from .models import OnyxData
 from .const import (
+    CONF_ADDITIONAL_DELAY,
     CONF_FINGERPRINT,
     CONF_INTERPOLATION_FREQUENCY,
     CONF_LOCAL_ADDRESS,
-    CONF_MIN_DIM_DURATION,
     CONF_MAX_DIM_DURATION,
-    CONF_ADDITIONAL_DELAY,
-    DEFAULT_INTERPOLATION_FREQUENCY,
-    DEFAULT_MIN_DIM_DURATION,
-    DEFAULT_MAX_DIM_DURATION,
+    CONF_MIN_DIM_DURATION,
     DEFAULT_ADDITIONAL_DELAY,
+    DEFAULT_INTERPOLATION_FREQUENCY,
+    DEFAULT_MAX_DIM_DURATION,
+    DEFAULT_MIN_DIM_DURATION,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
+from .models import OnyxData
 
 _LOGGER = logging.getLogger(__name__)
 

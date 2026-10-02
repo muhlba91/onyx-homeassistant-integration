@@ -1,45 +1,43 @@
 """Config flow for the ONYX integration."""
 
 import voluptuous as vol
-
-from homeassistant.helpers import selector
-from homeassistant.core import callback
 from homeassistant.config_entries import (
+    CONN_CLASS_LOCAL_POLL,
     ConfigEntry,
     ConfigFlow,
-    OptionsFlow,
     FlowResult,
-    CONN_CLASS_LOCAL_POLL,
+    OptionsFlow,
 )
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
     CONF_CODE,
-    CONF_SCAN_INTERVAL,
     CONF_FORCE_UPDATE,
+    CONF_SCAN_INTERVAL,
 )
+from homeassistant.core import callback
+from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-
-from onyx_client.client import create
 from onyx_client.authorizer import authorize
+from onyx_client.client import create
 
 from .const import (
-    CONF_FINGERPRINT,
-    CONF_LOCAL_ADDRESS,
-    CONF_MIN_DIM_DURATION,
-    CONF_MAX_DIM_DURATION,
     CONF_ADDITIONAL_DELAY,
+    CONF_FINGERPRINT,
     CONF_INTERPOLATION_FREQUENCY,
-    DEFAULT_INTERPOLATION_FREQUENCY,
-    DEFAULT_MIN_DIM_DURATION,
-    DEFAULT_MAX_DIM_DURATION,
+    CONF_LOCAL_ADDRESS,
+    CONF_MAX_DIM_DURATION,
+    CONF_MIN_DIM_DURATION,
     DEFAULT_ADDITIONAL_DELAY,
-    MAX_INTERPOLATION_FREQUENCY,
-    MIN_DIM_DURATION,
-    MAX_DIM_DURATION,
-    MIN_ADDITIONAL_DELAY,
-    MAX_ADDITIONAL_DELAY,
+    DEFAULT_INTERPOLATION_FREQUENCY,
+    DEFAULT_MAX_DIM_DURATION,
+    DEFAULT_MIN_DIM_DURATION,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    MAX_ADDITIONAL_DELAY,
+    MAX_DIM_DURATION,
+    MAX_INTERPOLATION_FREQUENCY,
+    MIN_ADDITIONAL_DELAY,
+    MIN_DIM_DURATION,
     MIN_INTERPOLATION_FREQUENCY,
 )
 
