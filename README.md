@@ -181,6 +181,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Jibberchris"><img src="https://avatars.githubusercontent.com/u/121609026?v=4?s=100" width="100px;" alt="Chris Jibber"/><br /><sub><b>Chris Jibber</b></sub></a><br /><a href="#ideas-Jibberchris" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/clostermannshof"><img src="https://avatars.githubusercontent.com/u/151548723?v=4?s=100" width="100px;" alt="Fabian"/><br /><sub><b>Fabian</b></sub></a><br /><a href="#ideas-clostermannshof" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/tbarth64"><img src="https://avatars.githubusercontent.com/u/79904446?v=4?s=100" width="100px;" alt="tbarth64"/><br /><sub><b>tbarth64</b></sub></a><br /><a href="#ideas-tbarth64" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/muhlba91/pulumi-proxmoxve/issues?q=author%3Atbarth64" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/robertweitl"><img src="https://avatars.githubusercontent.com/u/121123263?v=4?s=100" width="100px;" alt="Robert Weitlaner"/><br /><sub><b>Robert Weitlaner</b></sub></a><br /><a href="https://github.com/muhlba91/pulumi-proxmoxve/commits?author=robertweitl" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

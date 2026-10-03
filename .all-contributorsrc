@@ -56,6 +56,15 @@
                 "ideas",
                 "bug"
             ]
+        },
+        {
+            "login": "robertweitl",
+            "name": "Robert Weitlaner",
+            "avatar_url": "https://avatars.githubusercontent.com/u/121123263?v=4",
+            "profile": "https://github.com/robertweitl",
+            "contributions": [
+                "code"
+            ]
         }
     ],
     "contributorsPerLine": 7,
