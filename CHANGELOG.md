@@ -1,6 +1,37 @@
 # Changelog
 
 
+## [13.2.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v13.1.0...v13.2.0) (2026-10-03)
+
+
+### Features
+
+* add sensor entities for onyx tags (sun, temperature) ([437448f](https://github.com/muhlba91/onyx-homeassistant-integration/commit/437448f7ac2dc197ccbded0608b7662f1995aed2))
+
+
+### Bug Fixes
+
+* clamp interpolated values and guard the timeframes; related to [#654](https://github.com/muhlba91/onyx-homeassistant-integration/issues/654) ([c3ce1c8](https://github.com/muhlba91/onyx-homeassistant-integration/commit/c3ce1c86a16e63aa9bf5818e3f5bbea0589318f4))
+
+
+### Miscellaneous Chores
+
+* **deps:** update actions/checkout action to v6.1.0 ([5720417](https://github.com/muhlba91/onyx-homeassistant-integration/commit/5720417143566abc416e7deaa1e79c6199f0c903))
+* **deps:** update actions/checkout action to v7 ([937d0cd](https://github.com/muhlba91/onyx-homeassistant-integration/commit/937d0cd2dd68035e2b8e9b4e96d458fdd2093029))
+* **deps:** update actions/dependency-review-action action to v5 ([4112fea](https://github.com/muhlba91/onyx-homeassistant-integration/commit/4112fea55a28d16f53b1ca3f069dffa59756d13c))
+* **deps:** update actions/setup-python action to v6.3.0 ([3815d1d](https://github.com/muhlba91/onyx-homeassistant-integration/commit/3815d1d356e5be4647c4cb983ad306a22d5fb1aa))
+* **deps:** update actions/setup-python action to v7 ([c4eab51](https://github.com/muhlba91/onyx-homeassistant-integration/commit/c4eab51f4703c2967925cadb9accbdf5f8b4ad8d))
+* **deps:** update coverallsapp/github-action action to v2.3.8 ([3624272](https://github.com/muhlba91/onyx-homeassistant-integration/commit/36242727d4e312205333eec295fc13150db6784b))
+* **deps:** update dependency coverage to v7.16.2 ([1729e19](https://github.com/muhlba91/onyx-homeassistant-integration/commit/1729e1961d55f811b2a2c87942b958d078b0b2a2))
+* **deps:** update dependency mutmut to v3.8.0 ([3614f6f](https://github.com/muhlba91/onyx-homeassistant-integration/commit/3614f6fe6840bb2be7d360165bc33832a4d4ac8e))
+* **deps:** update dependency onyx-client to v11.2.0 ([d8e374b](https://github.com/muhlba91/onyx-homeassistant-integration/commit/d8e374bcdde71eae47ddfce16f321453a1526f53))
+* **deps:** update dependency pytest-homeassistant-custom-component to v0.13.368 ([1e1fe19](https://github.com/muhlba91/onyx-homeassistant-integration/commit/1e1fe19f052ef488c24425ef6775b0c47addf92c))
+* **deps:** update github/codeql-action action to v4.38.2 ([bd378d0](https://github.com/muhlba91/onyx-homeassistant-integration/commit/bd378d02a6a7b2816680e9d99183553d9aa2c020))
+* **deps:** update hacs/action digest to 1ebf01c ([06e9c25](https://github.com/muhlba91/onyx-homeassistant-integration/commit/06e9c25ca50b326c1caaa8b205c59250c95923b7))
+* **deps:** update ossf/scorecard-action action to v2.4.4 ([3eedce5](https://github.com/muhlba91/onyx-homeassistant-integration/commit/3eedce5164d7e750514d3113cec74ce1fdd9407f))
+* **deps:** update step-security/harden-runner action to v2.21.1 ([3d95e70](https://github.com/muhlba91/onyx-homeassistant-integration/commit/3d95e701004fac09c43b76f9c89483491b5193d9))
+* **deps:** upgrade dependencies ([7906bbd](https://github.com/muhlba91/onyx-homeassistant-integration/commit/7906bbd5dde9e31a04e81b9b0298e663cdd5768f))
+
 ## [13.1.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v13.0.0...v13.1.0) (2026-08-22)
 
 
