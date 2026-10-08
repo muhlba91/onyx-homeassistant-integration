@@ -2224,14 +2224,14 @@ habluetooth = ">=4.0"
 
 [[package]]
 name = "homeassistant"
-version = "2026.10.0b4"
+version = "2026.10.0"
 description = "Open-source home automation platform running on Python 3."
 optional = false
 python-versions = ">=3.14.2"
 groups = ["dev"]
 files = [
-    {file = "homeassistant-2026.10.0b4-py3-none-any.whl", hash = "sha256:999af096cae949f5ebcc79c5078b0da2e9026f952954d6517cd35f9e118a2069"},
-    {file = "homeassistant-2026.10.0b4.tar.gz", hash = "sha256:a7a81af3edc2ab093e6be9a9de2623a6934dbc713d87154deaa48300481c4f31"},
+    {file = "homeassistant-2026.10.0-py3-none-any.whl", hash = "sha256:1d6a7dc8e55216425f61915c095cad99b768679d9a829e58d2334333ba5d4446"},
+    {file = "homeassistant-2026.10.0.tar.gz", hash = "sha256:91050d024c032b85f8701477352d104706562d8a75c9da2cfe490c23eaa13e92"},
 ]
 
 [package.dependencies]
@@ -4509,21 +4509,21 @@ pytest = ">=7.0.0"
 
 [[package]]
 name = "pytest-homeassistant-custom-component"
-version = "0.13.370"
+version = "0.13.371"
 description = "Experimental package to automatically extract test plugins for Home Assistant custom components"
 optional = false
 python-versions = ">=3.14"
 groups = ["dev"]
 files = [
-    {file = "pytest_homeassistant_custom_component-0.13.370-py3-none-any.whl", hash = "sha256:9f41bbe5415740349f17b401508f679109555bc40af9c9a1e3b820dfb0f4b619"},
-    {file = "pytest_homeassistant_custom_component-0.13.370.tar.gz", hash = "sha256:473bdfc456ece3c3c503844e3565370d27fbc95b888551c0d7b2f81ee06395d2"},
+    {file = "pytest_homeassistant_custom_component-0.13.371-py3-none-any.whl", hash = "sha256:993eb9082e2c415121ed1e7dba973df51f4ef8036c8081daea9101e4360afdca"},
+    {file = "pytest_homeassistant_custom_component-0.13.371.tar.gz", hash = "sha256:ffa96e667825bf4644d3c868a85ab84b1d53f2ed662ee91bcf9a93cf3c22c68e"},
 ]
 
 [package.dependencies]
 aiohasupervisor = "0.6.0"
 coverage = "7.16.2"
 freezegun = "1.5.5"
-homeassistant = "2026.10.0b4"
+homeassistant = "2026.10.0"
 license-expression = "30.4.4"
 mock-open = "1.4.0"
 numpy = "2.3.2"
