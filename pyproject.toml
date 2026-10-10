@@ -32,7 +32,7 @@ pre-commit = "^4.0.0"
 pytest-asyncio = "^1.0.0"
 aioresponses = "^0.7.4"
 homeassistant = "^2026.10.0-beta.0"
-ruff = "^0.16.0"
+ruff = "^0.17.0"
 pytest-homeassistant-custom-component = "^0.13.289"
 mutmut = "^3.7.0"
 
