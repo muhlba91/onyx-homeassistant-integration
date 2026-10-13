@@ -15,15 +15,19 @@ from .api_connector import APIConnector
 from .configuration import Configuration
 from .const import (
     CONF_ADDITIONAL_DELAY,
+    CONF_CLOSED_TOLERANCE,
     CONF_FINGERPRINT,
     CONF_INTERPOLATION_FREQUENCY,
     CONF_LOCAL_ADDRESS,
     CONF_MAX_DIM_DURATION,
     CONF_MIN_DIM_DURATION,
+    CONF_MOVING_TIMEOUT,
     DEFAULT_ADDITIONAL_DELAY,
+    DEFAULT_CLOSED_TOLERANCE,
     DEFAULT_INTERPOLATION_FREQUENCY,
     DEFAULT_MAX_DIM_DURATION,
     DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_MOVING_TIMEOUT,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
@@ -52,6 +56,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: OnyxConfigEntry) -> bool
     additional_delay = entry.options.get(
         CONF_ADDITIONAL_DELAY, DEFAULT_ADDITIONAL_DELAY
     )
+    closed_tolerance = entry.options.get(
+        CONF_CLOSED_TOLERANCE, DEFAULT_CLOSED_TOLERANCE
+    )
+    moving_timeout = entry.options.get(CONF_MOVING_TIMEOUT, DEFAULT_MOVING_TIMEOUT)
     min_dim_duration = entry.options.get(
         CONF_MIN_DIM_DURATION, DEFAULT_MIN_DIM_DURATION
     )
@@ -74,6 +82,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: OnyxConfigEntry) -> bool
         max_dim_duration,
         additional_delay,
         interpolation_frequency,
+        closed_tolerance,
+        moving_timeout,
         force_update,
         fingerprint,
         token,
@@ -161,6 +171,20 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
         }
         hass.config_entries.async_update_entry(
             config_entry, data=new_data, options=new_options, version=3, minor_version=1
+        )
+
+    if config_entry.version == 3 and config_entry.minor_version < 2:
+        new_options = {
+            **config_entry.options,
+            CONF_CLOSED_TOLERANCE: config_entry.options.get(
+                CONF_CLOSED_TOLERANCE, DEFAULT_CLOSED_TOLERANCE
+            ),
+            CONF_MOVING_TIMEOUT: config_entry.options.get(
+                CONF_MOVING_TIMEOUT, DEFAULT_MOVING_TIMEOUT
+            ),
+        }
+        hass.config_entries.async_update_entry(
+            config_entry, options=new_options, minor_version=2
         )
 
     _LOGGER.info(

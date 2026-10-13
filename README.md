@@ -70,6 +70,8 @@ Add it from the **Integrations** menu, set the configuration, and you're good to
 | Local Address | Your ONYX.CENTER local IP address. |
 | Interpolation Frequency | Frequency (in ms) to interpolate the position or light intensity while moving. A lower value results in smoother transitions but more updates. Set to 0 to disable interpolation. (Default: 5000) |
 | Additional Delay for forced STOP | Additional delay (in ms) to wait before sending a forced STOP command to update the shutter position. (Default: 1000) |
+| \[Shutters] Closed Tolerance | Tolerance (in %) within which a shutter counts as closed, as shutters often stop a few percent short of fully closed. (Default: 3) |
+| \[Shutters] Moving Timeout | Maximum time (in s) a shutter may be shown as opening/closing. After that, a STOP is sent to retrieve the real values and the shutter is shown as idle again. Increase it for large or slow shutters. (Default: 180) |
 | \[Lights] Minimum Dim Duration | The minimum dim duration to use when dimming a light. (Default: 200) |
 | \[Lights] Maximum Dim Duration | The maximum dim duration to use when dimming a light. (Default: 200) |
 | Scan Interval | Interval for polling for updates. This is used as a fallback if near realtime updates are failing and can be set to a higher value. |

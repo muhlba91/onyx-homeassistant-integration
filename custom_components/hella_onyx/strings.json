@@ -19,6 +19,8 @@
         "data": {
           "interpolation_frequency": "[%key:common::config_flow::options::interpolation_frequency%]",
           "additional_delay": "[%key:common::config_flow::options::additional_delay%]",
+          "closed_tolerance": "[%key:common::config_flow::options::closed_tolerance%]",
+          "moving_timeout": "[%key:common::config_flow::options::moving_timeout%]",
           "min_dim_duration": "[%key:common::config_flow::options::min_dim_duration%]",
           "max_dim_duration": "[%key:common::config_flow::options::max_dim_duration%]",
           "scan_interval": "[%key:common::config_flow::options::scan_interval%]",
@@ -42,6 +44,8 @@
         "data": {
           "interpolation_frequency": "[%key:common::config_flow::data::interpolation_frequency%]",
           "additional_delay": "[%key:common::config_flow::data::additional_delay%]",
+          "closed_tolerance": "[%key:common::config_flow::data::closed_tolerance%]",
+          "moving_timeout": "[%key:common::config_flow::data::moving_timeout%]",
           "min_dim_duration": "[%key:common::config_flow::data::min_dim_duration%]",
           "max_dim_duration": "[%key:common::config_flow::data::max_dim_duration%]",
           "scan_interval": "[%key:common::config_flow::data::scan_interval%]",

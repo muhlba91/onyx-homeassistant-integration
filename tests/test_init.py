@@ -20,15 +20,19 @@ from custom_components.hella_onyx import (
 )
 from custom_components.hella_onyx.const import (
     CONF_ADDITIONAL_DELAY,
+    CONF_CLOSED_TOLERANCE,
     CONF_FINGERPRINT,
     CONF_INTERPOLATION_FREQUENCY,
     CONF_LOCAL_ADDRESS,
     CONF_MAX_DIM_DURATION,
     CONF_MIN_DIM_DURATION,
+    CONF_MOVING_TIMEOUT,
     DEFAULT_ADDITIONAL_DELAY,
+    DEFAULT_CLOSED_TOLERANCE,
     DEFAULT_INTERPOLATION_FREQUENCY,
     DEFAULT_MAX_DIM_DURATION,
     DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_MOVING_TIMEOUT,
     DEFAULT_SCAN_INTERVAL,
 )
 from custom_components.hella_onyx.models import OnyxData
@@ -52,6 +56,8 @@ def mock_config_entry():
             CONF_SCAN_INTERVAL: 120,
             CONF_INTERPOLATION_FREQUENCY: 5,
             CONF_ADDITIONAL_DELAY: 1000,
+            CONF_CLOSED_TOLERANCE: 4,
+            CONF_MOVING_TIMEOUT: 240,
             CONF_MIN_DIM_DURATION: 200,
             CONF_MAX_DIM_DURATION: 2000,
             CONF_FORCE_UPDATE: True,
@@ -92,6 +98,8 @@ async def test_async_setup_entry_and_unload(
     assert config.scan_interval == 120
     assert config.interpolation_frequency == 5
     assert config.additional_delay == 1000
+    assert config.closed_tolerance == 4
+    assert config.moving_timeout == 240
     assert config.min_dim_duration == 200
     assert config.max_dim_duration == 2000
     assert config.force_update is True
@@ -412,6 +420,8 @@ async def test_async_setup_entry_options_fallbacks(
     assert config.scan_interval == DEFAULT_SCAN_INTERVAL
     assert config.interpolation_frequency == DEFAULT_INTERPOLATION_FREQUENCY
     assert config.additional_delay == DEFAULT_ADDITIONAL_DELAY
+    assert config.closed_tolerance == DEFAULT_CLOSED_TOLERANCE
+    assert config.moving_timeout == DEFAULT_MOVING_TIMEOUT
     assert config.min_dim_duration == DEFAULT_MIN_DIM_DURATION
     assert config.max_dim_duration == DEFAULT_MAX_DIM_DURATION
     assert config.force_update is False
@@ -452,6 +462,8 @@ async def test_async_setup_entry_custom_option_keys(
         options={
             CONF_INTERPOLATION_FREQUENCY: 99,
             CONF_ADDITIONAL_DELAY: 888,
+            CONF_CLOSED_TOLERANCE: 9,
+            CONF_MOVING_TIMEOUT: 55,
             CONF_MIN_DIM_DURATION: 77,
             CONF_MAX_DIM_DURATION: 666,
             CONF_FORCE_UPDATE: True,
@@ -465,6 +477,8 @@ async def test_async_setup_entry_custom_option_keys(
     config = mock_api_connector_class.call_args[0][1]
     assert config.interpolation_frequency == 99
     assert config.additional_delay == 888
+    assert config.closed_tolerance == 9
+    assert config.moving_timeout == 55
     assert config.min_dim_duration == 77
     assert config.max_dim_duration == 666
     assert config.force_update is True
@@ -534,3 +548,57 @@ async def test_async_migrate_entry_v2_keys():
     assert call_kwargs["options"][CONF_MIN_DIM_DURATION] == 123
     assert call_kwargs["options"][CONF_MAX_DIM_DURATION] == 456
     assert call_kwargs["options"][CONF_FORCE_UPDATE] is True
+
+
+def _v3_entry(minor_version, options):
+    return ConfigEntry(
+        version=3,
+        minor_version=minor_version,
+        domain=DOMAIN,
+        title="test",
+        data={CONF_FINGERPRINT: "fp", CONF_ACCESS_TOKEN: "tok"},
+        source="user",
+        unique_id="test",
+        options=options,
+        discovery_keys={},
+        subentries_data={},
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_migrate_entry_v3_1_adds_shutter_options():
+    hass = MagicMock()
+    entry = _v3_entry(1, {CONF_SCAN_INTERVAL: 30, CONF_LOCAL_ADDRESS: "10.0.0.1"})
+    result = await async_migrate_entry(hass, entry)
+    assert result is True
+    hass.config_entries.async_update_entry.assert_called_once_with(
+        entry,
+        options={
+            CONF_SCAN_INTERVAL: 30,
+            CONF_LOCAL_ADDRESS: "10.0.0.1",
+            CONF_CLOSED_TOLERANCE: DEFAULT_CLOSED_TOLERANCE,
+            CONF_MOVING_TIMEOUT: DEFAULT_MOVING_TIMEOUT,
+        },
+        minor_version=2,
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_migrate_entry_v3_1_keeps_existing_shutter_options():
+    hass = MagicMock()
+    entry = _v3_entry(1, {CONF_CLOSED_TOLERANCE: 8, CONF_MOVING_TIMEOUT: 90})
+    await async_migrate_entry(hass, entry)
+    hass.config_entries.async_update_entry.assert_called_once_with(
+        entry,
+        options={CONF_CLOSED_TOLERANCE: 8, CONF_MOVING_TIMEOUT: 90},
+        minor_version=2,
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_migrate_entry_v3_2_is_untouched():
+    hass = MagicMock()
+    entry = _v3_entry(2, {CONF_CLOSED_TOLERANCE: 8, CONF_MOVING_TIMEOUT: 90})
+    result = await async_migrate_entry(hass, entry)
+    assert result is True
+    hass.config_entries.async_update_entry.assert_not_called()

@@ -20,9 +20,11 @@ from onyx_client.enum.device_type import DeviceType
 from custom_components.hella_onyx.configuration import Configuration
 from custom_components.hella_onyx.const import (
     DEFAULT_ADDITIONAL_DELAY,
+    DEFAULT_CLOSED_TOLERANCE,
     DEFAULT_INTERPOLATION_FREQUENCY,
     DEFAULT_MAX_DIM_DURATION,
     DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_MOVING_TIMEOUT,
     DEFAULT_SCAN_INTERVAL,
 )
 from custom_components.hella_onyx.light import OnyxLight
@@ -37,6 +39,8 @@ class TestOnyxLight:
             DEFAULT_MAX_DIM_DURATION,
             DEFAULT_ADDITIONAL_DELAY,
             DEFAULT_INTERPOLATION_FREQUENCY,
+            DEFAULT_CLOSED_TOLERANCE,
+            DEFAULT_MOVING_TIMEOUT,
             False,
             "",
             "",

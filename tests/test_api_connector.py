@@ -24,9 +24,11 @@ from custom_components.hella_onyx.api_connector import (
 from custom_components.hella_onyx.configuration import Configuration
 from custom_components.hella_onyx.const import (
     DEFAULT_ADDITIONAL_DELAY,
+    DEFAULT_CLOSED_TOLERANCE,
     DEFAULT_INTERPOLATION_FREQUENCY,
     DEFAULT_MAX_DIM_DURATION,
     DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_MOVING_TIMEOUT,
 )
 
 
@@ -43,6 +45,8 @@ class TestAPIConnector:
             DEFAULT_MAX_DIM_DURATION,
             DEFAULT_ADDITIONAL_DELAY,
             DEFAULT_INTERPOLATION_FREQUENCY,
+            DEFAULT_CLOSED_TOLERANCE,
+            DEFAULT_MOVING_TIMEOUT,
             False,
             "finger",
             "token",
@@ -524,6 +528,8 @@ class TestAPIConnector:
             DEFAULT_MAX_DIM_DURATION,
             DEFAULT_ADDITIONAL_DELAY,
             DEFAULT_INTERPOLATION_FREQUENCY,
+            DEFAULT_CLOSED_TOLERANCE,
+            DEFAULT_MOVING_TIMEOUT,
             False,
             "finger",
             "token",

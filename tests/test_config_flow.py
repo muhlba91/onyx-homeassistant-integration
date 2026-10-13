@@ -18,22 +18,30 @@ from custom_components.hella_onyx.config_flow import (
 )
 from custom_components.hella_onyx.const import (
     CONF_ADDITIONAL_DELAY,
+    CONF_CLOSED_TOLERANCE,
     CONF_FINGERPRINT,
     CONF_INTERPOLATION_FREQUENCY,
     CONF_LOCAL_ADDRESS,
     CONF_MAX_DIM_DURATION,
     CONF_MIN_DIM_DURATION,
+    CONF_MOVING_TIMEOUT,
     DEFAULT_ADDITIONAL_DELAY,
+    DEFAULT_CLOSED_TOLERANCE,
     DEFAULT_INTERPOLATION_FREQUENCY,
     DEFAULT_MAX_DIM_DURATION,
     DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_MOVING_TIMEOUT,
     DEFAULT_SCAN_INTERVAL,
     MAX_ADDITIONAL_DELAY,
+    MAX_CLOSED_TOLERANCE,
     MAX_DIM_DURATION,
     MAX_INTERPOLATION_FREQUENCY,
+    MAX_MOVING_TIMEOUT,
     MIN_ADDITIONAL_DELAY,
+    MIN_CLOSED_TOLERANCE,
     MIN_DIM_DURATION,
     MIN_INTERPOLATION_FREQUENCY,
+    MIN_MOVING_TIMEOUT,
 )
 
 
@@ -399,6 +407,8 @@ class TestOnyxFlowHandler:
         assert CONF_LOCAL_ADDRESS in schema_keys
         assert schema_keys[CONF_LOCAL_ADDRESS].default() == "192.168.1.99"
         assert CONF_ADDITIONAL_DELAY in schema_keys
+        assert CONF_CLOSED_TOLERANCE in schema_keys
+        assert CONF_MOVING_TIMEOUT in schema_keys
         assert CONF_MIN_DIM_DURATION in schema_keys
         assert CONF_MAX_DIM_DURATION in schema_keys
         assert CONF_INTERPOLATION_FREQUENCY in schema_keys
@@ -422,6 +432,8 @@ class TestOnyxFlowHandler:
                 CONF_MIN_DIM_DURATION: 0,
                 CONF_MAX_DIM_DURATION: 2000,
                 CONF_ADDITIONAL_DELAY: 1000,
+                CONF_CLOSED_TOLERANCE: 3,
+                CONF_MOVING_TIMEOUT: 180,
                 CONF_FORCE_UPDATE: True,
                 CONF_INTERPOLATION_FREQUENCY: 5000,
             }
@@ -435,6 +447,8 @@ class TestOnyxFlowHandler:
         assert entry_kwargs["options"][CONF_MIN_DIM_DURATION] == 0
         assert entry_kwargs["options"][CONF_MAX_DIM_DURATION] == 2000
         assert entry_kwargs["options"][CONF_ADDITIONAL_DELAY] == 1000
+        assert entry_kwargs["options"][CONF_CLOSED_TOLERANCE] == 3
+        assert entry_kwargs["options"][CONF_MOVING_TIMEOUT] == 180
         assert entry_kwargs["options"][CONF_FORCE_UPDATE] is True
         assert entry_kwargs["options"][CONF_INTERPOLATION_FREQUENCY] == 5000
         assert entry_kwargs["options"][CONF_LOCAL_ADDRESS] is None
@@ -456,6 +470,8 @@ class TestOnyxFlowHandler:
                 CONF_MIN_DIM_DURATION: 0,
                 CONF_MAX_DIM_DURATION: 2000,
                 CONF_ADDITIONAL_DELAY: 1000,
+                CONF_CLOSED_TOLERANCE: 3,
+                CONF_MOVING_TIMEOUT: 180,
                 CONF_FORCE_UPDATE: True,
                 CONF_INTERPOLATION_FREQUENCY: 5000,
             }
@@ -660,6 +676,8 @@ class TestOnyxFlowHandler:
                     CONF_MIN_DIM_DURATION: 0,
                     CONF_MAX_DIM_DURATION: 2000,
                     CONF_ADDITIONAL_DELAY: 0,
+                    CONF_CLOSED_TOLERANCE: 3,
+                    CONF_MOVING_TIMEOUT: 180,
                     CONF_FORCE_UPDATE: False,
                     CONF_INTERPOLATION_FREQUENCY: 5000,
                 }
@@ -670,6 +688,47 @@ class TestOnyxFlowHandler:
             assert isinstance(entry_kwargs["options"], dict)
 
         await _run()
+
+    @pytest.mark.parametrize(
+        "closed_tolerance,moving_timeout,expected_tolerance,expected_timeout",
+        [
+            (-5, 1, MIN_CLOSED_TOLERANCE, MIN_MOVING_TIMEOUT),
+            (5, 300, 5, 300),
+            (500, 100000, MAX_CLOSED_TOLERANCE, MAX_MOVING_TIMEOUT),
+        ],
+    )
+    @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_show_form")
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_create_entry"
+    )
+    @pytest.mark.asyncio
+    async def test_async_step_options_clamps_shutter_options(
+        self,
+        mock_async_create_entry,
+        mock_async_step_options,
+        closed_tolerance,
+        moving_timeout,
+        expected_tolerance,
+        expected_timeout,
+    ):
+        config_flow = OnyxFlowHandler()
+        config_flow._data = {CONF_FINGERPRINT: "finger"}
+        await config_flow.async_step_options(
+            {
+                CONF_LOCAL_ADDRESS: None,
+                CONF_SCAN_INTERVAL: 60,
+                CONF_MIN_DIM_DURATION: 0,
+                CONF_MAX_DIM_DURATION: 2000,
+                CONF_ADDITIONAL_DELAY: 1000,
+                CONF_CLOSED_TOLERANCE: closed_tolerance,
+                CONF_MOVING_TIMEOUT: moving_timeout,
+                CONF_FORCE_UPDATE: False,
+                CONF_INTERPOLATION_FREQUENCY: 5,
+            }
+        )
+        options = mock_async_create_entry.call_args.kwargs["options"]
+        assert options[CONF_CLOSED_TOLERANCE] == expected_tolerance
+        assert options[CONF_MOVING_TIMEOUT] == expected_timeout
 
     @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_user")
     @pytest.mark.asyncio
@@ -762,6 +821,18 @@ class TestGetOptionsSchema:
         assert v_delay.config["min"] == MIN_ADDITIONAL_DELAY
         assert v_delay.config["max"] == MAX_ADDITIONAL_DELAY
 
+        assert CONF_CLOSED_TOLERANCE in field_map
+        k_tolerance, v_tolerance = field_map[CONF_CLOSED_TOLERANCE]
+        assert k_tolerance.default() == DEFAULT_CLOSED_TOLERANCE
+        assert v_tolerance.config["min"] == MIN_CLOSED_TOLERANCE
+        assert v_tolerance.config["max"] == MAX_CLOSED_TOLERANCE
+
+        assert CONF_MOVING_TIMEOUT in field_map
+        k_timeout, v_timeout = field_map[CONF_MOVING_TIMEOUT]
+        assert k_timeout.default() == DEFAULT_MOVING_TIMEOUT
+        assert v_timeout.config["min"] == MIN_MOVING_TIMEOUT
+        assert v_timeout.config["max"] == MAX_MOVING_TIMEOUT
+
         assert CONF_MIN_DIM_DURATION in field_map
         k_min_dim, v_min_dim = field_map[CONF_MIN_DIM_DURATION]
         assert k_min_dim.default() == DEFAULT_MIN_DIM_DURATION
@@ -789,6 +860,8 @@ class TestGetOptionsSchema:
             CONF_LOCAL_ADDRESS: "10.0.0.1",
             CONF_INTERPOLATION_FREQUENCY: 10,
             CONF_ADDITIONAL_DELAY: 500,
+            CONF_CLOSED_TOLERANCE: 7,
+            CONF_MOVING_TIMEOUT: 42,
             CONF_MIN_DIM_DURATION: 100,
             CONF_MAX_DIM_DURATION: 3000,
             CONF_SCAN_INTERVAL: 15,
@@ -799,7 +872,14 @@ class TestGetOptionsSchema:
         assert field_map[CONF_LOCAL_ADDRESS][0].default() == "10.0.0.1"
         assert field_map[CONF_INTERPOLATION_FREQUENCY][0].default() == 10
         assert field_map[CONF_ADDITIONAL_DELAY][0].default() == 500
+        assert field_map[CONF_CLOSED_TOLERANCE][0].default() == 7
+        assert field_map[CONF_MOVING_TIMEOUT][0].default() == 42
         assert field_map[CONF_MIN_DIM_DURATION][0].default() == 100
         assert field_map[CONF_MAX_DIM_DURATION][0].default() == 3000
         assert field_map[CONF_SCAN_INTERVAL][0].default() == 15
         assert field_map[CONF_FORCE_UPDATE][0].default() is True
+
+
+def test_flow_version_matches_migration():
+    assert OnyxFlowHandler.VERSION == 3
+    assert OnyxFlowHandler.MINOR_VERSION == 2

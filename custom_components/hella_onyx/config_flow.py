@@ -22,23 +22,31 @@ from onyx_client.client import create
 
 from .const import (
     CONF_ADDITIONAL_DELAY,
+    CONF_CLOSED_TOLERANCE,
     CONF_FINGERPRINT,
     CONF_INTERPOLATION_FREQUENCY,
     CONF_LOCAL_ADDRESS,
     CONF_MAX_DIM_DURATION,
     CONF_MIN_DIM_DURATION,
+    CONF_MOVING_TIMEOUT,
     DEFAULT_ADDITIONAL_DELAY,
+    DEFAULT_CLOSED_TOLERANCE,
     DEFAULT_INTERPOLATION_FREQUENCY,
     DEFAULT_MAX_DIM_DURATION,
     DEFAULT_MIN_DIM_DURATION,
+    DEFAULT_MOVING_TIMEOUT,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     MAX_ADDITIONAL_DELAY,
+    MAX_CLOSED_TOLERANCE,
     MAX_DIM_DURATION,
     MAX_INTERPOLATION_FREQUENCY,
+    MAX_MOVING_TIMEOUT,
     MIN_ADDITIONAL_DELAY,
+    MIN_CLOSED_TOLERANCE,
     MIN_DIM_DURATION,
     MIN_INTERPOLATION_FREQUENCY,
+    MIN_MOVING_TIMEOUT,
 )
 
 
@@ -46,7 +54,7 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for ONYX."""
 
     VERSION = 3
-    MINOR_VERSION = 1
+    MINOR_VERSION = 2
     CONNECTION_CLASS = CONN_CLASS_LOCAL_POLL
 
     def __init__(self) -> None:
@@ -169,6 +177,14 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
             interpolation_frequency = max(
                 MIN_INTERPOLATION_FREQUENCY, user_input[CONF_INTERPOLATION_FREQUENCY]
             )
+            closed_tolerance = min(
+                MAX_CLOSED_TOLERANCE,
+                max(MIN_CLOSED_TOLERANCE, user_input[CONF_CLOSED_TOLERANCE]),
+            )
+            moving_timeout = min(
+                MAX_MOVING_TIMEOUT,
+                max(MIN_MOVING_TIMEOUT, user_input[CONF_MOVING_TIMEOUT]),
+            )
             min_dim_duration = max(MIN_DIM_DURATION, user_input[CONF_MIN_DIM_DURATION])
             max_dim_duration = min(MAX_DIM_DURATION, user_input[CONF_MAX_DIM_DURATION])
             force_update = user_input[CONF_FORCE_UPDATE]
@@ -178,6 +194,8 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
                 CONF_SCAN_INTERVAL: scan_interval,
                 CONF_INTERPOLATION_FREQUENCY: interpolation_frequency,
                 CONF_ADDITIONAL_DELAY: additional_delay,
+                CONF_CLOSED_TOLERANCE: closed_tolerance,
+                CONF_MOVING_TIMEOUT: moving_timeout,
                 CONF_MIN_DIM_DURATION: min_dim_duration,
                 CONF_MAX_DIM_DURATION: max_dim_duration,
                 CONF_FORCE_UPDATE: force_update,
@@ -271,6 +289,24 @@ def _get_options_schema(data: dict | None = None):
                 selector.NumberSelectorConfig(
                     min=MIN_ADDITIONAL_DELAY,
                     max=MAX_ADDITIONAL_DELAY,
+                )
+            ),
+            vol.Optional(
+                CONF_CLOSED_TOLERANCE,
+                default=data.get(CONF_CLOSED_TOLERANCE, DEFAULT_CLOSED_TOLERANCE),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=MIN_CLOSED_TOLERANCE,
+                    max=MAX_CLOSED_TOLERANCE,
+                )
+            ),
+            vol.Optional(
+                CONF_MOVING_TIMEOUT,
+                default=data.get(CONF_MOVING_TIMEOUT, DEFAULT_MOVING_TIMEOUT),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=MIN_MOVING_TIMEOUT,
+                    max=MAX_MOVING_TIMEOUT,
                 )
             ),
             vol.Optional(
