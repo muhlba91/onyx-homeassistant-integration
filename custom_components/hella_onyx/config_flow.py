@@ -212,9 +212,7 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="options",
-            data_schema=_get_options_schema(
-                data=user_input if user_input else self._options
-            ),
+            data_schema=_get_options_schema(data=self._options),
             errors=errors,
         )
 
