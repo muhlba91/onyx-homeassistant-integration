@@ -481,15 +481,54 @@ class TestOnyxLight:
                 time.time() - 1000, 10, [AnimationKeyframe("linear", 0, 100, 90)]
             ),
         )
+        device.target_brightness = NumericValue(
+            value=80,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+        )
         api.device.return_value = device
         with patch.object(
             entity, "schedule_update_ha_state"
         ) as mock_schedule_update_ha_state:
             entity._end_dim_device()
             assert api.device.called
-            assert not mock_schedule_update_ha_state.called
-            assert entity.hass.create_task.called
-            api.send_device_command_action.assert_called_with("uuid", Action.STOP)
+            assert mock_schedule_update_ha_state.called
+            assert entity._device.actual_brightness.value == 80
+            api.send_device_command_action.assert_not_called()
+
+    def test_end_dim_device_without_target_uses_keyframe(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=None,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+            animation=AnimationValue(
+                time.time() - 1000, 10, [AnimationKeyframe("linear", 0, 100, 90)]
+            ),
+        )
+        device.target_brightness = None
+        api.device.return_value = device
+        with patch.object(entity, "schedule_update_ha_state"):
+            entity._end_dim_device()
+        assert entity._device.actual_brightness.value == 90
+        api.send_device_command_action.assert_not_called()
+
+    def test_end_dim_device_without_end_value_keeps_value(self, api, entity, device):
+        device.actual_brightness = NumericValue(
+            value=30,
+            maximum=100,
+            minimum=0,
+            read_only=False,
+            animation=AnimationValue(
+                time.time() - 1000, 10, [AnimationKeyframe("linear", 0, 100, None)]
+            ),
+        )
+        device.target_brightness = None
+        api.device.return_value = device
+        with patch.object(entity, "schedule_update_ha_state"):
+            entity._end_dim_device()
+        assert entity._device.actual_brightness.value == 30
 
     def test_end_dim_device_within_time(self, api, entity, device):
         device.actual_brightness = NumericValue(
