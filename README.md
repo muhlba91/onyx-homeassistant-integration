@@ -168,6 +168,10 @@ adhere to the additional rules outlined in `.conform.yaml`.
 
 ---
 
+## Brand Assets
+
+[Brand assets](custom_components/hella_onyx/brand/) copyright by [HELLA Sonnen- und Wetterschutztechnik GmbH](https://www.hella.info).
+
 ## Contributors
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
