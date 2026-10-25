@@ -19,8 +19,7 @@
             "enabled": false
         },
         {
-            "description": "Poetry's mise lock is pinned to Python 3.14 (tool option python = \"3.14\"); a Python minor upgrade is a manual change together with that option",
-            "matchManagers": ["mise"],
+            "description": "Poetry's mise lock is pinned to Python 3.14 (tool option python = \"3.14\"); a Python minor upgrade is a manual change together with that option (applies to mise.toml and pyproject.toml)",
             "matchDepNames": ["python"],
             "allowedVersions": "<3.15.0"
         }
