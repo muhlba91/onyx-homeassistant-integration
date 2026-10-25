@@ -117,10 +117,9 @@ The **following ONYX devices** are **only community tested** due to the lack of 
 
 ## Development
 
-The project uses [poetry](https://poetry.eustace.io/) and to install all dependencies and the build environment, run:
+Tool versions (Python, uv, Poetry) are managed with [mise](https://mise.jdx.dev): run `mise trust` and `mise install` once. The project uses [poetry](https://poetry.eustace.io/); to install all dependencies and the build environment, run:
 
 ```bash
-pip install poetry
 poetry install
 ```
 

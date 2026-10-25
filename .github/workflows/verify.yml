@@ -18,11 +18,6 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     name: Checks
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: ["3.14"]
-        poetry-version: [2.4.1]
 
     steps:
       - uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
@@ -33,12 +28,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: ${{ matrix.python-version }}
-      - uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1 # v4.0.0
-        with:
-          poetry-version: ${{ matrix.poetry-version }}
+      - uses: jdx/mise-action@82a612c5ab8bcda7cc5db6b7e81a8e7584c3dc6e # v5.2.3
 
       - run: |
           poetry install
@@ -50,11 +40,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     name: Tests
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: ["3.14"]
-        poetry-version: [2.4.1]
 
     steps:
       - uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
@@ -65,12 +50,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: ${{ matrix.python-version }}
-      - uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1 # v4.0.0
-        with:
-          poetry-version: ${{ matrix.poetry-version }}
+      - uses: jdx/mise-action@82a612c5ab8bcda7cc5db6b7e81a8e7584c3dc6e # v5.2.3
 
       - run: |
           poetry install
@@ -90,11 +70,6 @@ jobs:
     permissions:
       checks: write
       contents: read
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: ["3.14"]
-        poetry-version: [2.4.1]
 
     steps:
       - uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
@@ -105,12 +80,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: ${{ matrix.python-version }}
-      - uses: abatilo/actions-poetry@3765cf608f2d4a72178a9fc5b918668e542b89b1 # v4.0.0
-        with:
-          poetry-version: ${{ matrix.poetry-version }}
+      - uses: jdx/mise-action@82a612c5ab8bcda7cc5db6b7e81a8e7584c3dc6e # v5.2.3
 
       - run: |
           poetry install
