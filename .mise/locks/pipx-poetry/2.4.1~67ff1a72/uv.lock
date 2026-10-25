@@ -3,7 +3,7 @@ revision = 5
 requires-python = "==3.14.*"
 
 [options]
-exclude-newer = "2026-10-24T16:01:08.633835Z"
+exclude-newer = "2026-10-24T16:16:38.448555Z"
 
 [[package]]
 name = "anyio"

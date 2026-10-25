@@ -6,7 +6,7 @@ lockfile_version = 3
 version = "2.4.1"
 backend = "pipx:poetry"
 specifiers = ["2.4.1"]
-uv = { path = ".mise/locks/pipx-poetry/2.4.1~67ff1a72", digest = "sha256:0213e186289b0f0edb970c204f86d734d61e352b72d4478625092794459517ab" }
+uv = { path = ".mise/locks/pipx-poetry/2.4.1~67ff1a72", digest = "sha256:65f022a443661a7dd88e2c59147db8aa2e3250fceab64898bb558037342eff98" }
 
 [tools."pipx:poetry".options]
 python = "3.14"
