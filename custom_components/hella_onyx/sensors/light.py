@@ -220,7 +220,7 @@ class OnyxLight(OnyxEntity, LightEntity):
             self._end_dim_device()
 
     def _end_dim_device(self, *args: Any):
-        """Call STOP to update the device values on ONYX."""
+        """Interpolate the brightness of a dimming device, or set the end value."""
         _LOGGER.debug("ending dimming device %s", self._uuid)
 
         animation = self._actual_brightness.animation
@@ -244,12 +244,17 @@ class OnyxLight(OnyxEntity, LightEntity):
         current_time = time.time()
 
         if end_time is not None and current_time > end_time:
-            self.hass.create_task(
-                self.api.send_device_command_action(
-                    self._uuid,
-                    Action.STOP,
-                )
+            # ONYX keeps reporting the start value together with the animation
+            # and sends no extra event when it ends: take the end value.
+            target = self._device.target_brightness
+            end_value = (
+                target.value
+                if target is not None and target.value is not None
+                else keyframe.value
             )
+            if end_value is not None:
+                self._device.actual_brightness.value = end_value
+            self.schedule_update_ha_state()
         elif (
             start_time is not None
             and current_time > start_time
