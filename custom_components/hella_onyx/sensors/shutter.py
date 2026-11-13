@@ -26,7 +26,7 @@ from onyx_client.data.numeric_value import NumericValue
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
-from ..api_connector import APIConnector, CommandException
+from ..api_connector import APIConnector
 from ..enum.moving_state import MovingState
 from ..sensors.onyx_entity import OnyxEntity
 from ..util.interpolation import interpolate
@@ -49,7 +49,6 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         super().__init__(api, timezone, name, device_type, uuid)
         self._moving_state = MovingState.STILL
         self._animation_seen = False
-        self._sync_pending = False
         self._moving_timeout_unsub: Callable[[], None] | None = None
 
     async def async_will_remove_from_hass(self) -> None:
@@ -63,7 +62,11 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         if device is None:
             return
 
-        sync_was_pending = self._sync_pending
+        # ONYX keeps reporting the start value together with an animation and
+        # sends no extra event when the animation ends: take the end value
+        # of an animation that is already over.
+        self._settle_finished_animation(device.actual_position, device.target_position)
+        self._settle_finished_animation(device.actual_angle, device.target_angle)
 
         position_animation = (
             device.actual_position.animation if device.actual_position else None
@@ -81,9 +84,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             if position_active or angle_active:
                 self._animation_seen = True
                 self._arm_moving_timeout()
-            elif self._animation_seen and sync_was_pending:
-                # the animation is over and the STOP has been answered: the
-                # values are the real ones now.
+            elif self._animation_seen:
+                # the animation is over: the values are the end values now.
                 self._set_state(MovingState.STILL)
 
         super()._handle_coordinator_update()
@@ -270,7 +272,6 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         """Set the new moving state."""
         self._moving_state = state
         self._animation_seen = False
-        self._sync_pending = False
         if state == MovingState.STILL:
             self._cancel_moving_timeout()
         else:
@@ -293,7 +294,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
     @callback
     def _handle_moving_timeout(self, *args: Any):
-        """Give up the moving state and fetch the real values with a STOP."""
+        """Give up the moving state when no animation ended the movement."""
         self._moving_timeout_unsub = None
         if self._moving_state == MovingState.STILL:
             return
@@ -304,15 +305,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
             self.api.config.moving_timeout,
         )
         self._set_state(MovingState.STILL)
-        self.hass.async_create_task(self._async_sync_with_device())
         self.schedule_update_ha_state()
-
-    async def _async_sync_with_device(self):
-        """Send a STOP, so ONYX reports the real values instead of interpolated ones."""
-        try:
-            await self.api.send_device_command_action(self._uuid, Action.STOP)
-        except CommandException:
-            _LOGGER.warning("could not sync shutter %s with a STOP", self._uuid)
 
     # pragma: no mutate start
     def _start_moving_device(self, animation: AnimationValue):
@@ -377,7 +370,7 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
     @callback
     def _end_moving_device(self, *args: Any):
-        """Call STOP to update the device values on ONYX."""
+        """Interpolate the values of a moving device, or set the end values."""
         _LOGGER.debug("ending moving device %s", self._uuid)
 
         position_animation = self._device.actual_position.animation
@@ -435,9 +428,15 @@ class OnyxShutter(OnyxEntity, CoverEntity):
                     and current_time > angle_end_time
                 )
             ):
-                if not self._sync_pending:
-                    self._sync_pending = True
-                    self.hass.async_create_task(self._async_sync_with_device())
+                # the device reports no extra event at the end of an
+                # animation, so the end values are taken from the animation.
+                self._set_end_value(
+                    self._device.actual_position, self._device.target_position
+                )
+                self._set_end_value(
+                    self._device.actual_angle, self._device.target_angle
+                )
+                self._set_state(MovingState.STILL)
             elif (
                 position_start_time is not None and current_time > position_start_time
             ) or (angle_start_time is not None and current_time > angle_start_time):
@@ -488,6 +487,27 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         """Return if the animation has not yet ended."""
         end_time = self._animation_end_time(animation)
         return end_time is not None and time.time() < end_time
+
+    def _settle_finished_animation(
+        self, value: NumericValue | None, target: NumericValue | None
+    ):
+        """Take the end value of an animation which is already over."""
+        if value is None or value.animation is None or not value.animation.keyframes:
+            return
+        if not self._is_animation_active(value.animation):
+            self._set_end_value(value, target)
+
+    @staticmethod
+    def _set_end_value(value: NumericValue | None, target: NumericValue | None):
+        """Set the value an animation ends at: the target, else its last keyframe."""
+        if value is None or value.animation is None or not value.animation.keyframes:
+            return
+        if target is not None and target.value is not None:
+            value.value = target.value
+            return
+        keyframes = [kf for kf in value.animation.keyframes if kf is not None]
+        if keyframes and keyframes[-1].value is not None:
+            value.value = keyframes[-1].value
 
     def _calculate_and_set_state(self, actual: int, new_value: int):
         """Calculate and set the new moving state."""
