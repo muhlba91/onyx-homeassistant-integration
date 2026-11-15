@@ -8,7 +8,7 @@ version = "13.2.0"
 description = "Home Assistant Integration for Hella's ONYX.CENTER API."
 license = "MIT"
 authors = [
-    "Daniel Muehlbachler-Pietrzykowski <daniel.muehlbachler@niftyside.io>",
+    "Daniel Muehlbachler-Pietrzykowski <dev@muehlbachler.io>",
 ]
 readme = "README.md"
 repository = "https://github.com/muhlba91/onyx-homeassistant-integration"
