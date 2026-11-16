@@ -39,8 +39,8 @@ changes afterwards. Positions and brightness of moving devices are calculated fr
 Every scan interval, the stream is reconnected to replace the state with a fresh one from the ONYX.CENTER. A shorter
 scan interval corrects deviations sooner but reconnects more often; 30-180 minutes are suggested.
 Connection losses are reconnected automatically. If the ONYX.CENTER sends nothing for 90 seconds, for example while
-it restarts, the entities become unavailable until it is back. If the stream fails unexpectedly, the entities become
-unavailable and the integration restarts the stream every minute until it succeeds.
+it restarts, the device entities become unavailable until it sends events again. If the stream fails unexpectedly, the
+entities become unavailable and the integration restarts the stream every minute until it succeeds.
 
 This integration requires API `v6`. If your ONYX.CENTER does not support it, update its firmware.
 
@@ -104,7 +104,7 @@ Once configured, the integration creates entities for:
 | Light | Manage the (dimmable) light. RGBW lights are controlled by brightness only. ([API Reference](https://developers.home-assistant.io/docs/core/entity/light/)) |
 | Binary Sensor (Input) | Whether the rain sensor or alarm contact is triggered (for a rain sensor: it is raining). The device class follows the configured role (rain sensor: moisture, fire alarm: smoke, wind or generic alarm: safety). ([API Reference](https://developers.home-assistant.io/docs/core/entity/binary-sensor/)) |
 | Button (Identify) | Winks the device to identify it (shutters move a short distance and back, lights blink, other devices light an LED). Disabled by default. ([API Reference](https://developers.home-assistant.io/docs/core/entity/button/)) |
-| Update | The software update of the ONYX.CENTER, which can be installed from Home Assistant. An update is offered while the ONYX.CENTER reports one; the ONYX.CENTER checks for updates by itself. ([API Reference](https://developers.home-assistant.io/docs/core/entity/update/)) |
+| Update | The software update of the ONYX.CENTER, which can be installed from Home Assistant. An update is offered while the ONYX.CENTER reports one; the ONYX.CENTER checks for updates by itself (the integration never triggers a check), and a newly found update appears with the next reconnect, at the latest after the scan interval. While an update is transferred to the ONYX.CENTER, the entity shows the progress. The entity is unavailable while the ONYX.CENTER reports no update status. ([API Reference](https://developers.home-assistant.io/docs/core/entity/update/)) |
 | Sensor (Device Type) | The device type of the ONYX device. For an unsupported device, a diagnostic sensor shows the type reported by the ONYX.CENTER. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (System State) | The calibration and collision state (`ok`, `not_calibrated`, `collision`, `collision_not_calibrated`) of the shutter or pergola, if the device reports it (diagnostic). ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Active Command) | The source type of the command the shutter or light executes (`client`, `automation` or `device`; `unattributed` if the ONYX.CENTER cannot tell the source, `none` while no command is active); the details are attributes, which are not recorded (diagnostic). ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
@@ -133,9 +133,11 @@ The following ONYX devices are **experimental** as they are untested; please rep
 The input binary sensors only report the state of the contact; how the ONYX.CENTER reacts to a triggered contact is configured
 on the ONYX.CENTER itself. Do not rely on them as a fire or alarm system.
 
-Installing an update restarts the ONYX.CENTER: the devices cannot be controlled and their entities become unavailable
-until it is back, which can take several minutes. The update entity stays available and shows the installation in
-progress until the ONYX.CENTER reports the new version, for at most 30 minutes.
+Installing an update restarts the ONYX.CENTER, which can take several minutes: the devices cannot be controlled, and
+their entities become unavailable after 90 seconds without events until it is back. The update entity stays available
+and shows the installation in progress until the ONYX.CENTER is back; if it is not back within 30 minutes, a warning is
+logged and the progress is reset. Keep the ONYX.CENTER powered during the installation; Home Assistant does not create
+a backup of it.
 
 ---
 

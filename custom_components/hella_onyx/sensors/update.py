@@ -10,6 +10,7 @@ from homeassistant.components.update import (
 )
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -27,8 +28,8 @@ class OnyxUpdate(CoordinatorEntity, UpdateEntity):
     An update is available while the ONYX.CENTER reports one; its versions
     are not compared. The ONYX.CENTER checks for updates by itself, this
     entity never triggers a check. Installing restarts the ONYX.CENTER; the
-    entity stays available and in progress until the reported status changes
-    or UPDATE_INSTALL_TIMEOUT passes.
+    entity stays available and in progress until the ONYX.CENTER reports a
+    new version or is back after the restart, at most UPDATE_INSTALL_TIMEOUT.
     """
 
     _attr_device_class = UpdateDeviceClass.FIRMWARE
@@ -42,6 +43,7 @@ class OnyxUpdate(CoordinatorEntity, UpdateEntity):
         super().__init__(api, context=UPDATE_CONTEXT)
         self.api = api
         self._installing: UpdateStatus | None = None
+        self._install_drops = 0
         self._install_unsub = None
 
     async def async_will_remove_from_hass(self) -> None:
@@ -117,9 +119,12 @@ class OnyxUpdate(CoordinatorEntity, UpdateEntity):
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:
         """Install the available update, which restarts the ONYX.CENTER."""
+        status = self._status
+        drops = self.api.stream_drops
         if not await self.api.install_update():
             raise HomeAssistantError("the ONYX.CENTER did not start the update")
-        self._installing = self._status
+        self._installing = status
+        self._install_drops = drops
         self._cancel_install_timeout()
         self._install_unsub = async_call_later(
             self.hass, UPDATE_INSTALL_TIMEOUT, self._handle_install_timeout
@@ -127,17 +132,17 @@ class OnyxUpdate(CoordinatorEntity, UpdateEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        """End the installation once the reported status changed."""
+        """End the installation once the ONYX.CENTER is back or updated."""
         installing = self._installing
         status = self._status
-        if (
-            installing is not None
-            and status is not None
-            and (
-                status.current != installing.current or status.available_version is None
+        if installing is not None and status is not None:
+            restarted = (
+                self.api.stream_drops > self._install_drops
+                and self.api.last_update_success
             )
-        ):
-            self._end_install()
+            if restarted or status.current != installing.current:
+                self._end_install()
+        self._update_device_version()
         super()._handle_coordinator_update()
 
     @callback
@@ -151,15 +156,28 @@ class OnyxUpdate(CoordinatorEntity, UpdateEntity):
         self._end_install()
         self.async_write_ha_state()
 
+    def _update_device_version(self) -> None:
+        """Update the version of the ONYX.CENTER device after an update."""
+        status = self._status
+        device = self.device_entry
+        if status is None or device is None or device.sw_version == status.current:
+            return
+        dr.async_get(self.hass).async_update_device(
+            device.id, sw_version=status.current
+        )
+
     def _end_install(self) -> None:
+        """Stop showing the installation in progress."""
         self._installing = None
         self._cancel_install_timeout()
 
     def _cancel_install_timeout(self) -> None:
+        """Cancel the pending installation timeout."""
         if self._install_unsub is not None:
             self._install_unsub()
             self._install_unsub = None
 
     @property
     def _status(self) -> UpdateStatus | None:
+        """Return the update status, if known."""
         return self.api.update_status
