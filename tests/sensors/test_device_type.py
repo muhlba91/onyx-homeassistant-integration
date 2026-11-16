@@ -3,12 +3,17 @@
 from unittest.mock import MagicMock
 
 import pytest
+from homeassistant.const import EntityCategory
 from onyx_client.data.device_mode import DeviceMode
+from onyx_client.device.device import Device
 from onyx_client.device.shutter import Shutter
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
-from custom_components.hella_onyx.sensors.device_type import OnyxSensorDeviceType
+from custom_components.hella_onyx.sensors.device_type import (
+    OnyxSensorDeviceType,
+    OnyxSensorUnknownDeviceType,
+)
 
 
 class TestOnyxSensorDeviceType:
@@ -48,3 +53,48 @@ class TestOnyxSensorDeviceType:
         api.device.return_value = None
         assert entity.native_value is None
         assert api.device.called
+
+
+class TestOnyxSensorUnknownDeviceType:
+    @pytest.fixture
+    def api(self):
+        yield MagicMock()
+
+    @pytest.fixture
+    def entity(self, api):
+        yield OnyxSensorUnknownDeviceType(
+            api, "UTC", "name", DeviceType.UNKNOWN, "uuid"
+        )
+
+    def test_properties(self, entity):
+        assert entity.name == "name Device Type"
+        assert entity.unique_id == "uuid/DeviceType"
+        assert entity.entity_category == EntityCategory.DIAGNOSTIC
+
+    def test_state(self, api, entity):
+        api.device.return_value = Device(
+            "uuid",
+            "name",
+            DeviceType.UNKNOWN,
+            DeviceMode(DeviceType.UNKNOWN),
+            [],
+            raw_type="future_device",
+        )
+        assert entity.native_value == "future_device"
+
+    def test_state_unknown_device(self, api, entity):
+        api.device.return_value = None
+        assert entity.native_value is None
+
+    def test_device_info(self, api, entity):
+        api.device.return_value = Device(
+            "uuid",
+            "name",
+            DeviceType.UNKNOWN,
+            DeviceMode(DeviceType.UNKNOWN),
+            [],
+            raw_type="future_device",
+        )
+        assert entity.device_info["model"] == "future_device"
+        api.device.return_value = None
+        assert entity.device_info["model"] == "unknown"

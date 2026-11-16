@@ -14,6 +14,7 @@ This component creates an integration that provides the following entities to co
 - **(dimmable) light** entities
 - **weather station** sensor entities
 - **tag** (ONYX.TAG sun / temperature) sensor entities
+- **input** (rain sensor / alarm contact) binary sensor entities
 
 ---
 
@@ -99,11 +100,16 @@ Once configured, the integration creates entities for:
 | --- | --- |
 | Cover | Manage the shutter, raffstore, awning, pergola or screen. ([API Reference](https://developers.home-assistant.io/docs/core/entity/cover/)) |
 | Light | Manage the (dimmable) light. RGBW lights are controlled by brightness only. ([API Reference](https://developers.home-assistant.io/docs/core/entity/light/)) |
-| Sensor (Device Type) | The device type of the ONYX device. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
-| Sensor (Weather Humidity) | The humidity of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
-| Sensor (Weather Temperature) | The temperature of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Binary Sensor (Input) | Whether the rain sensor or alarm contact is triggered (for a rain sensor: it is raining). The device class follows the configured role (rain sensor: moisture, fire alarm: smoke, wind or generic alarm: safety). ([API Reference](https://developers.home-assistant.io/docs/core/entity/binary-sensor/)) |
+| Button (Identify) | Winks the device to identify it (shutters move a short distance and back, lights blink, other devices light an LED). Disabled by default. ([API Reference](https://developers.home-assistant.io/docs/core/entity/button/)) |
+| Sensor (Device Type) | The device type of the ONYX device. For an unsupported device, a diagnostic sensor shows the type reported by the ONYX.CENTER. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Sensor (System State) | The calibration and collision state (`ok`, `not_calibrated`, `collision`, `collision_not_calibrated`) of the shutter or pergola, if the device reports it (diagnostic). ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Sensor (Active Command) | The source type of the command the shutter or light executes (`client`, `automation` or `device`; `unattributed` if the ONYX.CENTER cannot tell the source, `none` while no command is active); the details are attributes, which are not recorded (diagnostic). ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Sensor (Weather Humidity) | The humidity of the weather sensor or the ONYX.PERGOLA control unit. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Sensor (Weather Temperature) | The temperature of the weather sensor or the ONYX.PERGOLA control unit. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Air Pressure) | The air pressure of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Wind Peak) | The wind peak of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
+| Sensor (Weather Wind Speed) | The current wind speed of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Sun Brightness) | The current sun brightness of a sun tag. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Sun Brightness Peak) | The sun brightness peak of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Sun Brightness Sink) | The sun brightness sink of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
@@ -118,6 +124,11 @@ The following ONYX devices are **experimental** as they are untested; please rep
 
 - Screens
 - RGBW lights
+- Inputs (rain sensors, alarm contacts)
+- ONYX.PERGOLA control unit temperature and humidity
+
+The input binary sensors only report the state of the contact; how the ONYX.CENTER reacts to a triggered contact is configured
+on the ONYX.CENTER itself. Do not rely on them as a fire or alarm system.
 
 ---
 

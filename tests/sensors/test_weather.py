@@ -26,6 +26,7 @@ from custom_components.hella_onyx.sensors.weather import (
     OnyxSensorWeatherSunBrightnessSink,
     OnyxSensorWeatherTemperature,
     OnyxSensorWeatherWindPeak,
+    OnyxSensorWeatherWindSpeed,
 )
 
 
@@ -426,3 +427,60 @@ class TestOnyxSensorWeatherSunBrightness:
         api.device.return_value = device
         assert entity.state == 1000
         assert api.device.called
+
+
+class TestOnyxSensorWeatherWindSpeed:
+    @pytest.fixture
+    def api(self):
+        yield MagicMock()
+
+    @pytest.fixture
+    def hass(self):
+        yield MagicMock()
+
+    @pytest.fixture
+    def device(self):
+        yield Weather(
+            "id",
+            "name",
+            DeviceType.WEATHER,
+            DeviceMode(DeviceType.WEATHER),
+            list(Action),
+            wind_speed=NumericValue(2500, 0, 100000, True),
+        )
+
+    @pytest.fixture
+    def entity(self, api, hass):
+        sensor = OnyxSensorWeatherWindSpeed(
+            api, "UTC", "name", DeviceType.WEATHER, "uuid"
+        )
+        sensor.hass = hass
+        yield sensor
+
+    def test_icon(self, entity):
+        assert entity.icon == "mdi:weather-windy"
+
+    def test_name(self, entity):
+        assert entity.name == "name Wind Speed"
+
+    def test_unique_id(self, entity):
+        assert entity.unique_id == "uuid/WindSpeed"
+
+    def test_device_class(self, entity):
+        assert entity.device_class == SensorDeviceClass.WIND_SPEED
+
+    def test_suggested_display_precision(self, entity):
+        assert entity.suggested_display_precision == 1
+
+    def test_unit_of_measurement(self, entity):
+        assert entity.unit_of_measurement == UnitOfSpeed.METERS_PER_SECOND
+
+    def test_state(self, api, entity, device):
+        api.device.return_value = device
+        assert entity.state == 2.5
+        assert api.device.called
+
+    def test_state_unknown(self, api, entity, device):
+        device.wind_speed = None
+        api.device.return_value = device
+        assert entity.native_value is None
