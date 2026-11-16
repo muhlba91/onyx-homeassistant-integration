@@ -6,9 +6,11 @@ from contextlib import aclosing
 from datetime import timedelta
 
 from aiohttp import ClientResponseError
+from homeassistant.core import callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.debounce import Debouncer
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from onyx_client.client import create
 from onyx_client.data.device_command import DeviceCommand
@@ -25,7 +27,7 @@ from onyx_client.stream.events import (
 )
 
 from .configuration import Configuration
-from .const import DOMAIN, SNAPSHOT_TIMEOUT
+from .const import DOMAIN, SNAPSHOT_TIMEOUT, STREAM_RESTART_DELAY
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,7 +36,9 @@ class APIConnector(DataUpdateCoordinator):
     """API connector for an ONYX.CENTER.
 
     The state comes from the client's event stream. Every scan interval
-    resyncs the stream, which replaces the state with a fresh snapshot.
+    resyncs the stream, which replaces the state with a fresh snapshot. If
+    the stream fails unexpectedly, the entities become unavailable and the
+    stream restarts every STREAM_RESTART_DELAY until it succeeds.
     """
 
     def __init__(self, hass, config: Configuration, entry=None):
@@ -59,6 +63,9 @@ class APIConnector(DataUpdateCoordinator):
         self._known_devices = None
         self._snapshot = asyncio.Event()
         self._stream_task = None
+        self._restart_unsub = None
+        self._restarting = False
+        self._update_lock = asyncio.Lock()
         self.__client = None
 
     def _client(self):
@@ -87,10 +94,24 @@ class APIConnector(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Start the event stream, or resync it if it is running."""
-        if self._stream_task is not None and not self._stream_task.done():
-            self._client().resync()
+        # a restart and a scheduled refresh must not start two streams
+        async with self._update_lock:
+            if self._stream_task is not None and not self._stream_task.done():
+                self._client().resync()
+                return self.data
+
+            self._cancel_restart()
+            try:
+                await self._start_stream()
+            except UpdateFailed:
+                if self._restarting:
+                    self._schedule_restart()
+                raise
+            self._restarting = False
             return self.data
 
+    async def _start_stream(self):
+        """Verify the connection and wait for the first snapshot of a new stream."""
         result = await self._client().verify()
         if result == VerifyResult.UNAUTHORIZED:
             raise ConfigEntryAuthFailed("the access token was rejected")
@@ -100,6 +121,8 @@ class APIConnector(DataUpdateCoordinator):
             )
         if result != VerifyResult.OK:
             raise UpdateFailed("the ONYX.CENTER is unreachable")
+        if self._shutdown_requested:
+            raise UpdateFailed("the integration is shutting down")
 
         self._snapshot.clear()
         self._stream_task = self.hass.async_create_background_task(
@@ -111,7 +134,6 @@ class APIConnector(DataUpdateCoordinator):
         except TimeoutError as ex:
             await self._stop_stream()
             raise UpdateFailed("no snapshot received") from ex
-        return self.data
 
     async def async_shutdown(self):
         """Stop the event stream when the config entry is unloaded."""
@@ -119,14 +141,16 @@ class APIConnector(DataUpdateCoordinator):
         await self._stop_stream()
 
     async def _stop_stream(self):
-        """Stop the event stream."""
+        """Stop the event stream and a pending restart."""
+        # cancel the task first, so its failure while closing is not restarted
+        task, self._stream_task = self._stream_task, None
+        if task is not None:
+            task.cancel()
         if self.__client is not None:
             # a closed client cannot stream again
             await self.__client.close()
             self.__client = None
-        if self._stream_task is not None:
-            self._stream_task.cancel()
-            self._stream_task = None
+        self._cancel_restart()
 
     async def get_timezone(self):
         """Gets the ONYX.CENTER timezone."""
@@ -161,12 +185,46 @@ class APIConnector(DataUpdateCoordinator):
                 async for event in events:
                     self._handle_event(event)
         except ClientResponseError as ex:
+            if asyncio.current_task().cancelling():
+                return  # stopped by _stop_stream while failing
             # the client raises only for rejected credentials (401/403)
             _LOGGER.error("event stream rejected the credentials: %s", ex)
+            self.async_set_update_error(ex)
             if self.config_entry is not None:
                 self.config_entry.async_start_reauth(self.hass)
-        except Exception:
-            _LOGGER.exception("event stream failed, restarting with the next scan")
+        except Exception as ex:
+            if asyncio.current_task().cancelling():
+                return  # stopped by _stop_stream while failing
+            # the client reconnects by itself, so this is unexpected
+            _LOGGER.exception(
+                "event stream failed, restarting in %s seconds", STREAM_RESTART_DELAY
+            )
+            self.async_set_update_error(ex)
+            self._restarting = True
+            self._schedule_restart()
+
+    def _schedule_restart(self):
+        """Restart the event stream after STREAM_RESTART_DELAY."""
+        self._cancel_restart()
+        if self._shutdown_requested:
+            return
+        self._restart_unsub = async_call_later(
+            self.hass, STREAM_RESTART_DELAY, self._handle_stream_restart
+        )
+
+    def _cancel_restart(self):
+        """Cancel the pending restart, if any."""
+        if self._restart_unsub is not None:
+            self._restart_unsub()
+            self._restart_unsub = None
+
+    @callback
+    def _handle_stream_restart(self, _now):
+        """Restart the failed event stream with a refresh."""
+        self._restart_unsub = None
+        self.hass.async_create_background_task(
+            self.async_request_refresh(), name=f"{DOMAIN}_stream_restart"
+        )
 
     def _handle_event(self, event):
         """Apply a stream event to the data and notify the affected entities."""

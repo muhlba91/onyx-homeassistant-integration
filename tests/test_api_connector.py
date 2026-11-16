@@ -34,7 +34,10 @@ from custom_components.hella_onyx.const import (
     DEFAULT_MAX_DIM_DURATION,
     DEFAULT_MIN_DIM_DURATION,
     DEFAULT_MOVING_TIMEOUT,
+    STREAM_RESTART_DELAY,
 )
+
+MODULE = "custom_components.hella_onyx.api_connector"
 
 
 def shutter(identifier: str, position: int = 0):
@@ -205,15 +208,136 @@ class TestAPIConnector:
 
     async def test_stream_fails_unexpectedly(self, api, client):
         client.error = RuntimeError("boom")
-        await api._async_update_data()
-        await api._stream_task
+        listener = MagicMock()
+        api.async_add_listener(listener, "a")
+        with patch(f"{MODULE}.async_call_later") as call_later:
+            await api._async_update_data()
+            await api._stream_task
         assert api._stream_task.exception() is None
+        assert not api.last_update_success
+        assert listener.called
+        hass, delay, restart = call_later.call_args.args
+        assert hass is api.hass
+        assert delay == STREAM_RESTART_DELAY
+        assert restart == api._handle_stream_restart
+        assert api._restart_unsub is call_later.return_value
+
+    async def test_stream_restart(self, api, client):
+        client.error = RuntimeError("boom")
+        with patch(f"{MODULE}.async_call_later"):
+            await api._async_update_data()
+            await api._stream_task
+        client.error = None
+        with patch.object(api, "async_request_refresh") as refresh:
+            api._handle_stream_restart(None)
+            await asyncio.sleep(0)
+        refresh.assert_called_once_with()
+        assert api._restart_unsub is None
+        await api.async_refresh()
+        assert api.last_update_success
+        assert not api._restarting
+        assert client.verify.call_count == 2
+
+    async def test_failed_restart_retries(self, api, client):
+        api._restarting = True
+        client.verify.return_value = VerifyResult.UNREACHABLE
+        with (
+            patch(f"{MODULE}.async_call_later") as call_later,
+            pytest.raises(UpdateFailed),
+        ):
+            await api._async_update_data()
+        assert call_later.call_args.args[1] == STREAM_RESTART_DELAY
+        assert api._restarting
+
+    async def test_failed_start_without_restart_does_not_retry(self, api, client):
+        client.verify.return_value = VerifyResult.UNREACHABLE
+        with (
+            patch(f"{MODULE}.async_call_later") as call_later,
+            pytest.raises(UpdateFailed),
+        ):
+            await api._async_update_data()
+        assert not call_later.called
+
+    async def test_no_restart_after_shutdown(self, api, client):
+        api._restarting = True
+        api._shutdown_requested = True
+        with (
+            patch(f"{MODULE}.async_call_later") as call_later,
+            pytest.raises(UpdateFailed),
+        ):
+            await api._async_update_data()
+        assert not call_later.called
+        assert api._stream_task is None
+
+    async def test_shutdown_cancels_restart(self, api):
+        unsub = MagicMock()
+        api._restart_unsub = unsub
+        await api.async_shutdown()
+        unsub.assert_called_once_with()
+
+    async def test_concurrent_updates_start_one_stream(self, api, client):
+        await asyncio.gather(api._async_update_data(), api._async_update_data())
+        assert client.verify.call_count == 1
+        assert client.resync.call_count == 1
+
+    async def test_update_cancels_pending_restart(self, api):
+        unsub = MagicMock()
+        api._restart_unsub = unsub
+        await api._async_update_data()
+        unsub.assert_called_once_with()
+        assert api._restart_unsub is None
+
+    @pytest.mark.parametrize(
+        "error",
+        [RuntimeError("boom"), ClientResponseError(MagicMock(), (), status=401)],
+    )
+    async def test_failure_of_stopped_stream_is_ignored(
+        self, hass, api, client, entry, error
+    ):
+        async def stream():
+            try:
+                await asyncio.Event().wait()
+            except asyncio.CancelledError:
+                # e.g. closing the client fails while the stream is stopped
+                raise error from None
+            yield
+
+        client.stream = stream
+        with patch(f"{MODULE}.async_call_later") as call_later:
+            task = hass.async_create_background_task(api._stream(), "stream")
+            await asyncio.sleep(0)
+            task.cancel()
+            await task
+        assert api.last_update_success
+        assert not call_later.called
+        assert not entry.async_start_reauth.called
+
+    async def test_stop_stream_cancels_restart(self, api):
+        unsub = MagicMock()
+        api._restart_unsub = unsub
+        await api._stop_stream()
+        unsub.assert_called_once_with()
+        assert api._restart_unsub is None
+
+    async def test_stop_stream_detaches_task_before_closing(self, api, client):
+        await api._async_update_data()
+        task = api._stream_task
+
+        async def close():
+            assert api._stream_task is None
+            assert task.cancelling()
+
+        client.close.side_effect = close
+        await api._stop_stream()
+        assert client.close.called
 
     async def test_stream_rejected_starts_reauth(self, api, client, entry):
         client.error = ClientResponseError(MagicMock(), (), status=401)
         await api._async_update_data()
         await api._stream_task
         entry.async_start_reauth.assert_called_once_with(api.hass)
+        assert not api.last_update_success
+        assert api._restart_unsub is None
 
     async def test_shutdown(self, api, client):
         await api._async_update_data()
