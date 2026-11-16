@@ -14,6 +14,7 @@ from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.event import async_call_later, async_track_time_interval
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from onyx_client.client import create
+from onyx_client.data.automation import Automation
 from onyx_client.data.device_command import DeviceCommand
 from onyx_client.data.update_status import UpdateStatus
 from onyx_client.enum.action import Action
@@ -31,6 +32,7 @@ from onyx_client.stream.events import (
 
 from .configuration import Configuration
 from .const import (
+    AUTOMATION_CONTEXT,
     DOMAIN,
     SNAPSHOT_TIMEOUT,
     STREAM_CHECK_INTERVAL,
@@ -74,6 +76,7 @@ class APIConnector(DataUpdateCoordinator):
             "update": None,
         }
         self._known_devices = None
+        self._known_automations = None
         self._snapshot = asyncio.Event()
         self._stream_task = None
         self._restart_unsub = None
@@ -106,6 +109,22 @@ class APIConnector(DataUpdateCoordinator):
     def groups(self):
         """Return all groups."""
         return self.data["groups"]
+
+    @property
+    def automations(self) -> list[Automation]:
+        """Return all automations in the order of the ONYX App."""
+        return self.data["automations"]
+
+    def automation(self, identifier: str) -> Automation | None:
+        """Get the automation with the provided identifier, if known."""
+        return next(
+            (
+                automation
+                for automation in self.automations
+                if automation.identifier == identifier
+            ),
+            None,
+        )
 
     @property
     def update_status(self) -> UpdateStatus | None:
@@ -221,6 +240,24 @@ class APIConnector(DataUpdateCoordinator):
         if not success:
             raise CommandException("ONYX_ACTION_ERROR", uuid)
 
+    async def set_automation_enabled(self, identifier: str, enabled: bool) -> bool:
+        """Enable or disable an automation; disabling cancels its commands."""
+        _LOGGER.info(
+            "%s automation %s", "enabling" if enabled else "disabling", identifier
+        )
+        client = self._client()
+        switch = client.enable_automation if enabled else client.disable_automation
+        automation = await switch(identifier)
+        if automation is None:
+            return False
+        # show the new state before the stream reports it
+        self.data["automations"] = [
+            automation if known.identifier == identifier else known
+            for known in self.automations
+        ]
+        self._update_device_listeners(AUTOMATION_CONTEXT)
+        return True
+
     async def install_update(self) -> bool:
         """Install the available software update, which restarts the ONYX.CENTER."""
         _LOGGER.info("installing the software update of the ONYX.CENTER")
@@ -324,6 +361,7 @@ class APIConnector(DataUpdateCoordinator):
                 self._known_devices = set(event.devices)
             elif not set(event.devices) <= self._known_devices:
                 self._reload("new devices in snapshot", set(event.devices))
+            self._check_new_automations(event.automations)
             self._snapshot.set()
             self.async_update_listeners()
         elif isinstance(event, DeviceAdded):
@@ -343,6 +381,8 @@ class APIConnector(DataUpdateCoordinator):
             self.data["groups"] = event.groups
         elif isinstance(event, AutomationsChanged):
             self.data["automations"] = event.automations
+            self._check_new_automations(event.automations)
+            self._update_device_listeners(AUTOMATION_CONTEXT)
         elif isinstance(event, UpdateChanged):
             self.data["update"] = event.update
             self._update_device_listeners(UPDATE_CONTEXT)
@@ -355,10 +395,23 @@ class APIConnector(DataUpdateCoordinator):
             if listener_context == context:
                 update_callback()
 
+    def _check_new_automations(self, automations: list[Automation]):
+        """Reload the config entry once to add switches for new automations."""
+        identifiers = {automation.identifier for automation in automations}
+        if self._known_automations is None:
+            self._known_automations = identifiers
+        elif not identifiers <= self._known_automations:
+            self._known_automations |= identifiers
+            self._schedule_reload("new automations")
+
     def _reload(self, reason: str, devices: set):
         """Reload the config entry once to add entities for the new devices."""
-        _LOGGER.info("reloading %s: %s", DOMAIN, reason)
         self._known_devices = (self._known_devices or set()) | devices
+        self._schedule_reload(reason)
+
+    def _schedule_reload(self, reason: str):
+        """Reload the config entry."""
+        _LOGGER.info("reloading %s: %s", DOMAIN, reason)
         if self.config_entry is not None:
             self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
 

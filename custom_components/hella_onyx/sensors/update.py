@@ -17,7 +17,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from onyx_client.data.update_status import UpdateStatus
 
 from ..api_connector import APIConnector
-from ..const import DOMAIN, UPDATE_CONTEXT, UPDATE_INSTALL_TIMEOUT
+from ..const import UPDATE_CONTEXT, UPDATE_INSTALL_TIMEOUT
+from ..sensors.onyx_center import center_device_info
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -65,13 +66,7 @@ class OnyxUpdate(CoordinatorEntity, UpdateEntity):
     def device_info(self) -> DeviceInfo:
         """Return the device information of the ONYX.CENTER."""
         status = self._status
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.api.config.fingerprint)},
-            name="ONYX.CENTER",
-            manufacturer="Hella",
-            model="ONYX.CENTER",
-            sw_version=status.current if status else None,
-        )
+        return center_device_info(self.api, status.current if status else None)
 
     @property
     def available(self) -> bool:

@@ -16,6 +16,7 @@ This component creates an integration that provides the following entities to co
 - **tag** (ONYX.TAG sun / temperature) sensor entities
 - **input** (rain sensor / alarm contact) binary sensor entities
 - **software update** entity of the ONYX.CENTER
+- **automation** switch entities of the ONYX.CENTER
 
 ---
 
@@ -104,6 +105,7 @@ Once configured, the integration creates entities for:
 | Light | Manage the (dimmable) light. RGBW lights are controlled by brightness only. ([API Reference](https://developers.home-assistant.io/docs/core/entity/light/)) |
 | Binary Sensor (Input) | Whether the rain sensor or alarm contact is triggered (for a rain sensor: it is raining). The device class follows the configured role (rain sensor: moisture, fire alarm: smoke, wind or generic alarm: safety). ([API Reference](https://developers.home-assistant.io/docs/core/entity/binary-sensor/)) |
 | Button (Identify) | Winks the device to identify it (shutters move a short distance and back, lights blink, other devices light an LED). Disabled by default. ([API Reference](https://developers.home-assistant.io/docs/core/entity/button/)) |
+| Switch (Automation) | Enables or disables a safety or comfort automation of the ONYX.CENTER, such as the wind protection; disabling an automation also cancels the commands it issued. Automations without a name, such as the wind protection of a weather sensor, are named after their device if it can be determined, otherwise after their type. The switches belong to the ONYX.CENTER device. Disabled by default (configuration). ([API Reference](https://developers.home-assistant.io/docs/core/entity/switch/)) |
 | Update | The software update of the ONYX.CENTER, which can be installed from Home Assistant. An update is offered while the ONYX.CENTER reports one; the ONYX.CENTER checks for updates by itself (the integration never triggers a check), and a newly found update appears with the next reconnect, at the latest after the scan interval. While an update is transferred to the ONYX.CENTER, the entity shows the progress. The entity is unavailable while the ONYX.CENTER reports no update status. ([API Reference](https://developers.home-assistant.io/docs/core/entity/update/)) |
 | Sensor (Device Type) | The device type of the ONYX device. For an unsupported device, a diagnostic sensor shows the type reported by the ONYX.CENTER. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (System State) | The calibration and collision state (`ok`, `not_calibrated`, `collision`, `collision_not_calibrated`) of the shutter or pergola, if the device reports it (diagnostic). ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
@@ -129,9 +131,15 @@ The following ONYX devices are **experimental** as they are untested; please rep
 - RGBW lights
 - Inputs (rain sensors, alarm contacts)
 - ONYX.PERGOLA control unit temperature and humidity
+- Automation switches
 
 The input binary sensors only report the state of the contact; how the ONYX.CENTER reacts to a triggered contact is configured
 on the ONYX.CENTER itself. Do not rely on them as a fire or alarm system.
+
+Disabling a safety automation, such as the wind protection, leaves your shading products unprotected until it is
+enabled again. Enable the automation switches only if you need them, and keep them out of automations which could
+disable them unintentionally. New automations are detected automatically; the integration reloads to add their
+switches. Removed automations become unavailable; remove them from Home Assistant manually.
 
 Installing an update restarts the ONYX.CENTER, which can take several minutes: the devices cannot be controlled, and
 their entities become unavailable after 90 seconds without events until it is back. The update entity stays available
