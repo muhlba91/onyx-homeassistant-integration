@@ -403,12 +403,17 @@ class TestAPIConnector:
     @pytest.mark.parametrize("event", [snapshot(shutter("a")), Pulse(1.0)])
     async def test_event_after_silence_marks_available(self, api, event):
         await api._async_update_data()
-        api.last_update_success = False
+        api._last_event = 0
+        api._check_stream(None)
         listener = MagicMock()
         api.async_add_listener(listener, "a")
+        api._handle_event(Resynced("timeout"))
+        assert not api.last_update_success
+        assert not listener.called
         api._handle_event(event)
         assert api.last_update_success
         listener.assert_called_once_with()
+        assert not api._silent
 
     async def test_event_without_stream_keeps_failure(self, api, client):
         api._handle_event(Pulse(1.0))
@@ -421,6 +426,26 @@ class TestAPIConnector:
             await api._stream_task
         api._handle_event(Pulse(1.0))
         assert not api.last_update_success
+
+    async def test_resync_during_silence_is_no_request(self, api, client):
+        await api._async_update_data()
+        api._last_event = 0
+        with pytest.raises(UpdateFailed):
+            await api._async_update_data()
+        api._handle_event(Resynced("timeout"))
+        assert api.stream_drops == 1
+
+    async def test_stream_start_resets_flags(self, api, client):
+        client.error = RuntimeError("boom")
+        with patch(f"{MODULE}.async_call_later"):
+            await api._async_update_data()
+            await api._stream_task
+        api._resync_requested = True
+        api._silent = True
+        client.error = None
+        await api._async_update_data()
+        assert not api._resync_requested
+        assert not api._silent
 
     async def test_stream_drops(self, api, client):
         await api._async_update_data()
