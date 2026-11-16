@@ -15,6 +15,7 @@ This component creates an integration that provides the following entities to co
 - **weather station** sensor entities
 - **tag** (ONYX.TAG sun / temperature) sensor entities
 - **input** (rain sensor / alarm contact) binary sensor entities
+- **software update** entity of the ONYX.CENTER
 
 ---
 
@@ -103,6 +104,7 @@ Once configured, the integration creates entities for:
 | Light | Manage the (dimmable) light. RGBW lights are controlled by brightness only. ([API Reference](https://developers.home-assistant.io/docs/core/entity/light/)) |
 | Binary Sensor (Input) | Whether the rain sensor or alarm contact is triggered (for a rain sensor: it is raining). The device class follows the configured role (rain sensor: moisture, fire alarm: smoke, wind or generic alarm: safety). ([API Reference](https://developers.home-assistant.io/docs/core/entity/binary-sensor/)) |
 | Button (Identify) | Winks the device to identify it (shutters move a short distance and back, lights blink, other devices light an LED). Disabled by default. ([API Reference](https://developers.home-assistant.io/docs/core/entity/button/)) |
+| Update | The software update of the ONYX.CENTER, which can be installed from Home Assistant. An update is offered while the ONYX.CENTER reports one; the ONYX.CENTER checks for updates by itself. ([API Reference](https://developers.home-assistant.io/docs/core/entity/update/)) |
 | Sensor (Device Type) | The device type of the ONYX device. For an unsupported device, a diagnostic sensor shows the type reported by the ONYX.CENTER. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (System State) | The calibration and collision state (`ok`, `not_calibrated`, `collision`, `collision_not_calibrated`) of the shutter or pergola, if the device reports it (diagnostic). ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Active Command) | The source type of the command the shutter or light executes (`client`, `automation` or `device`; `unattributed` if the ONYX.CENTER cannot tell the source, `none` while no command is active); the details are attributes, which are not recorded (diagnostic). ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
@@ -130,6 +132,10 @@ The following ONYX devices are **experimental** as they are untested; please rep
 
 The input binary sensors only report the state of the contact; how the ONYX.CENTER reacts to a triggered contact is configured
 on the ONYX.CENTER itself. Do not rely on them as a fire or alarm system.
+
+Installing an update restarts the ONYX.CENTER: the devices cannot be controlled and their entities become unavailable
+until it is back, which can take several minutes. The update entity stays available and shows the installation in
+progress until the ONYX.CENTER reports the new version, for at most 30 minutes.
 
 ---
 

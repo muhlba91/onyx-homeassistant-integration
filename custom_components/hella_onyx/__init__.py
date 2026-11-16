@@ -41,6 +41,7 @@ PLATFORMS = [
     Platform.COVER,
     Platform.LIGHT,
     Platform.SENSOR,
+    Platform.UPDATE,
 ]
 
 type OnyxConfigEntry = ConfigEntry[OnyxData]

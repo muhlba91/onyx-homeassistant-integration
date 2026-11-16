@@ -15,6 +15,7 @@ from homeassistant.helpers.event import async_call_later, async_track_time_inter
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from onyx_client.client import create
 from onyx_client.data.device_command import DeviceCommand
+from onyx_client.data.update_status import UpdateStatus
 from onyx_client.enum.action import Action
 from onyx_client.enum.verify_result import VerifyResult
 from onyx_client.stream.events import (
@@ -34,6 +35,7 @@ from .const import (
     STREAM_CHECK_INTERVAL,
     STREAM_RESTART_DELAY,
     STREAM_SILENCE_TIMEOUT,
+    UPDATE_CONTEXT,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -99,6 +101,11 @@ class APIConnector(DataUpdateCoordinator):
     def groups(self):
         """Return all groups."""
         return self.data["groups"]
+
+    @property
+    def update_status(self) -> UpdateStatus | None:
+        """Return the software update status, if known."""
+        return self.data["update"]
 
     def now(self) -> float:
         """Return the current time of the ONYX.CENTER as UNIX timestamp."""
@@ -203,6 +210,11 @@ class APIConnector(DataUpdateCoordinator):
         )
         if not success:
             raise CommandException("ONYX_ACTION_ERROR", uuid)
+
+    async def install_update(self) -> bool:
+        """Install the available software update, which restarts the ONYX.CENTER."""
+        _LOGGER.info("installing the software update of the ONYX.CENTER")
+        return await self._client().install_update() is not None
 
     async def _stream(self):
         """Consume the event stream until it is cancelled or rejected."""
@@ -311,11 +323,12 @@ class APIConnector(DataUpdateCoordinator):
             self.data["automations"] = event.automations
         elif isinstance(event, UpdateChanged):
             self.data["update"] = event.update
+            self._update_device_listeners(UPDATE_CONTEXT)
 
-    def _update_device_listeners(self, uuid: str):
-        """Notify only the entities of the given device."""
-        for update_callback, context in list(self._listeners.values()):
-            if context == uuid:
+    def _update_device_listeners(self, context: str):
+        """Notify only the entities of the given device or other context."""
+        for update_callback, listener_context in list(self._listeners.values()):
+            if listener_context == context:
                 update_callback()
 
     def _reload(self, reason: str, devices: set):
