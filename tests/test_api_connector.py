@@ -403,7 +403,7 @@ class TestAPIConnector:
     @pytest.mark.parametrize("event", [snapshot(shutter("a")), Pulse(1.0)])
     async def test_event_after_silence_marks_available(self, api, event):
         await api._async_update_data()
-        api._last_event = 0
+        api._last_event -= STREAM_SILENCE_TIMEOUT + 1
         api._check_stream(None)
         listener = MagicMock()
         api.async_add_listener(listener, "a")
@@ -429,7 +429,7 @@ class TestAPIConnector:
 
     async def test_resync_during_silence_is_no_request(self, api, client):
         await api._async_update_data()
-        api._last_event = 0
+        api._last_event -= STREAM_SILENCE_TIMEOUT + 1
         with pytest.raises(UpdateFailed):
             await api._async_update_data()
         api._handle_event(Resynced("timeout"))
@@ -477,13 +477,13 @@ class TestAPIConnector:
             await api._async_update_data()
             await api._stream_task
         api.last_update_success = True
-        api._last_event = 0
+        api._last_event -= STREAM_SILENCE_TIMEOUT + 1
         api._check_stream(None)
         assert api.last_update_success
 
     async def test_resync_of_silent_stream_fails(self, api, client):
         await api._async_update_data()
-        api._last_event = 0
+        api._last_event -= STREAM_SILENCE_TIMEOUT + 1
         with pytest.raises(UpdateFailed):
             await api._async_update_data()
         assert client.resync.called
