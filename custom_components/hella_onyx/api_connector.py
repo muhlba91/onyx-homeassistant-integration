@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import time
 from contextlib import aclosing
 from datetime import timedelta
 
@@ -10,7 +11,7 @@ from homeassistant.core import callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.debounce import Debouncer
-from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.event import async_call_later, async_track_time_interval
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from onyx_client.client import create
 from onyx_client.data.device_command import DeviceCommand
@@ -27,7 +28,13 @@ from onyx_client.stream.events import (
 )
 
 from .configuration import Configuration
-from .const import DOMAIN, SNAPSHOT_TIMEOUT, STREAM_RESTART_DELAY
+from .const import (
+    DOMAIN,
+    SNAPSHOT_TIMEOUT,
+    STREAM_CHECK_INTERVAL,
+    STREAM_RESTART_DELAY,
+    STREAM_SILENCE_TIMEOUT,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,7 +45,10 @@ class APIConnector(DataUpdateCoordinator):
     The state comes from the client's event stream. Every scan interval
     resyncs the stream, which replaces the state with a fresh snapshot. If
     the stream fails unexpectedly, the entities become unavailable and the
-    stream restarts every STREAM_RESTART_DELAY until it succeeds.
+    stream restarts every STREAM_RESTART_DELAY until it succeeds. The client
+    reconnects a dropped stream by itself; if no event, including the
+    pulse, arrives for STREAM_SILENCE_TIMEOUT, the entities become
+    unavailable until the next snapshot.
     """
 
     def __init__(self, hass, config: Configuration, entry=None):
@@ -65,6 +75,8 @@ class APIConnector(DataUpdateCoordinator):
         self._stream_task = None
         self._restart_unsub = None
         self._restarting = False
+        self._last_event = None
+        self._check_unsub = None
         self._update_lock = asyncio.Lock()
         self.__client = None
 
@@ -98,6 +110,9 @@ class APIConnector(DataUpdateCoordinator):
         async with self._update_lock:
             if self._stream_task is not None and not self._stream_task.done():
                 self._client().resync()
+                if self._stream_silent():
+                    # keep the entities unavailable until the next snapshot
+                    raise UpdateFailed("no events from the ONYX.CENTER")
                 return self.data
 
             self._cancel_restart()
@@ -125,6 +140,7 @@ class APIConnector(DataUpdateCoordinator):
             raise UpdateFailed("the integration is shutting down")
 
         self._snapshot.clear()
+        self._last_event = time.monotonic()
         self._stream_task = self.hass.async_create_background_task(
             self._stream(), name=f"{DOMAIN}_stream"
         )
@@ -134,6 +150,13 @@ class APIConnector(DataUpdateCoordinator):
         except TimeoutError as ex:
             await self._stop_stream()
             raise UpdateFailed("no snapshot received") from ex
+        if self._check_unsub is None:
+            self._check_unsub = async_track_time_interval(
+                self.hass,
+                self._check_stream,
+                timedelta(seconds=STREAM_CHECK_INTERVAL),
+                name=f"{DOMAIN}_stream_check",
+            )
 
     async def async_shutdown(self):
         """Stop the event stream when the config entry is unloaded."""
@@ -151,6 +174,9 @@ class APIConnector(DataUpdateCoordinator):
             await self.__client.close()
             self.__client = None
         self._cancel_restart()
+        if self._check_unsub is not None:
+            self._check_unsub()
+            self._check_unsub = None
 
     async def get_timezone(self):
         """Gets the ONYX.CENTER timezone."""
@@ -218,6 +244,26 @@ class APIConnector(DataUpdateCoordinator):
             self._restart_unsub()
             self._restart_unsub = None
 
+    def _stream_silent(self) -> bool:
+        """Return whether no event arrived for STREAM_SILENCE_TIMEOUT."""
+        return (
+            self._last_event is not None
+            and time.monotonic() - self._last_event > STREAM_SILENCE_TIMEOUT
+        )
+
+    @callback
+    def _check_stream(self, _now):
+        """Mark the entities unavailable while the running stream is silent."""
+        if self._stream_task is None or self._stream_task.done():
+            return  # a failed stream is handled by its restart
+        if self.last_update_success and self._stream_silent():
+            _LOGGER.warning(
+                "no events from the ONYX.CENTER for %s seconds, "
+                "entities are unavailable until it is back",
+                STREAM_SILENCE_TIMEOUT,
+            )
+            self.async_set_update_error(UpdateFailed("no events from the ONYX.CENTER"))
+
     @callback
     def _handle_stream_restart(self, _now):
         """Restart the failed event stream with a refresh."""
@@ -229,6 +275,7 @@ class APIConnector(DataUpdateCoordinator):
     def _handle_event(self, event):
         """Apply a stream event to the data and notify the affected entities."""
         _LOGGER.debug("received event %s", type(event).__name__)
+        self._last_event = time.monotonic()
         if isinstance(event, Snapshot):
             self.data = {
                 "devices": event.devices,
@@ -241,6 +288,9 @@ class APIConnector(DataUpdateCoordinator):
             elif not set(event.devices) <= self._known_devices:
                 self._reload("new devices in snapshot", set(event.devices))
             self._snapshot.set()
+            if not self.last_update_success and self._stream_task is not None:
+                _LOGGER.info("events from the ONYX.CENTER are back")
+                self.last_update_success = True
             self.async_update_listeners()
         elif isinstance(event, DeviceAdded):
             identifier = event.device.identifier

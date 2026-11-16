@@ -37,8 +37,9 @@ The integration keeps a connection to the ONYX API's event stream open, which se
 changes afterwards. Positions and brightness of moving devices are calculated from the reported animations.
 Every scan interval, the stream is reconnected to replace the state with a fresh one from the ONYX.CENTER. A shorter
 scan interval corrects deviations sooner but reconnects more often; 30-180 minutes are suggested.
-Connection losses are reconnected automatically. If the stream fails unexpectedly, the entities become unavailable
-and the integration restarts the stream every minute until it succeeds.
+Connection losses are reconnected automatically. If the ONYX.CENTER sends nothing for 90 seconds, for example while
+it restarts, the entities become unavailable until it is back. If the stream fails unexpectedly, the entities become
+unavailable and the integration restarts the stream every minute until it succeeds.
 
 This integration requires API `v6`. If your ONYX.CENTER does not support it, update its firmware.
 
