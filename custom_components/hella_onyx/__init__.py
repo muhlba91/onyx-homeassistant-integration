@@ -5,6 +5,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
+    CONF_FORCE_UPDATE,
     CONF_SCAN_INTERVAL,
     Platform,
 )
@@ -169,6 +170,17 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
         }
         hass.config_entries.async_update_entry(
             config_entry, options=new_options, minor_version=2
+        )
+
+    if config_entry.version == 3 and config_entry.minor_version < 3:
+        # force_update was removed with the event stream (API v6)
+        new_options = {
+            key: value
+            for key, value in config_entry.options.items()
+            if key != CONF_FORCE_UPDATE
+        }
+        hass.config_entries.async_update_entry(
+            config_entry, options=new_options, minor_version=3
         )
 
     _LOGGER.info(

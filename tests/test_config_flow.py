@@ -876,4 +876,4 @@ class TestGetOptionsSchema:
 
 def test_flow_version_matches_migration():
     assert OnyxFlowHandler.VERSION == 3
-    assert OnyxFlowHandler.MINOR_VERSION == 2
+    assert OnyxFlowHandler.MINOR_VERSION == 3
