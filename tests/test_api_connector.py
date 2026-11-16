@@ -8,6 +8,7 @@ from aiohttp import ClientResponseError
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from onyx_client.client import OnyxClient
+from onyx_client.data.automation import Automation
 from onyx_client.data.date_information import DateInformation
 from onyx_client.data.update_status import UpdateStatus
 from onyx_client.enum.action import Action
@@ -29,6 +30,7 @@ from onyx_client.utils.mapper import init_device
 from custom_components.hella_onyx.api_connector import APIConnector, CommandException
 from custom_components.hella_onyx.configuration import Configuration
 from custom_components.hella_onyx.const import (
+    AUTOMATION_CONTEXT,
     DEFAULT_ADDITIONAL_DELAY,
     DEFAULT_CLOSED_TOLERANCE,
     DEFAULT_INTERPOLATION_FREQUENCY,
@@ -55,11 +57,15 @@ def shutter(identifier: str, position: int = 0):
     )
 
 
-def snapshot(*devices):
+def automation(identifier: str, enabled: bool = True):
+    return Automation(identifier, identifier, None, "wind", enabled)
+
+
+def snapshot(*devices, automations=()):
     return Snapshot(
         {device.identifier: device for device in devices},
         {"group": Group("group", "Group", ["a"])},
-        [],
+        list(automations),
         UpdateStatus("2.13.4"),
     )
 
@@ -548,16 +554,68 @@ class TestAPIConnector:
             assert not reload.called
 
     async def test_collections_changed(self, api):
-        api._handle_event(snapshot(shutter("a")))
+        api._handle_event(snapshot(shutter("a"), automations=[automation("x")]))
         groups = {"other": Group("other", "Other", [])}
         api._handle_event(GroupsChanged(groups))
-        api._handle_event(AutomationsChanged(["automation"]))
+        automations = [automation("x")]
+        api._handle_event(AutomationsChanged(automations))
         api._handle_event(UpdateChanged(UpdateStatus("2.14.0")))
         api._handle_event(Pulse(1.0))
         assert api.groups == groups
-        assert api.data["automations"] == ["automation"]
+        assert api.automations is automations
         assert api.data["update"].current == "2.14.0"
         assert api.update_status is api.data["update"]
+
+    async def test_automation(self, api):
+        api._handle_event(snapshot(automations=[automation("x"), automation("y")]))
+        assert api.automation("y").identifier == "y"
+        assert api.automation("unknown") is None
+
+    async def test_automations_changed_updates_only_its_listeners(self, hass, api):
+        api._handle_event(snapshot(shutter("a"), automations=[automation("x")]))
+        automation_listener = MagicMock()
+        device_listener = MagicMock()
+        api.async_add_listener(automation_listener, AUTOMATION_CONTEXT)
+        api.async_add_listener(device_listener, "a")
+        with patch.object(hass.config_entries, "async_schedule_reload") as reload:
+            api._handle_event(AutomationsChanged([automation("x", False)]))
+            api._handle_event(AutomationsChanged([]))
+            assert not reload.called
+        assert automation_listener.call_count == 2
+        assert not device_listener.called
+
+    async def test_new_automations_reload(self, hass, api):
+        api._handle_event(snapshot(automations=[automation("x")]))
+        with patch.object(hass.config_entries, "async_schedule_reload") as reload:
+            api._handle_event(AutomationsChanged([automation("x"), automation("y")]))
+            api._handle_event(snapshot(automations=[automation("y")]))
+            reload.assert_called_once_with("entry")
+            api._handle_event(snapshot(automations=[automation("z")]))
+            assert reload.call_count == 2
+
+    @pytest.mark.parametrize(
+        ("enabled", "method"),
+        [(True, "enable_automation"), (False, "disable_automation")],
+    )
+    async def test_set_automation_enabled(self, api, client, enabled, method):
+        api._handle_event(
+            snapshot(automations=[automation("x", not enabled), automation("y")])
+        )
+        listener = MagicMock()
+        api.async_add_listener(listener, AUTOMATION_CONTEXT)
+        switched = automation("x", enabled)
+        setattr(client, method, AsyncMock(return_value=switched))
+        assert await api.set_automation_enabled("x", enabled)
+        getattr(client, method).assert_called_once_with("x")
+        assert api.automations == [switched, automation("y")]
+        assert listener.called
+
+    async def test_set_automation_enabled_failed(self, api, client):
+        automations = [automation("x")]
+        api._handle_event(snapshot(automations=automations))
+        client.disable_automation = AsyncMock(return_value=None)
+        assert not await api.set_automation_enabled("x", False)
+        assert api.automations == automations
 
     async def test_update_changed_updates_only_its_listeners(self, api):
         api._handle_event(snapshot(shutter("a")))
