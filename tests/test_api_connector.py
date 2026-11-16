@@ -34,7 +34,9 @@ from custom_components.hella_onyx.const import (
     DEFAULT_MAX_DIM_DURATION,
     DEFAULT_MIN_DIM_DURATION,
     DEFAULT_MOVING_TIMEOUT,
+    STREAM_CHECK_INTERVAL,
     STREAM_RESTART_DELAY,
+    STREAM_SILENCE_TIMEOUT,
 )
 
 MODULE = "custom_components.hella_onyx.api_connector"
@@ -352,6 +354,81 @@ class TestAPIConnector:
         api = APIConnector(hass, config)
         await api.async_shutdown()
         assert api._stream_task is None
+
+    async def test_stream_check_started_once_and_stopped(self, api, client):
+        client.error = RuntimeError("boom")
+        with (
+            patch(f"{MODULE}.async_track_time_interval") as track,
+            patch(f"{MODULE}.async_call_later"),
+        ):
+            await api._async_update_data()
+            await api._stream_task
+            client.error = None
+            await api._async_update_data()
+        hass, check, interval = track.call_args.args
+        assert hass is api.hass
+        assert check == api._check_stream
+        assert interval.total_seconds() == STREAM_CHECK_INTERVAL
+        assert track.call_count == 1
+        await api._stop_stream()
+        track.return_value.assert_called_once_with()
+        assert api._check_unsub is None
+
+    async def test_silent_stream_marks_unavailable(self, api):
+        await api._async_update_data()
+        listener = MagicMock()
+        api.async_add_listener(listener, "a")
+        now = api._last_event
+        with patch(f"{MODULE}.time.monotonic", return_value=now + 1):
+            api._handle_event(Pulse(1.0))
+        with patch(
+            f"{MODULE}.time.monotonic",
+            return_value=now + 1 + STREAM_SILENCE_TIMEOUT,
+        ):
+            api._check_stream(None)
+            assert api.last_update_success
+        with patch(
+            f"{MODULE}.time.monotonic",
+            return_value=now + 2 + STREAM_SILENCE_TIMEOUT,
+        ):
+            api._check_stream(None)
+            assert not api.last_update_success
+            assert listener.call_count == 1
+            api._check_stream(None)
+            assert listener.call_count == 1
+
+    async def test_snapshot_after_silence_marks_available(self, api):
+        await api._async_update_data()
+        api.async_set_update_error(UpdateFailed("silent"))
+        listener = MagicMock()
+        api.async_add_listener(listener, "a")
+        api._handle_event(snapshot(shutter("a")))
+        assert api.last_update_success
+        assert listener.called
+
+    async def test_snapshot_without_stream_keeps_failure(self, api):
+        api.async_set_update_error(UpdateFailed("failed"))
+        api._handle_event(snapshot(shutter("a")))
+        assert not api.last_update_success
+
+    async def test_check_ignores_ended_stream(self, api, client):
+        api._check_stream(None)
+        assert api.last_update_success
+        client.error = RuntimeError("boom")
+        with patch(f"{MODULE}.async_call_later"):
+            await api._async_update_data()
+            await api._stream_task
+        api.last_update_success = True
+        api._last_event = 0
+        api._check_stream(None)
+        assert api.last_update_success
+
+    async def test_resync_of_silent_stream_fails(self, api, client):
+        await api._async_update_data()
+        api._last_event = 0
+        with pytest.raises(UpdateFailed):
+            await api._async_update_data()
+        assert client.resync.called
 
     async def test_device_changed_updates_only_its_listeners(self, api):
         api._handle_event(snapshot(shutter("a"), shutter("b")))
