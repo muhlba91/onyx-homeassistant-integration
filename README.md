@@ -11,7 +11,7 @@
 This component creates an integration that provides the following entities to control [Hella's ONYX.CENTER](https://www.hella.info/) via Home Assistant:
 
 - **raffstore/shutter/screen** entities
-- **(dimmable) light** entities
+- **(dimmable/RGBW) light** entities
 - **weather station** sensor entities
 - **tag** (ONYX.TAG sun / temperature) sensor entities
 - **input** (rain sensor / alarm contact) binary sensor entities
@@ -102,7 +102,7 @@ Once configured, the integration creates entities for:
 | Entity | Description |
 | --- | --- |
 | Cover | Manage the shutter, raffstore, awning, pergola or screen. ([API Reference](https://developers.home-assistant.io/docs/core/entity/cover/)) |
-| Light | Manage the (dimmable) light. RGBW lights are controlled by brightness only. ([API Reference](https://developers.home-assistant.io/docs/core/entity/light/)) |
+| Light | Manage the (dimmable) light. RGBW lights also show and set the color (hue and saturation) or the white tone (color temperature, within the range the light reports); setting a color of a light which is off also turns it on. ([API Reference](https://developers.home-assistant.io/docs/core/entity/light/)) |
 | Binary Sensor (Input) | Whether the rain sensor or alarm contact is triggered (for a rain sensor: it is raining). The device class follows the configured role (rain sensor: moisture, fire alarm: smoke, wind or generic alarm: safety). ([API Reference](https://developers.home-assistant.io/docs/core/entity/binary-sensor/)) |
 | Button (Identify) | Winks the device to identify it (shutters move a short distance and back, lights blink, other devices light an LED). Disabled by default. ([API Reference](https://developers.home-assistant.io/docs/core/entity/button/)) |
 | Switch (Automation) | Enables or disables a safety or comfort automation of the ONYX.CENTER, such as the wind protection; disabling an automation also cancels the commands it issued. Automations without a name, such as the wind protection of a weather sensor, are named after their device if it can be determined, otherwise after their type. The switches belong to the ONYX.CENTER device. Disabled by default (configuration). ([API Reference](https://developers.home-assistant.io/docs/core/entity/switch/)) |
