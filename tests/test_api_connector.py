@@ -386,7 +386,7 @@ class TestAPIConnector:
         await api._async_update_data()
         listener = MagicMock()
         api.async_add_listener(listener, "a")
-        now = api._last_event
+        now = 1000.0  # exactly representable, so the boundary is not off by rounding
         with patch(f"{MODULE}.time.monotonic", return_value=now + 1):
             api._handle_event(Pulse(1.0))
         with patch(
