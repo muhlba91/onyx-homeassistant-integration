@@ -6,22 +6,31 @@ from typing import Any
 
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
+    ATTR_COLOR_TEMP_KELVIN,
+    ATTR_HS_COLOR,
     ColorMode,
     LightEntity,
     LightEntityFeature,
 )
+from onyx_client.data.animation_keyframe import AnimationKeyframe
+from onyx_client.data.animation_value import AnimationValue
 from onyx_client.data.numeric_value import NumericValue
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
 from ..api_connector import APIConnector
+from ..const import DEFAULT_MAX_COLOR_TEMPERATURE, DEFAULT_MIN_COLOR_TEMPERATURE
 from ..sensors.onyx_entity import OnyxEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class OnyxLight(OnyxEntity, LightEntity):
-    """A light entity."""
+    """A light entity.
+
+    RGBW lights (experimental) show either a color (hue and saturation) or a
+    white tone (color temperature), as reported by the ONYX.CENTER.
+    """
 
     def __init__(
         self,
@@ -57,17 +66,47 @@ class OnyxLight(OnyxEntity, LightEntity):
     @property
     def color_mode(self) -> ColorMode | str | None:
         """Return the color mode of the light."""
-        return (
-            ColorMode.ONOFF
-            if self._type == DeviceType.BASIC_LIGHT
-            else ColorMode.BRIGHTNESS
-        )
+        if self._type == DeviceType.BASIC_LIGHT:
+            return ColorMode.ONOFF
+        if self._type != DeviceType.RGBW_LIGHT:
+            return ColorMode.BRIGHTNESS
+        device = self._device
+        mode = device.color_mode if device else None
+        if mode is not None and mode.value == "temperature":
+            return ColorMode.COLOR_TEMP
+        return ColorMode.HS
 
     @property
     def supported_color_modes(self) -> set[ColorMode] | set[str] | None:
         """Flag supported color modes."""
-        mode = self.color_mode
-        return {mode} if mode else None
+        if self._type == DeviceType.RGBW_LIGHT:
+            return {ColorMode.HS, ColorMode.COLOR_TEMP}
+        return {self.color_mode}
+
+    @property
+    def hs_color(self) -> tuple[float, float] | None:
+        """Return the hue (0..360) and saturation (0..100) of an RGBW light."""
+        hue = self._effective_hue()
+        saturation = self._effective(self._value("actual_saturation"))
+        if hue is None or saturation is None:
+            return None
+        return hue, saturation
+
+    @property
+    def color_temp_kelvin(self) -> int | None:
+        """Return the color temperature of an RGBW light in Kelvin."""
+        kelvin = self._effective(self._value("actual_color_temperature"))
+        return None if kelvin is None else round(kelvin)
+
+    @property
+    def min_color_temp_kelvin(self) -> int:
+        """Return the warmest supported color temperature in Kelvin."""
+        return self._color_temperature_range()[0]
+
+    @property
+    def max_color_temp_kelvin(self) -> int:
+        """Return the coldest supported color temperature in Kelvin."""
+        return self._color_temperature_range()[1]
 
     @property
     def brightness(self) -> int | None:
@@ -87,7 +126,24 @@ class OnyxLight(OnyxEntity, LightEntity):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turns the light on."""
         brightness_attribute = kwargs.pop(ATTR_BRIGHTNESS, None)
-        if brightness_attribute is None:
+        properties = self._color_properties(
+            kwargs.pop(ATTR_HS_COLOR, None), kwargs.pop(ATTR_COLOR_TEMP_KELVIN, None)
+        )
+        if brightness_attribute is not None:
+            brightness = self._actual_brightness
+            target_max = (
+                brightness.maximum if brightness and brightness.maximum else 255
+            )
+            hella_brightness = ceil(brightness_attribute / 255 * target_max)
+            properties["target_brightness"] = hella_brightness
+            properties["dim_duration"] = self._get_dim_duration(
+                hella_brightness, target_max
+            )
+        if properties:
+            _LOGGER.debug("setting light %s: %s", self._uuid, properties)
+            await self.api.send_device_command_properties(self._uuid, properties)
+        if brightness_attribute is None and not (properties and self.is_on):
+            # a color alone keeps a light off; turning on restores its brightness
             _LOGGER.debug(
                 "turning light %s on",
                 self._uuid,
@@ -95,26 +151,6 @@ class OnyxLight(OnyxEntity, LightEntity):
             await self.api.send_device_command_action(
                 self._uuid,
                 Action.LIGHT_ON,
-            )
-        else:
-            brightness = self._actual_brightness
-            target_max = (
-                brightness.maximum if brightness and brightness.maximum else 255
-            )
-            hella_brightness = ceil(brightness_attribute / 255 * target_max)
-            dim_duration = self._get_dim_duration(hella_brightness, target_max)
-            _LOGGER.debug(
-                "setting brightness for light %s: %s (%s ms)",
-                self._uuid,
-                hella_brightness,
-                dim_duration,
-            )
-            await self.api.send_device_command_properties(
-                self._uuid,
-                {
-                    "target_brightness": hella_brightness,
-                    "dim_duration": dim_duration,
-                },
             )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
@@ -127,7 +163,66 @@ class OnyxLight(OnyxEntity, LightEntity):
 
     @property
     def _animated_values(self) -> list[NumericValue | None]:
-        return [self._actual_brightness]
+        return [
+            self._actual_brightness,
+            self._value("actual_hue"),
+            self._value("actual_saturation"),
+            self._value("actual_color_temperature"),
+        ]
+
+    def _value(self, key: str) -> NumericValue | None:
+        """A numeric property of the device, if known."""
+        return getattr(self._device, key, None)
+
+    def _effective(self, value: NumericValue | None) -> float | None:
+        """The value at the current ONYX.CENTER time, if known."""
+        return value.effective_value(self.api.now()) if value else None
+
+    def _effective_hue(self) -> float | None:
+        """The hue at the current ONYX.CENTER time, if known.
+
+        Hue animations take the shortest way around the color wheel, e.g.
+        from 350 over 0 to 10 degrees.
+        """
+        hue = self._value("actual_hue")
+        if hue is None:
+            return None
+        animation = hue.animation
+        if animation is None or not animation.keyframes:
+            value = hue.value
+        else:
+            value = _shortest_hue_path(animation).value_at(self.api.now())
+        return None if value is None else value % 360
+
+    def _color_temperature_range(self) -> tuple[int, int]:
+        """The supported color temperature range in Kelvin."""
+        kelvin = self._value("target_color_temperature") or self._value(
+            "actual_color_temperature"
+        )
+        minimum = kelvin.minimum if kelvin else None
+        maximum = kelvin.maximum if kelvin else None
+        if minimum is None or maximum is None or minimum >= maximum:
+            return DEFAULT_MIN_COLOR_TEMPERATURE, DEFAULT_MAX_COLOR_TEMPERATURE
+        return minimum, maximum
+
+    def _color_properties(
+        self, hs_color: tuple[float, float] | None, kelvin: int | None
+    ) -> dict:
+        """The properties to set the color or white tone of an RGBW light."""
+        if self._type != DeviceType.RGBW_LIGHT:
+            return {}
+        if hs_color is not None:
+            hue, saturation = hs_color
+            return {
+                "target_hue": round(hue) % 360,
+                "target_saturation": min(max(round(saturation), 0), 100),
+            }
+        if kelvin is not None:
+            minimum, maximum = self._color_temperature_range()
+            return {
+                "target_color_temperature": min(max(round(kelvin), minimum), maximum)
+            }
+        return {}
 
     @property
     def _actual_brightness(self) -> NumericValue | None:
@@ -160,3 +255,20 @@ class OnyxLight(OnyxEntity, LightEntity):
             if device_range.minimum is not None:
                 duration = max(duration, device_range.minimum)
         return duration
+
+
+def _shortest_hue_path(animation: AnimationValue) -> AnimationValue:
+    """The animation with each hue keyframe moved to the nearest equivalent angle."""
+    previous = animation.current_value
+    keyframes = []
+    for keyframe in animation.keyframes:
+        value = keyframe.value
+        if value is not None:
+            value = previous + (value - previous + 180) % 360 - 180
+            previous = value
+        keyframes.append(
+            AnimationKeyframe(
+                value, keyframe.duration, keyframe.delay, keyframe.interpolation
+            )
+        )
+    return AnimationValue(animation.start, animation.current_value, keyframes)
