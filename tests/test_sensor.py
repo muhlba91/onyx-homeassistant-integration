@@ -60,44 +60,44 @@ async def test_async_setup_entry(mock_hass):
                 value=1,
                 minimum=0,
                 maximum=1,
-                read_only=False,
+                readonly=False,
             ),
             humidity=NumericValue(
                 value=1,
                 minimum=0,
                 maximum=1,
-                read_only=False,
+                readonly=False,
             ),
             air_pressure=NumericValue(
                 value=1,
                 minimum=0,
                 maximum=1,
-                read_only=False,
+                readonly=False,
             ),
             wind_peak=NumericValue(
                 value=1,
                 minimum=0,
                 maximum=1,
-                read_only=False,
+                readonly=False,
             ),
             sun_brightness_peak=NumericValue(
                 value=1,
                 minimum=0,
                 maximum=1,
-                read_only=False,
+                readonly=False,
             ),
             sun_brightness_sink=NumericValue(
                 value=1,
                 minimum=0,
                 maximum=1,
-                read_only=False,
+                readonly=False,
             ),
         ),
         "none": Shutter(
             "none",
             "name",
-            None,
-            None,
+            DeviceType.UNKNOWN,
+            DeviceMode(DeviceType.UNKNOWN),
             [],
         ),
     }
@@ -106,7 +106,7 @@ async def test_async_setup_entry(mock_hass):
 
     await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
     assert async_add_entries.called_async_add_entities
-    assert async_add_entries.update_before_add is True
+    assert async_add_entries.update_before_add is False
     assert len(async_add_entries.data) == 9
     for entry in async_add_entries.data:
         assert entry.api == api
@@ -173,25 +173,25 @@ async def test_async_setup_entry_with_no_humidity_and_pressure(mock_hass):
             value=1,
             minimum=0,
             maximum=1,
-            read_only=False,
+            readonly=False,
         ),
         wind_peak=NumericValue(
             value=1,
             minimum=0,
             maximum=1,
-            read_only=False,
+            readonly=False,
         ),
         sun_brightness_peak=NumericValue(
             value=1,
             minimum=0,
             maximum=1,
-            read_only=False,
+            readonly=False,
         ),
         sun_brightness_sink=NumericValue(
             value=1,
             minimum=0,
             maximum=1,
-            read_only=False,
+            readonly=False,
         ),
     )
     api = MagicMock()
@@ -316,7 +316,7 @@ class AsyncAddEntries:
         self.data = []
         self.update_before_add = None
 
-    def call(self, data, boolean):
+    def call(self, data, boolean=False):
         self.data = data
         self.called_async_add_entities = True
         self.update_before_add = boolean

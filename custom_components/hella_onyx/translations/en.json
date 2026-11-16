@@ -2,11 +2,14 @@
   "title": "Hella ONYX.CENTER",
   "config": {
     "abort": {
-      "already_configured": "This ONYX.CENTER fingerprint is already configured."
+      "already_configured": "This ONYX.CENTER fingerprint is already configured.",
+      "reauth_successful": "Re-authentication was successful."
     },
     "error": {
       "invalid_code": "The provided code could not be exchanged for access credentials.",
-      "invalid_connection_data": "The provided connection data could not be verified.",
+      "cannot_connect": "The ONYX.CENTER could not be reached.",
+      "invalid_auth": "The fingerprint or access token is invalid.",
+      "api_version_unsupported": "The ONYX.CENTER does not support API v6. Please update its firmware.",
       "unknown": "Unexpected error."
     },
     "step": {
@@ -29,13 +32,12 @@
         "data": {
           "local_address": "Local IP Address (optional)",
           "interpolation_frequency": "Interpolation Frequency [s]",
-          "additional_delay": "Additional Delay for forced STOP [ms]",
+          "additional_delay": "Additional Moving Delay [ms]",
           "closed_tolerance": "[Shutters] Closed Tolerance [%]",
           "moving_timeout": "[Shutters] Moving Timeout [s]",
           "min_dim_duration": "[Lights] Minimum Dim Duration [ms]",
           "max_dim_duration": "[Lights] Maximum Dim Duration [ms]",
-          "scan_interval": "Scan Interval [min]",
-          "force_update": "[Advanced] Disable partial updates?"
+          "scan_interval": "Scan Interval [min]"
         }
       }
     }
@@ -47,13 +49,12 @@
         "data": {
           "local_address": "Local IP Address (optional)",
           "interpolation_frequency": "Interpolation Frequency [s]",
-          "additional_delay": "Additional Delay for forced STOP [ms]",
+          "additional_delay": "Additional Moving Delay [ms]",
           "closed_tolerance": "[Shutters] Closed Tolerance [%]",
           "moving_timeout": "[Shutters] Moving Timeout [s]",
           "min_dim_duration": "[Lights] Minimum Dim Duration [ms]",
           "max_dim_duration": "[Lights] Maximum Dim Duration [ms]",
-          "scan_interval": "Scan Interval [min]",
-          "force_update": "[Advanced] Disable partial updates?"
+          "scan_interval": "Scan Interval [min]"
         }
       }
     }

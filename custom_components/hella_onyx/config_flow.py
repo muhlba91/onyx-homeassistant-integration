@@ -2,7 +2,7 @@
 
 import voluptuous as vol
 from homeassistant.config_entries import (
-    CONN_CLASS_LOCAL_POLL,
+    CONN_CLASS_CLOUD_PUSH,
     ConfigEntry,
     ConfigFlow,
     FlowResult,
@@ -11,7 +11,6 @@ from homeassistant.config_entries import (
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
     CONF_CODE,
-    CONF_FORCE_UPDATE,
     CONF_SCAN_INTERVAL,
 )
 from homeassistant.core import callback
@@ -19,6 +18,7 @@ from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from onyx_client.authorizer import authorize
 from onyx_client.client import create
+from onyx_client.enum.verify_result import VerifyResult
 
 from .const import (
     CONF_ADDITIONAL_DELAY,
@@ -49,13 +49,19 @@ from .const import (
     MIN_MOVING_TIMEOUT,
 )
 
+VERIFY_ERRORS = {
+    VerifyResult.UNREACHABLE: "cannot_connect",
+    VerifyResult.UNAUTHORIZED: "invalid_auth",
+    VerifyResult.VERSION_UNSUPPORTED: "api_version_unsupported",
+}
+
 
 class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for ONYX."""
 
     VERSION = 3
     MINOR_VERSION = 2
-    CONNECTION_CLASS = CONN_CLASS_LOCAL_POLL
+    CONNECTION_CLASS = CONN_CLASS_CLOUD_PUSH
 
     def __init__(self) -> None:
         self._data = {}
@@ -103,10 +109,12 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
                 else:
                     errors[CONF_CODE] = "invalid_code"
 
-            if not errors and not await self._async_verify_conn(
-                fingerprint, token, local_address
-            ):
-                errors[CONF_ACCESS_TOKEN] = "invalid_connection_data"
+            if not errors:
+                result = await self._async_verify_conn(
+                    fingerprint, token, local_address
+                )
+                if result != VerifyResult.OK:
+                    errors["base"] = VERIFY_ERRORS[result]
 
             if not errors:
                 if self._entry:
@@ -187,7 +195,6 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
             )
             min_dim_duration = max(MIN_DIM_DURATION, user_input[CONF_MIN_DIM_DURATION])
             max_dim_duration = min(MAX_DIM_DURATION, user_input[CONF_MAX_DIM_DURATION])
-            force_update = user_input[CONF_FORCE_UPDATE]
 
             options = {
                 CONF_LOCAL_ADDRESS: local_address,
@@ -198,7 +205,6 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
                 CONF_MOVING_TIMEOUT: moving_timeout,
                 CONF_MIN_DIM_DURATION: min_dim_duration,
                 CONF_MAX_DIM_DURATION: max_dim_duration,
-                CONF_FORCE_UPDATE: force_update,
             }
 
             if not errors:
@@ -221,7 +227,9 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
         self._entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
         return await self.async_step_user(data)
 
-    async def _async_verify_conn(self, fingerprint, token, local_address) -> bool:
+    async def _async_verify_conn(
+        self, fingerprint, token, local_address
+    ) -> VerifyResult:
         """Verify the connection credentials."""
         return await create(
             fingerprint=fingerprint,
@@ -334,10 +342,6 @@ def _get_options_schema(data: dict | None = None):
                     max=720,
                 )
             ),
-            vol.Optional(
-                CONF_FORCE_UPDATE,
-                default=data.get(CONF_FORCE_UPDATE, False),
-            ): selector.BooleanSelector(),
         }
     )
 

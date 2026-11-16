@@ -1,12 +1,9 @@
 """The ONYX shutter entity."""
 
 import logging
-import time
 from collections.abc import Callable
 from datetime import timedelta
-from functools import reduce
 from math import ceil
-from operator import add
 from typing import Any
 
 from homeassistant.components.cover import (
@@ -17,11 +14,7 @@ from homeassistant.components.cover import (
     CoverEntityFeature,
 )
 from homeassistant.core import callback
-from homeassistant.helpers.event import (
-    async_track_point_in_utc_time,
-)
-from homeassistant.util import utcnow
-from onyx_client.data.animation_value import AnimationValue
+from homeassistant.helpers.event import async_call_later
 from onyx_client.data.numeric_value import NumericValue
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
@@ -29,13 +22,20 @@ from onyx_client.enum.device_type import DeviceType
 from ..api_connector import APIConnector
 from ..enum.moving_state import MovingState
 from ..sensors.onyx_entity import OnyxEntity
-from ..util.interpolation import interpolate
 
 _LOGGER = logging.getLogger(__name__)
 
+# an animation started up to this long (in s) before a command belongs to it
+REQUEST_TOLERANCE = 1
+
 
 class OnyxShutter(OnyxEntity, CoverEntity):
-    """A shutter entity."""
+    """A shutter entity.
+
+    Positions are computed from the reported animations at read time. A
+    command sets the expected moving state until the device reports an
+    animation started after it, or the moving timeout gives it up.
+    """
 
     def __init__(
         self,
@@ -47,8 +47,8 @@ class OnyxShutter(OnyxEntity, CoverEntity):
     ):
         """Initialize a shutter entity."""
         super().__init__(api, timezone, name, device_type, uuid)
-        self._moving_state = MovingState.STILL
-        self._animation_seen = False
+        self._requested_state = MovingState.STILL
+        self._requested_at = 0.0
         self._moving_timeout_unsub: Callable[[], None] | None = None
 
     async def async_will_remove_from_hass(self) -> None:
@@ -58,62 +58,9 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        device = self._device
-        if device is None:
-            return
-
-        # ONYX keeps reporting the start value together with an animation and
-        # sends no extra event when the animation ends: take the end value
-        # of an animation that is already over.
-        self._settle_finished_animation(device.actual_position, device.target_position)
-        self._settle_finished_animation(device.actual_angle, device.target_angle)
-
-        position_animation = (
-            device.actual_position.animation if device.actual_position else None
-        )
-        position_active = self._handle_animation(
-            "position_animation", position_animation, device.target_position
-        )
-
-        angle_animation = device.actual_angle.animation if device.actual_angle else None
-        angle_active = self._handle_animation(
-            "angle_animation", angle_animation, device.target_angle
-        )
-
-        if self._moving_state != MovingState.STILL:
-            if position_active or angle_active:
-                self._animation_seen = True
-                self._arm_moving_timeout()
-            elif self._animation_seen:
-                # the animation is over: the values are the end values now.
-                self._set_state(MovingState.STILL)
-
+        if self._requested_state != MovingState.STILL and self._reported_movement:
+            self._set_requested_state(MovingState.STILL)
         super()._handle_coordinator_update()
-
-    def _handle_animation(
-        self,
-        name: str,
-        animation: AnimationValue | None,
-        target: NumericValue | None,
-    ) -> bool:
-        """Handle a received animation, returning whether it is still running."""
-        if animation is None or len(animation.keyframes) == 0:
-            return False
-
-        _LOGGER.debug(
-            "received %s for shutter %s: %s",
-            name,
-            self._uuid,
-            animation,
-        )
-
-        active = self._is_animation_active(animation)
-        if active and self._moving_state == MovingState.STILL and target is not None:
-            self._calculate_and_set_state(animation.current_value, target.value)
-        # an animation which ended before we started moving is a stale one
-        if active or self._animation_seen:
-            self._start_moving_device(animation)
-        return active
 
     @property
     def icon(self) -> str:
@@ -156,17 +103,11 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
         None is unknown, 0 is closed, 100 is fully open.
         """
-        position = self._device.actual_position
-        _LOGGER.debug(
-            "received position for device %s: %s",
-            self._uuid,
-            position,
-        )
-        if not position or not position.maximum:
+        position = self._actual_position
+        value = self._effective_value(position)
+        if value is None or not position.maximum:
             return None
-        return self._clamp_percentage(
-            100 - int(position.value / position.maximum * 100)
-        )
+        return self._clamp_percentage(100 - int(value * 100 / position.maximum))
 
     @property
     def current_cover_tilt_position(self) -> int | None:
@@ -174,15 +115,10 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
         None is unknown, 0 is closed, 100 is fully open.
         """
-        position = self._device.actual_angle
-        _LOGGER.debug(
-            "received tilt position for device %s: %s",
-            self._uuid,
-            position,
-        )
-        if not position or self._max_angle == 0:
+        value = self._effective_value(self._actual_angle)
+        if value is None:
             return None
-        return self._clamp_percentage(int(position.value / self._max_angle * 100))
+        return self._clamp_percentage(int(value * 100 / self._max_angle))
 
     @property
     def is_opening(self) -> bool:
@@ -195,51 +131,50 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         return self._moving_state == MovingState.CLOSING
 
     @property
-    def is_closed(self) -> bool:
+    def is_closed(self) -> bool | None:
         """Return if the cover is closed or not."""
-        position = self._device.actual_position
-        if not position:
-            return False
+        position = self._actual_position
+        value = self._effective_value(position)
+        if value is None or not position.maximum:
+            return None
         tolerance = position.maximum * self.api.config.closed_tolerance / 100
-        return position.value >= position.maximum - tolerance
+        return value >= position.maximum - tolerance
 
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
-        self._set_state(MovingState.OPENING)
-        await self.api.send_device_command_action(self._uuid, Action.OPEN)
+        await self._send_action(Action.OPEN, MovingState.OPENING)
 
     async def async_close_cover(self, **kwargs: Any) -> None:
         """Close cover."""
-        self._set_state(MovingState.CLOSING)
-        await self.api.send_device_command_action(self._uuid, Action.CLOSE)
+        await self._send_action(Action.CLOSE, MovingState.CLOSING)
 
     async def async_set_cover_position(self, **kwargs: Any) -> None:
         """Move the cover to a specific position."""
         if ATTR_POSITION in kwargs:
-            position = 100 - int(kwargs[ATTR_POSITION])
+            device = self._device
+            target_position = device.target_position if device else None
             target_max = (
-                self._device.target_position.maximum
-                if self._device.target_position and self._device.target_position.maximum
+                target_position.maximum
+                if target_position and target_position.maximum
                 else 100
             )
-            hella_position = ceil(position * (target_max / 100))
-            self._calculate_and_set_state(self._device.actual_position.value, position)
-            self.schedule_update_ha_state()
-            target_angle = (
-                self._device.target_angle.value if self._device.target_angle else 0
-            )
-            await self.api.send_device_command_properties(
-                self._uuid,
+            hella_position = ceil((100 - int(kwargs[ATTR_POSITION])) * target_max / 100)
+            target_angle = device.target_angle if device else None
+            await self._send_properties(
                 {
                     "target_position": hella_position,
-                    "target_angle": target_angle,
+                    "target_angle": target_angle.value
+                    if target_angle and target_angle.value is not None
+                    else 0,
                 },
+                self._calculate_state(
+                    self._effective_value(self._actual_position), hella_position
+                ),
             )
 
     async def async_stop_cover(self, **kwargs: Any) -> None:
         """Stop the cover."""
-        self._set_state(MovingState.STILL)
-        await self.api.send_device_command_action(self._uuid, Action.STOP)
+        await self._send_action(Action.STOP, MovingState.STILL)
 
     async def async_open_cover_tilt(self, **kwargs: Any) -> None:
         """Open the cover tilt."""
@@ -252,39 +187,97 @@ class OnyxShutter(OnyxEntity, CoverEntity):
     async def async_set_cover_tilt_position(self, **kwargs: Any) -> None:
         """Move the cover tilt to a specific position."""
         if ATTR_TILT_POSITION in kwargs:
-            angle = int(kwargs[ATTR_TILT_POSITION])
-            hella_angle = ceil(angle * (self._max_angle / 100))
-            self._calculate_and_set_state(
-                self._device.actual_angle.value,
-                hella_angle,
-            )
-            self.schedule_update_ha_state()
-            await self.api.send_device_command_properties(
-                self._uuid, {"target_angle": hella_angle}
+            hella_angle = ceil(int(kwargs[ATTR_TILT_POSITION]) * self._max_angle / 100)
+            await self._send_properties(
+                {"target_angle": hella_angle},
+                self._calculate_state(
+                    self._effective_value(self._actual_angle), hella_angle
+                ),
             )
 
     async def async_stop_cover_tilt(self, **kwargs: Any) -> None:
         """Stop the cover."""
-        self._set_state(MovingState.STILL)
-        await self.api.send_device_command_action(self._uuid, Action.STOP)
+        await self.async_stop_cover()
 
-    def _set_state(self, state: MovingState):
-        """Set the new moving state."""
-        self._moving_state = state
-        self._animation_seen = False
-        if state == MovingState.STILL:
-            self._cancel_moving_timeout()
-        else:
-            self._arm_moving_timeout()
+    @property
+    def _actual_position(self) -> NumericValue | None:
+        device = self._device
+        return device.actual_position if device else None
 
-    def _arm_moving_timeout(self):
-        """(Re-)start the timeout after which the moving state is given up."""
-        self._cancel_moving_timeout()
-        self._moving_timeout_unsub = async_track_point_in_utc_time(
-            self.hass,
-            self._handle_moving_timeout,
-            utcnow() + timedelta(seconds=self.api.config.moving_timeout),
+    @property
+    def _actual_angle(self) -> NumericValue | None:
+        device = self._device
+        return device.actual_angle if device else None
+
+    @property
+    def _animated_values(self) -> list[NumericValue | None]:
+        return [self._actual_position, self._actual_angle]
+
+    def _effective_value(self, value: NumericValue | None) -> float | None:
+        """The value at the current ONYX.CENTER time."""
+        return value.effective_value(self.api.now()) if value else None
+
+    @property
+    def _running_animations(self) -> list:
+        """The animations which are running, including the additional delay."""
+        now = self.api.now() - self.api.config.additional_delay / 1000
+        return [
+            value.animation
+            for value in self._animated_values
+            if value is not None and value.is_animating(now)
+        ]
+
+    @property
+    def _reported_movement(self) -> bool:
+        """Whether the device reports an animation started after the command."""
+        return any(
+            animation.start >= self._requested_at - REQUEST_TOLERANCE
+            for animation in self._running_animations
         )
+
+    @property
+    def _moving_state(self) -> MovingState:
+        """The requested state, else the direction of the running animation."""
+        if self._requested_state != MovingState.STILL:
+            return self._requested_state
+        for animation in self._running_animations:
+            return self._calculate_state(
+                animation.current_value, animation.value_at(animation.end_time())
+            )
+        return MovingState.STILL
+
+    async def _send_action(self, action: Action, state: MovingState):
+        """Send the action, expecting the given moving state."""
+        await self._send(self.api.send_device_command_action(self._uuid, action), state)
+
+    async def _send_properties(self, properties: dict, state: MovingState):
+        """Send the properties, expecting the given moving state."""
+        await self._send(
+            self.api.send_device_command_properties(self._uuid, properties), state
+        )
+
+    async def _send(self, command, state: MovingState):
+        """Show the expected moving state while sending the command."""
+        self._set_requested_state(state)
+        self.async_write_ha_state()
+        try:
+            await command
+        except BaseException:
+            self._set_requested_state(MovingState.STILL)
+            self.async_write_ha_state()
+            raise
+
+    def _set_requested_state(self, state: MovingState):
+        """Set the expected moving state until the device reports it."""
+        self._requested_state = state
+        self._requested_at = self.api.now()
+        self._cancel_moving_timeout()
+        if state != MovingState.STILL:
+            self._moving_timeout_unsub = async_call_later(
+                self.hass,
+                timedelta(seconds=self.api.config.moving_timeout),
+                self._handle_moving_timeout,
+            )
 
     def _cancel_moving_timeout(self):
         """Cancel the pending moving timeout, if any."""
@@ -294,225 +287,15 @@ class OnyxShutter(OnyxEntity, CoverEntity):
 
     @callback
     def _handle_moving_timeout(self, *args: Any):
-        """Give up the moving state when no animation ended the movement."""
+        """Give up the expected moving state when no animation was reported."""
         self._moving_timeout_unsub = None
-        if self._moving_state == MovingState.STILL:
-            return
-
-        _LOGGER.warning(
-            "shutter %s is still moving after %s seconds, assuming it stopped",
+        _LOGGER.debug(
+            "shutter %s reported no movement within %s seconds, assuming it stopped",
             self._uuid,
             self.api.config.moving_timeout,
         )
-        self._set_state(MovingState.STILL)
-        self.schedule_update_ha_state()
-
-    # pragma: no mutate start
-    def _start_moving_device(self, animation: AnimationValue):
-        """Start the update loop."""
-        if self._moving_state == MovingState.STILL:
-            _LOGGER.debug("not moving still device %s", self._uuid)
-            return
-
-        if not animation.keyframes:
-            return
-
-        end_time = self._animation_end_time(animation)
-        if end_time is None:
-            return
-
-        utc_now = utcnow()
-        current_time = time.time()
-        time_delta = timedelta(seconds=end_time - current_time)
-        is_moving = current_time < end_time
-
-        _LOGGER.debug(
-            "moving device %s with current_time %s < end_time %s (delta: %s): %s",
-            self._uuid,
-            current_time,
-            end_time,
-            time_delta,
-            is_moving,
-        )
-
-        if is_moving:
-            interpolation_frequency = self.api.config.interpolation_frequency
-            if interpolation_frequency > 0:
-                for slice in range(
-                    int(time_delta.total_seconds() // interpolation_frequency) + 1
-                ):
-                    utc_intermediate_time = utc_now + timedelta(
-                        seconds=slice * interpolation_frequency
-                    )
-                    async_track_point_in_utc_time(
-                        self.hass,
-                        self._end_moving_device,
-                        utc_intermediate_time,
-                    )
-                    _LOGGER.debug(
-                        "scheduled intermediate end_moving_device for device %s at %s",
-                        self._uuid,
-                        utc_intermediate_time,
-                    )
-            utc_end_time = utc_now + time_delta
-            async_track_point_in_utc_time(
-                self.hass,
-                self._end_moving_device,
-                utc_end_time,
-            )
-            _LOGGER.debug(
-                "scheduled end_moving_device for device %s at %s",
-                self._uuid,
-                utc_end_time,
-            )
-        else:
-            self._end_moving_device()
-
-    @callback
-    def _end_moving_device(self, *args: Any):
-        """Interpolate the values of a moving device, or set the end values."""
-        _LOGGER.debug("ending moving device %s", self._uuid)
-
-        position_animation = self._device.actual_position.animation
-        position_keyframe = (
-            self._calculate_animation_duration_and_delay(position_animation.keyframes)
-            if position_animation is not None and len(position_animation.keyframes) > 0
-            else None
-        )
-        position_start_time = (
-            (position_animation.start + position_keyframe[1])
-            if position_keyframe is not None and position_animation is not None
-            else None
-        )
-        position_end_time = (
-            (position_start_time + position_keyframe[0])
-            if position_keyframe is not None and position_start_time is not None
-            else None
-        )
-
-        angle_animation = self._device.actual_angle.animation
-        angle_keyframe = (
-            self._calculate_animation_duration_and_delay(angle_animation.keyframes)
-            if angle_animation is not None and len(angle_animation.keyframes) > 0
-            else None
-        )
-        angle_start_time = (
-            (angle_animation.start + angle_keyframe[1])
-            if angle_keyframe is not None and angle_animation is not None
-            else None
-        )
-        angle_end_time = (
-            (angle_start_time + angle_keyframe[0])
-            if angle_keyframe is not None and angle_start_time is not None
-            else None
-        )
-
-        current_time = time.time()
-
-        if self._moving_state != MovingState.STILL:
-            if (
-                (
-                    angle_end_time is None
-                    and position_end_time is not None
-                    and current_time > position_end_time
-                )
-                or (
-                    position_end_time is None
-                    and angle_end_time is not None
-                    and current_time > angle_end_time
-                )
-                or (
-                    position_end_time is not None
-                    and angle_end_time is not None
-                    and current_time > position_end_time
-                    and current_time > angle_end_time
-                )
-            ):
-                # the device reports no extra event at the end of an
-                # animation, so the end values are taken from the animation.
-                self._set_end_value(
-                    self._device.actual_position, self._device.target_position
-                )
-                self._set_end_value(
-                    self._device.actual_angle, self._device.target_angle
-                )
-                self._set_state(MovingState.STILL)
-            elif (
-                position_start_time is not None and current_time > position_start_time
-            ) or (angle_start_time is not None and current_time > angle_start_time):
-                position_update = self._interpolate_animation(
-                    position_animation,
-                    position_keyframe,
-                    self._device.target_position.value,
-                    current_time,
-                )
-                if position_update is not None:
-                    _LOGGER.debug(
-                        "interpolating actual_position update for device %s: %d",
-                        self._uuid,
-                        position_update,
-                    )
-                    self._device.actual_position.value = position_update
-                angle_update = self._interpolate_animation(
-                    angle_animation,
-                    angle_keyframe,
-                    self._device.target_angle.value,
-                    current_time,
-                )
-                if angle_update is not None:
-                    _LOGGER.debug(
-                        "interpolating actual_angle update for device %s: %d",
-                        self._uuid,
-                        angle_update,
-                    )
-                    self._device.actual_angle.value = angle_update
-
-            self.schedule_update_ha_state()
-
-    # pragma: no mutate end
-
-    def _animation_end_time(self, animation: AnimationValue) -> float | None:
-        """Time at which the animation is over, including the additional delay."""
-        keyframe = self._calculate_animation_duration_and_delay(animation.keyframes)
-        if keyframe is None:
-            return None
-        return (
-            animation.start
-            + keyframe[0]
-            + keyframe[1]
-            + self.api.config.additional_delay / 1000
-        )
-
-    def _is_animation_active(self, animation: AnimationValue) -> bool:
-        """Return if the animation has not yet ended."""
-        end_time = self._animation_end_time(animation)
-        return end_time is not None and time.time() < end_time
-
-    def _settle_finished_animation(
-        self, value: NumericValue | None, target: NumericValue | None
-    ):
-        """Take the end value of an animation which is already over."""
-        if value is None or value.animation is None or not value.animation.keyframes:
-            return
-        if not self._is_animation_active(value.animation):
-            self._set_end_value(value, target)
-
-    @staticmethod
-    def _set_end_value(value: NumericValue | None, target: NumericValue | None):
-        """Set the value an animation ends at: the target, else its last keyframe."""
-        if value is None or value.animation is None or not value.animation.keyframes:
-            return
-        if target is not None and target.value is not None:
-            value.value = target.value
-            return
-        keyframes = [kf for kf in value.animation.keyframes if kf is not None]
-        if keyframes and keyframes[-1].value is not None:
-            value.value = keyframes[-1].value
-
-    def _calculate_and_set_state(self, actual: int, new_value: int):
-        """Calculate and set the new moving state."""
-        new_state = self._calculate_state(actual, new_value)
-        self._set_state(new_state)
+        self._requested_state = MovingState.STILL
+        self.async_write_ha_state()
 
     @property
     def _max_angle(self) -> int:
@@ -530,40 +313,13 @@ class OnyxShutter(OnyxEntity, CoverEntity):
         return max(0, min(100, value))
 
     @staticmethod
-    def _interpolate_animation(
-        animation: AnimationValue | None,
-        keyframe: tuple | None,
-        target: int,
-        current_time: float,
-    ) -> int | None:
-        """Interpolate a single animation, or None if there is nothing to interpolate."""
-        if animation is None or keyframe is None or keyframe[0] <= 0:
-            return None
-        return interpolate(
-            animation.current_value,
-            target,
-            keyframe[0],
-            current_time,
-            animation.start + keyframe[1],
-        )
-
-    @staticmethod
-    def _calculate_state(actual: int, new_value: int) -> MovingState:
-        """Calculate the new moving state."""
+    def _calculate_state(actual: float | None, new_value: float) -> MovingState:
+        """Calculate the moving state; higher ONYX values are more closed."""
+        if actual is None:
+            return MovingState.STILL
         if new_value < actual:
             return MovingState.OPENING
         elif new_value > actual:
             return MovingState.CLOSING
         else:
             return MovingState.STILL
-
-    @staticmethod
-    def _calculate_animation_duration_and_delay(keyframes: list) -> tuple:
-        """Calculate the animation duration and delay."""
-        usable_keyframes = [kf for kf in keyframes if kf is not None]
-        if len(usable_keyframes) == 0:
-            return None
-
-        duration = reduce(add, [kf.duration for kf in usable_keyframes])
-        delay = reduce(add, [kf.delay for kf in usable_keyframes])
-        return duration, delay
