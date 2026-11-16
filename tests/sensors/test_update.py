@@ -28,6 +28,7 @@ class TestOnyxUpdate:
         api.update_status = UpdateStatus(CURRENT, "2.14.0")
         api.install_update = AsyncMock(return_value=True)
         api.last_update_success = True
+        api.stream_drops = 0
         yield api
 
     @pytest.fixture
@@ -35,6 +36,7 @@ class TestOnyxUpdate:
         entity = OnyxUpdate(api)
         entity.hass = MagicMock()
         entity.async_write_ha_state = MagicMock()
+        entity.device_entry = None
         yield entity
 
     def test_properties(self, entity):
@@ -118,26 +120,63 @@ class TestOnyxUpdate:
         assert not call_later.called
         assert not entity.in_progress
 
-    @pytest.mark.parametrize(
-        "status",
-        [UpdateStatus("2.14.0-0-g0000000"), UpdateStatus(CURRENT)],
-    )
-    async def test_install_ends_with_new_status(self, api, entity, status):
+    async def test_install_ends_with_new_version(self, api, entity):
         with patch(f"{MODULE}.async_call_later") as call_later:
             await entity.async_install(None, False)
         api.update_status = UpdateStatus(CURRENT, "2.14.0", 0.5)
         entity._handle_coordinator_update()
         assert entity.in_progress
-        assert not call_later.return_value.called
         api.update_status = None
         entity._handle_coordinator_update()
         assert entity._installing is not None
-        api.update_status = status
+        api.update_status = UpdateStatus("2.14.0-0-g0000000")
         entity._handle_coordinator_update()
         assert not entity.in_progress
         call_later.return_value.assert_called_once_with()
         assert entity._install_unsub is None
         assert entity.async_write_ha_state.called
+
+    async def test_install_waits_for_restart(self, api, entity):
+        with patch(f"{MODULE}.async_call_later"):
+            await entity.async_install(None, False)
+        # the transfer finished, the ONYX.CENTER did not restart yet
+        api.update_status = UpdateStatus(CURRENT)
+        entity._handle_coordinator_update()
+        assert entity.in_progress
+        # the stream dropped, the ONYX.CENTER is not back yet
+        api.stream_drops = 1
+        api.last_update_success = False
+        entity._handle_coordinator_update()
+        assert entity.in_progress
+        api.last_update_success = True
+        entity._handle_coordinator_update()
+        assert not entity.in_progress
+
+    async def test_install_ends_after_failed_restart(self, api, entity):
+        api.stream_drops = 3
+        with patch(f"{MODULE}.async_call_later"):
+            await entity.async_install(None, False)
+        entity._handle_coordinator_update()
+        assert entity.in_progress
+        # back with the same version and the update still offered
+        api.stream_drops = 4
+        entity._handle_coordinator_update()
+        assert not entity.in_progress
+        assert entity.state == STATE_ON
+
+    def test_device_version_updated(self, api, entity):
+        entity.device_entry = MagicMock(id="device", sw_version="2.13.0")
+        with patch(f"{MODULE}.dr.async_get") as registry:
+            entity._handle_coordinator_update()
+            registry.return_value.async_update_device.assert_called_once_with(
+                "device", sw_version=CURRENT
+            )
+            registry.reset_mock()
+            entity.device_entry.sw_version = CURRENT
+            entity._handle_coordinator_update()
+            api.update_status = None
+            entity._handle_coordinator_update()
+        assert not registry.return_value.async_update_device.called
 
     async def test_install_timeout(self, api, entity):
         with patch(f"{MODULE}.async_call_later"):

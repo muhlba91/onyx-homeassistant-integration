@@ -24,6 +24,7 @@ from onyx_client.stream.events import (
     DeviceChanged,
     DeviceRemoved,
     GroupsChanged,
+    Resynced,
     Snapshot,
     UpdateChanged,
 )
@@ -50,7 +51,7 @@ class APIConnector(DataUpdateCoordinator):
     stream restarts every STREAM_RESTART_DELAY until it succeeds. The client
     reconnects a dropped stream by itself; if no event, including the
     pulse, arrives for STREAM_SILENCE_TIMEOUT, the entities become
-    unavailable until the next snapshot.
+    unavailable until the next event.
     """
 
     def __init__(self, hass, config: Configuration, entry=None):
@@ -79,6 +80,9 @@ class APIConnector(DataUpdateCoordinator):
         self._restarting = False
         self._last_event = None
         self._check_unsub = None
+        self._resync_requested = False
+        # reconnects the integration did not request, e.g. a center restart
+        self.stream_drops = 0
         self._update_lock = asyncio.Lock()
         self.__client = None
 
@@ -116,6 +120,7 @@ class APIConnector(DataUpdateCoordinator):
         # a restart and a scheduled refresh must not start two streams
         async with self._update_lock:
             if self._stream_task is not None and not self._stream_task.done():
+                self._resync_requested = True
                 self._client().resync()
                 if self._stream_silent():
                     # keep the entities unavailable until the next snapshot
@@ -157,7 +162,7 @@ class APIConnector(DataUpdateCoordinator):
         except TimeoutError as ex:
             await self._stop_stream()
             raise UpdateFailed("no snapshot received") from ex
-        if self._check_unsub is None:
+        if self._check_unsub is None and not self._shutdown_requested:
             self._check_unsub = async_track_time_interval(
                 self.hass,
                 self._check_stream,
@@ -269,12 +274,15 @@ class APIConnector(DataUpdateCoordinator):
         if self._stream_task is None or self._stream_task.done():
             return  # a failed stream is handled by its restart
         if self.last_update_success and self._stream_silent():
+            # one warning instead of the coordinator's error, e.g. during an update
             _LOGGER.warning(
                 "no events from the ONYX.CENTER for %s seconds, "
                 "entities are unavailable until it is back",
                 STREAM_SILENCE_TIMEOUT,
             )
-            self.async_set_update_error(UpdateFailed("no events from the ONYX.CENTER"))
+            self.last_update_success = False
+            self.last_exception = UpdateFailed("no events from the ONYX.CENTER")
+            self.async_update_listeners()
 
     @callback
     def _handle_stream_restart(self, _now):
@@ -288,6 +296,19 @@ class APIConnector(DataUpdateCoordinator):
         """Apply a stream event to the data and notify the affected entities."""
         _LOGGER.debug("received event %s", type(event).__name__)
         self._last_event = time.monotonic()
+        recovered = (
+            not self.last_update_success
+            and self._stream_task is not None
+            and not self._stream_task.done()
+        )
+        if recovered:
+            _LOGGER.info("events from the ONYX.CENTER are back")
+            self.last_update_success = True
+        if isinstance(event, Resynced):
+            if self._resync_requested:
+                self._resync_requested = False
+            else:
+                self.stream_drops += 1
         if isinstance(event, Snapshot):
             self.data = {
                 "devices": event.devices,
@@ -300,9 +321,6 @@ class APIConnector(DataUpdateCoordinator):
             elif not set(event.devices) <= self._known_devices:
                 self._reload("new devices in snapshot", set(event.devices))
             self._snapshot.set()
-            if not self.last_update_success and self._stream_task is not None:
-                _LOGGER.info("events from the ONYX.CENTER are back")
-                self.last_update_success = True
             self.async_update_listeners()
         elif isinstance(event, DeviceAdded):
             identifier = event.device.identifier
@@ -324,6 +342,8 @@ class APIConnector(DataUpdateCoordinator):
         elif isinstance(event, UpdateChanged):
             self.data["update"] = event.update
             self._update_device_listeners(UPDATE_CONTEXT)
+        if recovered and not isinstance(event, Snapshot):
+            self.async_update_listeners()
 
     def _update_device_listeners(self, context: str):
         """Notify only the entities of the given device or other context."""

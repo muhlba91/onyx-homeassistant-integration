@@ -20,6 +20,7 @@ from onyx_client.stream.events import (
     DeviceRemoved,
     GroupsChanged,
     Pulse,
+    Resynced,
     Snapshot,
     UpdateChanged,
 )
@@ -394,23 +395,54 @@ class TestAPIConnector:
         ):
             api._check_stream(None)
             assert not api.last_update_success
+            assert isinstance(api.last_exception, UpdateFailed)
             assert listener.call_count == 1
             api._check_stream(None)
             assert listener.call_count == 1
 
-    async def test_snapshot_after_silence_marks_available(self, api):
+    @pytest.mark.parametrize("event", [snapshot(shutter("a")), Pulse(1.0)])
+    async def test_event_after_silence_marks_available(self, api, event):
         await api._async_update_data()
-        api.async_set_update_error(UpdateFailed("silent"))
+        api.last_update_success = False
         listener = MagicMock()
         api.async_add_listener(listener, "a")
-        api._handle_event(snapshot(shutter("a")))
+        api._handle_event(event)
         assert api.last_update_success
-        assert listener.called
+        listener.assert_called_once_with()
 
-    async def test_snapshot_without_stream_keeps_failure(self, api):
-        api.async_set_update_error(UpdateFailed("failed"))
+    async def test_event_without_stream_keeps_failure(self, api, client):
+        api._handle_event(Pulse(1.0))
+        api.last_update_success = False
         api._handle_event(snapshot(shutter("a")))
         assert not api.last_update_success
+        client.error = RuntimeError("boom")
+        with patch(f"{MODULE}.async_call_later"):
+            await api._async_update_data()
+            await api._stream_task
+        api._handle_event(Pulse(1.0))
+        assert not api.last_update_success
+
+    async def test_stream_drops(self, api, client):
+        await api._async_update_data()
+        api._handle_event(Resynced("timeout"))
+        assert api.stream_drops == 1
+        await api._async_update_data()
+        api._handle_event(Resynced("resync requested"))
+        assert api.stream_drops == 1
+        api._handle_event(Resynced("timeout"))
+        assert api.stream_drops == 2
+
+    async def test_no_stream_check_after_shutdown(self, api, client):
+        async def stream():
+            api._shutdown_requested = True
+            yield snapshot(shutter("a"))
+            await asyncio.Event().wait()
+
+        client.stream = stream
+        with patch(f"{MODULE}.async_track_time_interval") as track:
+            await api._async_update_data()
+        assert not track.called
+        assert api._check_unsub is None
 
     async def test_check_ignores_ended_stream(self, api, client):
         api._check_stream(None)
