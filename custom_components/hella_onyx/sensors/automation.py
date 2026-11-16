@@ -2,6 +2,7 @@
 
 import logging
 from typing import Any
+from urllib.parse import urlsplit
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import EntityCategory
@@ -86,6 +87,7 @@ class OnyxAutomationSwitch(CoordinatorEntity, SwitchEntity):
         await self._set_enabled(False)
 
     async def _set_enabled(self, enabled: bool) -> None:
+        """Enable or disable the automation, or raise if the ONYX.CENTER refused."""
         if not await self.api.set_automation_enabled(self._identifier, enabled):
             raise HomeAssistantError(
                 f"the ONYX.CENTER did not {'enable' if enabled else 'disable'} "
@@ -99,19 +101,21 @@ class OnyxAutomationSwitch(CoordinatorEntity, SwitchEntity):
 
     @property
     def _label(self) -> str:
-        """The name of the automation, else of its device, else its type.
+        """The name of the automation, else of its device, else its type or id.
 
         Automations of a single device, e.g. the wind protection of a weather
-        sensor, often have no name; the ONYX App shows the device's name.
+        sensor, often have no name; the ONYX App shows the device's name. Their
+        identifier is a URI; a path segment equal to a device id names it.
         """
         automation = self._automation
         if automation is not None and automation.name:
             return automation.name
+        segments = set(urlsplit(self._identifier).path.split("/"))
         device = next(
             (
                 device
                 for identifier, device in self.api.devices.items()
-                if identifier in self._identifier
+                if identifier in segments
             ),
             None,
         )

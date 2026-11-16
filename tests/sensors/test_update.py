@@ -57,7 +57,7 @@ class TestOnyxUpdate:
         assert info["model"] == "ONYX.CENTER"
         assert info["sw_version"] == CURRENT
         api.update_status = None
-        assert entity.device_info["sw_version"] is None
+        assert "sw_version" not in entity.device_info
 
     def test_update_available(self, entity):
         assert entity.installed_version == CURRENT

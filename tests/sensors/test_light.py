@@ -322,12 +322,41 @@ class TestOnyxRgbwLight:
         assert not api.send_device_command_action.called
 
     async def test_turn_on_color_of_light_off(self, api, entity, device):
+        # one command, as a following LIGHT_ON would cancel the color
         device.actual_brightness = value(0, 65535)
+        device.target_brightness = value(0, 65535)
         await entity.async_turn_on(hs_color=(10, 20))
         api.send_device_command_properties.assert_called_once_with(
-            "uuid", {"target_hue": 10, "target_saturation": 20}
+            "uuid",
+            {
+                "target_hue": 10,
+                "target_saturation": 20,
+                "target_brightness": 65535,
+                "dim_duration": DEFAULT_MAX_DIM_DURATION,
+            },
         )
-        api.send_device_command_action.assert_called_once_with("uuid", Action.LIGHT_ON)
+        assert not api.send_device_command_action.called
+
+    @pytest.mark.parametrize(
+        ("target", "expected"), [(value(30000, 65535), 30000), (None, 65535)]
+    )
+    async def test_turn_on_color_of_light_off_target(
+        self, api, entity, device, target, expected
+    ):
+        device.actual_brightness = value(0, 65535)
+        device.target_brightness = target
+        await entity.async_turn_on(color_temp_kelvin=5000)
+        properties = api.send_device_command_properties.call_args.args[1]
+        assert properties["target_brightness"] == expected
+
+    async def test_turn_on_color_of_light_off_target_out_of_range(
+        self, api, entity, device
+    ):
+        device.actual_brightness = value(0, 255)
+        device.target_brightness = value(65535, 65535)
+        await entity.async_turn_on(color_temp_kelvin=5000)
+        properties = api.send_device_command_properties.call_args.args[1]
+        assert properties["target_brightness"] == 255
 
     async def test_turn_on_color_of_dimmable_light(self, api):
         entity = OnyxLight(api, "UTC", "name", DeviceType.DIMMABLE_LIGHT, "uuid")

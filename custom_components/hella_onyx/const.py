@@ -31,6 +31,8 @@ MAX_DIM_DURATION = 65535
 # the documented color temperature range of RGBW lights, in Kelvin
 DEFAULT_MIN_COLOR_TEMPERATURE = 2700
 DEFAULT_MAX_COLOR_TEMPERATURE = 10500
+# the color mode of an RGBW light showing a white tone
+COLOR_MODE_TEMPERATURE = "temperature"
 
 SNAPSHOT_TIMEOUT = 30
 STREAM_RESTART_DELAY = 60
