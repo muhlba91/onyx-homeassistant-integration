@@ -36,6 +36,8 @@ The integration keeps a connection to the ONYX API's event stream open, which se
 changes afterwards. Positions and brightness of moving devices are calculated from the reported animations.
 Every scan interval, the stream is reconnected to replace the state with a fresh one from the ONYX.CENTER. A shorter
 scan interval corrects deviations sooner but reconnects more often; 30-180 minutes are suggested.
+Connection losses are reconnected automatically. If the stream fails unexpectedly, the entities become unavailable
+and the integration restarts the stream every minute until it succeeds.
 
 This integration requires API `v6`. If your ONYX.CENTER does not support it, update its firmware.
 
@@ -72,8 +74,8 @@ Add it from the **Integrations** menu, set the configuration, and you're good to
 | Additional Moving Delay | Additional time (in ms) after the end of a movement or dimming during which the device is still shown as moving. (Default: 1000) |
 | \[Shutters] Closed Tolerance | Tolerance (in %) within which a shutter counts as closed, as shutters often stop a few percent short of fully closed. (Default: 3) |
 | \[Shutters] Moving Timeout | Maximum time (in s) a shutter is shown as opening/closing after a command if the ONYX.CENTER reports no movement. (Default: 180) |
-| \[Lights] Minimum Dim Duration | The minimum dim duration to use when dimming a light. (Default: 200) |
-| \[Lights] Maximum Dim Duration | The maximum dim duration to use when dimming a light. (Default: 2000) |
+| \[Lights] Minimum Dim Duration | The minimum dim duration (in ms) to use when dimming a light. A range reported by the light itself overrides it. (Default: 200) |
+| \[Lights] Maximum Dim Duration | The maximum dim duration (in ms) to use when dimming a light. A range reported by the light itself overrides it. (Default: 2000) |
 | Scan Interval | Interval (in min) to reconnect the event stream and replace the state with a fresh one. (Default: 60) |
 
 ### Authentication

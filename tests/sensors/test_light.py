@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from homeassistant.components.light import ColorMode, LightEntityFeature
 from onyx_client.data.device_mode import DeviceMode
+from onyx_client.data.numeric_value import NumericValue
 from onyx_client.device.light import Light
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
@@ -140,6 +141,22 @@ class TestOnyxLight:
         assert entity._get_dim_duration(0, 100) == DEFAULT_MAX_DIM_DURATION
         device.actual_brightness = value(None)
         assert entity._get_dim_duration(90, 100) == 1820
+
+    def test_get_dim_duration_device_range(self, entity, device):
+        device.actual_brightness = value(0, 65535)
+        device.dim_duration = NumericValue(None, 0, 1500, False)
+        assert entity._get_dim_duration(65535, 65535) == 1500
+        assert entity._get_dim_duration(0, 65535) == DEFAULT_MIN_DIM_DURATION
+        device.dim_duration = NumericValue(None, 300, 5000, False)
+        assert entity._get_dim_duration(0, 65535) == 300
+        assert entity._get_dim_duration(65535, 65535) == DEFAULT_MAX_DIM_DURATION
+        device.dim_duration = NumericValue(None, None, None, False)
+        assert entity._get_dim_duration(0, 65535) == DEFAULT_MIN_DIM_DURATION
+        assert entity._get_dim_duration(65535, 65535) == DEFAULT_MAX_DIM_DURATION
+
+    def test_get_dim_duration_device_range_unknown_device(self, api, entity):
+        api.device.return_value = None
+        assert entity._get_dim_duration(255, 255) == DEFAULT_MAX_DIM_DURATION
 
     def test_get_dim_duration_during_animation(self, entity, device):
         device.actual_brightness = animated(0, 100, NOW - 1, 2)

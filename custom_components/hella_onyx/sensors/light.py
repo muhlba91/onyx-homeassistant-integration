@@ -141,7 +141,7 @@ class OnyxLight(OnyxEntity, LightEntity):
         return 0 if value is None else value
 
     def _get_dim_duration(self, target: int, maximum: int) -> int:
-        """Get the dim duration."""
+        """Get the dim duration within the configured and the device's range."""
         duration = abs(
             int(
                 abs(target - self._effective_brightness())
@@ -150,4 +150,13 @@ class OnyxLight(OnyxEntity, LightEntity):
                 + self.api.config.min_dim_duration
             )
         )
-        return min(duration, self.api.config.max_dim_duration)
+        duration = min(duration, self.api.config.max_dim_duration)
+        device = self._device
+        device_range = device.dim_duration if device else None
+        if device_range is not None:
+            # the device minimum wins over an inconsistent maximum
+            if device_range.maximum is not None:
+                duration = min(duration, device_range.maximum)
+            if device_range.minimum is not None:
+                duration = max(duration, device_range.minimum)
+        return duration
