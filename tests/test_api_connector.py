@@ -37,6 +37,7 @@ from custom_components.hella_onyx.const import (
     STREAM_CHECK_INTERVAL,
     STREAM_RESTART_DELAY,
     STREAM_SILENCE_TIMEOUT,
+    UPDATE_CONTEXT,
 )
 
 MODULE = "custom_components.hella_onyx.api_connector"
@@ -499,6 +500,25 @@ class TestAPIConnector:
         assert api.groups == groups
         assert api.data["automations"] == ["automation"]
         assert api.data["update"].current == "2.14.0"
+        assert api.update_status is api.data["update"]
+
+    async def test_update_changed_updates_only_its_listeners(self, api):
+        api._handle_event(snapshot(shutter("a")))
+        update_listener = MagicMock()
+        device_listener = MagicMock()
+        api.async_add_listener(update_listener, UPDATE_CONTEXT)
+        api.async_add_listener(device_listener, "a")
+        api._handle_event(UpdateChanged(UpdateStatus("2.13.4", "2.14.0", 0.5)))
+        assert update_listener.called
+        assert not device_listener.called
+
+    @pytest.mark.parametrize(
+        ("status", "result"), [(UpdateStatus("2.13.4", "2.14.0"), True), (None, False)]
+    )
+    async def test_install_update(self, api, client, status, result):
+        client.install_update = AsyncMock(return_value=status)
+        assert await api.install_update() is result
+        client.install_update.assert_called_once_with()
 
     async def test_now(self, api):
         assert api.now() == 1.5

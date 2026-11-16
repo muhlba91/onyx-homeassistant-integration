@@ -34,3 +34,8 @@ STREAM_RESTART_DELAY = 60
 STREAM_CHECK_INTERVAL = 30
 # the ONYX.CENTER sends a pulse every 30 seconds; three missed pulses
 STREAM_SILENCE_TIMEOUT = 90
+
+# the listener context of the update entity
+UPDATE_CONTEXT = "update"
+# the longest expected installation of an ONYX.CENTER update, in seconds
+UPDATE_INSTALL_TIMEOUT = 1800
