@@ -19,7 +19,11 @@ from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
 from ..api_connector import APIConnector
-from ..const import DEFAULT_MAX_COLOR_TEMPERATURE, DEFAULT_MIN_COLOR_TEMPERATURE
+from ..const import (
+    COLOR_MODE_TEMPERATURE,
+    DEFAULT_MAX_COLOR_TEMPERATURE,
+    DEFAULT_MIN_COLOR_TEMPERATURE,
+)
 from ..sensors.onyx_entity import OnyxEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,7 +76,7 @@ class OnyxLight(OnyxEntity, LightEntity):
             return ColorMode.BRIGHTNESS
         device = self._device
         mode = device.color_mode if device else None
-        if mode is not None and mode.value == "temperature":
+        if mode is not None and mode.value == COLOR_MODE_TEMPERATURE:
             return ColorMode.COLOR_TEMP
         return ColorMode.HS
 
@@ -129,12 +133,16 @@ class OnyxLight(OnyxEntity, LightEntity):
         properties = self._color_properties(
             kwargs.pop(ATTR_HS_COLOR, None), kwargs.pop(ATTR_COLOR_TEMP_KELVIN, None)
         )
+        brightness = self._actual_brightness
+        target_max = brightness.maximum if brightness and brightness.maximum else 255
+        hella_brightness = None
         if brightness_attribute is not None:
-            brightness = self._actual_brightness
-            target_max = (
-                brightness.maximum if brightness and brightness.maximum else 255
-            )
             hella_brightness = ceil(brightness_attribute / 255 * target_max)
+        elif properties and not self.is_on:
+            # a new command cancels the previous one, so a color of a light
+            # which is off is sent together with a brightness instead of LIGHT_ON
+            hella_brightness = self._target_brightness(target_max)
+        if hella_brightness is not None:
             properties["target_brightness"] = hella_brightness
             properties["dim_duration"] = self._get_dim_duration(
                 hella_brightness, target_max
@@ -142,8 +150,7 @@ class OnyxLight(OnyxEntity, LightEntity):
         if properties:
             _LOGGER.debug("setting light %s: %s", self._uuid, properties)
             await self.api.send_device_command_properties(self._uuid, properties)
-        if brightness_attribute is None and not (properties and self.is_on):
-            # a color alone keeps a light off; turning on restores its brightness
+        else:
             _LOGGER.debug(
                 "turning light %s on",
                 self._uuid,
@@ -194,6 +201,13 @@ class OnyxLight(OnyxEntity, LightEntity):
             value = _shortest_hue_path(animation).value_at(self.api.now())
         return None if value is None else value % 360
 
+    def _target_brightness(self, maximum: int) -> int:
+        """The reported target brightness if it is on, else the maximum."""
+        target = self._value("target_brightness")
+        if target is None or not target.value or target.value > maximum:
+            return maximum
+        return target.value
+
     def _color_temperature_range(self) -> tuple[int, int]:
         """The supported color temperature range in Kelvin."""
         kelvin = self._value("target_color_temperature") or self._value(
@@ -208,7 +222,10 @@ class OnyxLight(OnyxEntity, LightEntity):
     def _color_properties(
         self, hs_color: tuple[float, float] | None, kelvin: int | None
     ) -> dict:
-        """The properties to set the color or white tone of an RGBW light."""
+        """The properties to set the color or white tone of an RGBW light.
+
+        Home Assistant passes one of both; a color wins over a white tone.
+        """
         if self._type != DeviceType.RGBW_LIGHT:
             return {}
         if hs_color is not None:

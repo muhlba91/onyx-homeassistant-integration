@@ -52,7 +52,8 @@ class TestOnyxAutomationSwitch:
         info = entity.device_info
         assert info["identifiers"] == {(DOMAIN, "finger")}
         assert info["name"] == "ONYX.CENTER"
-        assert info["sw_version"] is None
+        # None would clear the version registered by the update entity
+        assert "sw_version" not in info
 
     def test_state(self, api, entity):
         assert entity.available
@@ -77,6 +78,10 @@ class TestOnyxAutomationSwitch:
 
     def test_name_of_device(self, api):
         assert self.create(api, WIND).name == "Weather Automation"
+
+    def test_name_of_device_needs_whole_segment(self, api):
+        api.devices["sens"] = api.devices.pop("sensor")
+        assert self.create(api, WIND).name == "info.hella.onyx.wind Automation"
 
     def test_name_of_type(self, api):
         api.devices = {}

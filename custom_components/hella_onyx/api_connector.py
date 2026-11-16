@@ -250,7 +250,7 @@ class APIConnector(DataUpdateCoordinator):
         automation = await switch(identifier)
         if automation is None:
             return False
-        # show the new state before the stream reports it
+        # show the new state until the stream's AutomationsChanged replaces it
         self.data["automations"] = [
             automation if known.identifier == identifier else known
             for known in self.automations
