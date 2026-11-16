@@ -3287,14 +3287,14 @@ files = [
 
 [[package]]
 name = "onyx-client"
-version = "11.2.1"
+version = "12.0.0"
 description = "HTTP Client for Hella's ONYX.CENTER API."
 optional = false
 python-versions = "<3.15,>=3.14"
 groups = ["main"]
 files = [
-    {file = "onyx_client-11.2.1-py3-none-any.whl", hash = "sha256:42a9ba1a85a7a1c15814418b436e9726ae90f42657df49a2201055d53dad3763"},
-    {file = "onyx_client-11.2.1.tar.gz", hash = "sha256:7ed1631891b2e9703816c91f8006fadce10fd4a9b63bb080632a3e15ae4effbb"},
+    {file = "onyx_client-12.0.0-py3-none-any.whl", hash = "sha256:5aa6775e8c4f063b7bd71246ca618479ae7effa394362c0a9ba7e3eb11b202a5"},
+    {file = "onyx_client-12.0.0.tar.gz", hash = "sha256:b21c7262ad343720a6cd201d13f48ffae3e39a09d0ea93c96217302d2851724c"},
 ]
 
 [package.dependencies]
@@ -6289,4 +6289,4 @@ ifaddr = ">=0.1.7"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14.2,<3.15"
-content-hash = "9e2c7e4c7ce2897b9fdcefabd6fbcf0b9e1e5e3e91b87c05eca41bcaebaa24a2"
+content-hash = "b1554769089f59bf0cf8e35a995a96dadc2ecd9d37f64524a5caaea792a04106"
