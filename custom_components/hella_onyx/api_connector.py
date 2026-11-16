@@ -81,6 +81,7 @@ class APIConnector(DataUpdateCoordinator):
         self._last_event = None
         self._check_unsub = None
         self._resync_requested = False
+        self._silent = False
         # reconnects the integration did not request, e.g. a center restart
         self.stream_drops = 0
         self._update_lock = asyncio.Lock()
@@ -120,9 +121,11 @@ class APIConnector(DataUpdateCoordinator):
         # a restart and a scheduled refresh must not start two streams
         async with self._update_lock:
             if self._stream_task is not None and not self._stream_task.done():
-                self._resync_requested = True
+                silent = self._stream_silent()
+                # a resync during an outage merges into the pending reconnect
+                self._resync_requested = not silent
                 self._client().resync()
-                if self._stream_silent():
+                if silent:
                     # keep the entities unavailable until the next snapshot
                     raise UpdateFailed("no events from the ONYX.CENTER")
                 return self.data
@@ -153,6 +156,8 @@ class APIConnector(DataUpdateCoordinator):
 
         self._snapshot.clear()
         self._last_event = time.monotonic()
+        self._resync_requested = False
+        self._silent = False
         self._stream_task = self.hass.async_create_background_task(
             self._stream(), name=f"{DOMAIN}_stream"
         )
@@ -280,6 +285,7 @@ class APIConnector(DataUpdateCoordinator):
                 "entities are unavailable until it is back",
                 STREAM_SILENCE_TIMEOUT,
             )
+            self._silent = True
             self.last_update_success = False
             self.last_exception = UpdateFailed("no events from the ONYX.CENTER")
             self.async_update_listeners()
@@ -296,13 +302,11 @@ class APIConnector(DataUpdateCoordinator):
         """Apply a stream event to the data and notify the affected entities."""
         _LOGGER.debug("received event %s", type(event).__name__)
         self._last_event = time.monotonic()
-        recovered = (
-            not self.last_update_success
-            and self._stream_task is not None
-            and not self._stream_task.done()
-        )
+        recovered = self._silent and not isinstance(event, Resynced)
         if recovered:
+            # the snapshot following Resynced brings the fresh state
             _LOGGER.info("events from the ONYX.CENTER are back")
+            self._silent = False
             self.last_update_success = True
         if isinstance(event, Resynced):
             if self._resync_requested:
