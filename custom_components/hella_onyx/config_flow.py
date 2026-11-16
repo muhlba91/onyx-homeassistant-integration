@@ -60,7 +60,7 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for ONYX."""
 
     VERSION = 3
-    MINOR_VERSION = 2
+    MINOR_VERSION = 3
     CONNECTION_CLASS = CONN_CLASS_CLOUD_PUSH
 
     def __init__(self) -> None:

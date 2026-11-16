@@ -1,6 +1,6 @@
 """Test for ONYX integration init, setup and teardown."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
 from homeassistant.config_entries import ConfigEntry
@@ -521,40 +521,83 @@ def _v3_entry(minor_version, options):
     )
 
 
+def _migrating_hass():
+    """A hass mock which updates the entry like Home Assistant does."""
+    hass = MagicMock()
+
+    def update(entry, **kwargs):
+        for key, value in kwargs.items():
+            object.__setattr__(entry, key, value)
+
+    hass.config_entries.async_update_entry.side_effect = update
+    return hass
+
+
 @pytest.mark.asyncio
 async def test_async_migrate_entry_v3_1_adds_shutter_options():
-    hass = MagicMock()
+    hass = _migrating_hass()
     entry = _v3_entry(1, {CONF_SCAN_INTERVAL: 30, CONF_LOCAL_ADDRESS: "10.0.0.1"})
     result = await async_migrate_entry(hass, entry)
     assert result is True
-    hass.config_entries.async_update_entry.assert_called_once_with(
-        entry,
-        options={
-            CONF_SCAN_INTERVAL: 30,
-            CONF_LOCAL_ADDRESS: "10.0.0.1",
-            CONF_CLOSED_TOLERANCE: DEFAULT_CLOSED_TOLERANCE,
-            CONF_MOVING_TIMEOUT: DEFAULT_MOVING_TIMEOUT,
-        },
-        minor_version=2,
-    )
+    options = {
+        CONF_SCAN_INTERVAL: 30,
+        CONF_LOCAL_ADDRESS: "10.0.0.1",
+        CONF_CLOSED_TOLERANCE: DEFAULT_CLOSED_TOLERANCE,
+        CONF_MOVING_TIMEOUT: DEFAULT_MOVING_TIMEOUT,
+    }
+    assert hass.config_entries.async_update_entry.call_args_list == [
+        call(entry, options=options, minor_version=2),
+        call(entry, options=options, minor_version=3),
+    ]
+    assert entry.minor_version == 3
 
 
 @pytest.mark.asyncio
 async def test_async_migrate_entry_v3_1_keeps_existing_shutter_options():
-    hass = MagicMock()
+    hass = _migrating_hass()
     entry = _v3_entry(1, {CONF_CLOSED_TOLERANCE: 8, CONF_MOVING_TIMEOUT: 90})
     await async_migrate_entry(hass, entry)
-    hass.config_entries.async_update_entry.assert_called_once_with(
+    assert hass.config_entries.async_update_entry.call_args_list[0] == call(
         entry,
         options={CONF_CLOSED_TOLERANCE: 8, CONF_MOVING_TIMEOUT: 90},
         minor_version=2,
     )
+    assert dict(entry.options) == {CONF_CLOSED_TOLERANCE: 8, CONF_MOVING_TIMEOUT: 90}
 
 
 @pytest.mark.asyncio
-async def test_async_migrate_entry_v3_2_is_untouched():
+async def test_async_migrate_entry_v3_1_to_latest_drops_force_update():
+    hass = _migrating_hass()
+    entry = _v3_entry(1, {CONF_SCAN_INTERVAL: 30, CONF_FORCE_UPDATE: True})
+    await async_migrate_entry(hass, entry)
+    assert entry.version == 3
+    assert entry.minor_version == 3
+    assert dict(entry.options) == {
+        CONF_SCAN_INTERVAL: 30,
+        CONF_CLOSED_TOLERANCE: DEFAULT_CLOSED_TOLERANCE,
+        CONF_MOVING_TIMEOUT: DEFAULT_MOVING_TIMEOUT,
+    }
+
+
+@pytest.mark.asyncio
+async def test_async_migrate_entry_v3_2_drops_force_update():
     hass = MagicMock()
-    entry = _v3_entry(2, {CONF_CLOSED_TOLERANCE: 8, CONF_MOVING_TIMEOUT: 90})
+    entry = _v3_entry(
+        2, {CONF_CLOSED_TOLERANCE: 8, CONF_MOVING_TIMEOUT: 90, CONF_FORCE_UPDATE: True}
+    )
+    result = await async_migrate_entry(hass, entry)
+    assert result is True
+    hass.config_entries.async_update_entry.assert_called_once_with(
+        entry,
+        options={CONF_CLOSED_TOLERANCE: 8, CONF_MOVING_TIMEOUT: 90},
+        minor_version=3,
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_migrate_entry_v3_3_is_untouched():
+    hass = MagicMock()
+    entry = _v3_entry(3, {CONF_CLOSED_TOLERANCE: 8, CONF_MOVING_TIMEOUT: 90})
     result = await async_migrate_entry(hass, entry)
     assert result is True
     hass.config_entries.async_update_entry.assert_not_called()
