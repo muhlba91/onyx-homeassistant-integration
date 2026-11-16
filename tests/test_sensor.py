@@ -5,8 +5,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 from homeassistant.config_entries import ConfigEntry
 from onyx_client.data.device_mode import DeviceMode
+from onyx_client.data.enum_value import EnumValue
 from onyx_client.data.numeric_value import NumericValue
 from onyx_client.device.device import Device
+from onyx_client.device.input import Input
 from onyx_client.device.light import Light
 from onyx_client.device.shutter import Shutter
 from onyx_client.device.tag_sun import TagSun
@@ -17,6 +19,9 @@ from onyx_client.enum.device_type import DeviceType
 from custom_components.hella_onyx import DOMAIN
 from custom_components.hella_onyx.models import OnyxData
 from custom_components.hella_onyx.sensor import async_setup_entry
+from custom_components.hella_onyx.sensors.device_type import (
+    OnyxSensorUnknownDeviceType,
+)
 
 
 @patch("homeassistant.core.HomeAssistant")
@@ -107,44 +112,87 @@ async def test_async_setup_entry(mock_hass):
     await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
     assert async_add_entries.called_async_add_entities
     assert async_add_entries.update_before_add is False
-    assert len(async_add_entries.data) == 9
+    assert [entry.unique_id for entry in async_add_entries.data] == [
+        "shutter/DeviceType",
+        "shutter/ActiveCommand",
+        "light/DeviceType",
+        "light/ActiveCommand",
+        "weather/DeviceType",
+        "weather/Temperature",
+        "weather/Humidity",
+        "weather/AirPressure",
+        "weather/WindPeak",
+        "weather/SunBrightnessPeak",
+        "weather/SunBrightnessSink",
+        "none/DeviceType",
+    ]
+    assert isinstance(async_add_entries.data[-1], OnyxSensorUnknownDeviceType)
     for entry in async_add_entries.data:
         assert entry.api == api
         assert entry.timezone == "UTC"
         assert entry._type is not None
-    assert async_add_entries.data[0]._uuid == "shutter"
-    assert async_add_entries.data[0].unique_id == "shutter/DeviceType"
-    assert async_add_entries.data[0]._name == "name"
-    assert async_add_entries.data[1]._uuid == "light"
-    assert async_add_entries.data[1].unique_id == "light/DeviceType"
-    assert async_add_entries.data[1]._name == "name"
-    assert async_add_entries.data[2]._uuid == "weather"
-    assert async_add_entries.data[2].unique_id == "weather/DeviceType"
-    assert async_add_entries.data[2]._name == "name"
-    assert async_add_entries.data[3].unique_id == "weather/Temperature"
-    assert async_add_entries.data[4].unique_id == "weather/Humidity"
-    assert async_add_entries.data[5].unique_id == "weather/AirPressure"
-    assert async_add_entries.data[6].unique_id == "weather/WindPeak"
-    assert async_add_entries.data[7].unique_id == "weather/SunBrightnessPeak"
-    assert async_add_entries.data[8].unique_id == "weather/SunBrightnessSink"
-    assert async_add_entries.data[3]._uuid == "weather"
-    assert async_add_entries.data[3].unique_id == "weather/Temperature"
-    assert async_add_entries.data[3]._name == "name"
-    assert async_add_entries.data[4]._uuid == "weather"
-    assert async_add_entries.data[4].unique_id == "weather/Humidity"
-    assert async_add_entries.data[4]._name == "name"
-    assert async_add_entries.data[5]._uuid == "weather"
-    assert async_add_entries.data[5].unique_id == "weather/AirPressure"
-    assert async_add_entries.data[5]._name == "name"
-    assert async_add_entries.data[6]._uuid == "weather"
-    assert async_add_entries.data[6].unique_id == "weather/WindPeak"
-    assert async_add_entries.data[6]._name == "name"
-    assert async_add_entries.data[7]._uuid == "weather"
-    assert async_add_entries.data[7].unique_id == "weather/SunBrightnessPeak"
-    assert async_add_entries.data[7]._name == "name"
-    assert async_add_entries.data[8]._uuid == "weather"
-    assert async_add_entries.data[8].unique_id == "weather/SunBrightnessSink"
-    assert async_add_entries.data[8]._name == "name"
+        assert entry._name == "name"
+
+
+@patch("homeassistant.core.HomeAssistant")
+@pytest.mark.asyncio
+async def test_async_setup_entry_v6_devices(mock_hass):
+    config_entry = ConfigEntry(
+        version=1,
+        minor_version=1,
+        domain=DOMAIN,
+        title="entry",
+        data={},
+        source="source",
+        unique_id="onyx",
+        options={},
+        discovery_keys={},
+        subentries_data={},
+    )
+    api = MagicMock()
+    api.devices = {
+        "pergola": Shutter(
+            "pergola",
+            "name",
+            DeviceType.PERGOLA_SLAT_ROOF,
+            DeviceMode(DeviceType.PERGOLA_SLAT_ROOF),
+            [],
+            system_state=EnumValue("ok", ["ok", "collision"], True),
+            temperature=NumericValue(214, -400, 1500, True),
+            humidity=NumericValue(53, 0, 100, True),
+        ),
+        "weather": Weather(
+            "weather",
+            "name",
+            DeviceType.WEATHER,
+            DeviceMode(DeviceType.WEATHER),
+            [],
+            wind_speed=NumericValue(1500, 0, 100000, True),
+        ),
+        "input": Input(
+            "input",
+            "name",
+            DeviceType.INPUT,
+            DeviceMode(DeviceType.INPUT),
+            [],
+            input_type=EnumValue("rain_sensor", [], True),
+            input_active=EnumValue("false", ["true", "false"], True),
+        ),
+    }
+    config_entry.runtime_data = OnyxData(api=api, config=MagicMock(), timezone="UTC")
+    async_add_entries = AsyncAddEntries()
+
+    await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
+    assert [entry.unique_id for entry in async_add_entries.data] == [
+        "pergola/DeviceType",
+        "pergola/Temperature",
+        "pergola/Humidity",
+        "pergola/SystemState",
+        "pergola/ActiveCommand",
+        "weather/DeviceType",
+        "weather/WindSpeed",
+        "input/DeviceType",
+    ]
 
 
 @patch("homeassistant.core.HomeAssistant")
@@ -261,10 +309,10 @@ async def test_async_setup_entry_tags(mock_hass):
     assert async_add_entries.called_async_add_entities
     assert [entry.unique_id for entry in async_add_entries.data] == [
         "sun/DeviceType",
-        "temperature/DeviceType",
         "sun/SunBrightnessPeak",
         "sun/SunBrightnessSink",
         "sun/SunBrightness",
+        "temperature/DeviceType",
         "temperature/Temperature",
         "temperature/Humidity",
     ]

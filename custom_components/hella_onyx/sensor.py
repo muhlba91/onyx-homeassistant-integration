@@ -11,7 +11,10 @@ from onyx_client.enum.device_type import DeviceType
 from custom_components.hella_onyx.api_connector import APIConnector
 
 from . import OnyxConfigEntry
-from .sensors.device_type import OnyxSensorDeviceType
+from .devices import is_supported
+from .sensors.active_command import OnyxSensorActiveCommand
+from .sensors.device_type import OnyxSensorDeviceType, OnyxSensorUnknownDeviceType
+from .sensors.system_state import OnyxSensorSystemState
 from .sensors.weather import (
     OnyxSensorWeatherAirPressure,
     OnyxSensorWeatherHumidity,
@@ -20,6 +23,7 @@ from .sensors.weather import (
     OnyxSensorWeatherSunBrightnessSink,
     OnyxSensorWeatherTemperature,
     OnyxSensorWeatherWindPeak,
+    OnyxSensorWeatherWindSpeed,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,36 +41,32 @@ async def async_setup_entry(
     api = entry.runtime_data.api
     timezone = entry.runtime_data.timezone
 
-    # all device type sensors
-    sensors = [
-        [
-            OnyxSensorDeviceType(
-                api, timezone, device.name, device.device_type, device_id
-            ),
-        ]
-        # we only support shutters, lights, weather stations and tags
-        for device_id, device in filter(
-            lambda item: (
-                item[1].device_type.is_shutter()
-                or item[1].device_type.is_light()
-                or item[1].device_type == DeviceType.WEATHER
-                or item[1].device_type.is_tag()
-            ),
-            api.devices.items(),
-        )
-    ]
-    # all weather stations and tags (they report a subset of the weather values)
-    sensors = sensors + [
-        _collect_weather_sensors(api, timezone, device, device_id)
-        for device_id, device in filter(
-            lambda item: (
-                item[1].device_type == DeviceType.WEATHER
-                or item[1].device_type.is_tag()
-            ),
-            api.devices.items(),
-        )
-    ]
-    sensors = [item for sublist in sensors for item in sublist]
+    sensors = []
+    for device_id, device in api.devices.items():
+        device_type = device.device_type
+        args = (api, timezone, device.name, device_type, device_id)
+        if device_type == DeviceType.UNKNOWN:
+            _LOGGER.info(
+                "device %s has the unsupported type %s", device_id, device.raw_type
+            )
+            sensors.append(OnyxSensorUnknownDeviceType(*args))
+            continue
+        if not is_supported(device_type):
+            continue
+        sensors.append(OnyxSensorDeviceType(*args))
+        # weather stations, tags and shutters (pergola units measure temperature
+        # and humidity) report (a subset of) weather values
+        if (
+            device_type == DeviceType.WEATHER
+            or device_type.is_tag()
+            or device_type.is_shutter()
+        ):
+            sensors.extend(_collect_weather_sensors(api, timezone, device, device_id))
+        # diagnostic sensors of controllable devices
+        if device_type.is_shutter() and getattr(device, "system_state", None):
+            sensors.append(OnyxSensorSystemState(*args))
+        if device_type.is_shutter() or device_type.is_light():
+            sensors.append(OnyxSensorActiveCommand(*args))
 
     _LOGGER.info("adding %s hella_onyx sensor entities", len(sensors))
     async_add_entities(sensors)
@@ -98,6 +98,12 @@ def _collect_weather_sensors(
     if getattr(device, "wind_peak", None) is not None:
         sensors.append(
             OnyxSensorWeatherWindPeak(
+                api, timezone, device.name, device.device_type, device_id
+            )
+        )
+    if getattr(device, "wind_speed", None) is not None:
+        sensors.append(
+            OnyxSensorWeatherWindSpeed(
                 api, timezone, device.name, device.device_type, device_id
             )
         )

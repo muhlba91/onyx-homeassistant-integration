@@ -286,3 +286,42 @@ class OnyxSensorWeatherSunBrightnessSink(OnyxEntity, SensorEntity):
     def native_value(self) -> float | None:
         """Return the current value."""
         return self._numeric_value("sun_brightness_sink")
+
+
+class OnyxSensorWeatherWindSpeed(OnyxEntity, SensorEntity):
+    """ONYX Weather Wind Speed Sensor."""
+
+    @property
+    def name(self) -> str:
+        """Return the display name of the sensor."""
+        return f"{self._name} Wind Speed"
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique id of the sensor."""
+        return f"{self._uuid}/WindSpeed"
+
+    @property
+    def icon(self) -> str:
+        """Icon to use in the frontend, if any."""
+        return "mdi:weather-windy"
+
+    @property
+    def device_class(self) -> str | None:
+        """Return the class of this device, from component device class."""
+        return SensorDeviceClass.WIND_SPEED
+
+    @property
+    def suggested_display_precision(self) -> int:
+        """Return the native number of decimal digits for display."""
+        return 1
+
+    @property
+    def native_unit_of_measurement(self) -> str | None:
+        """Return the native unit of this measurement."""
+        return UnitOfSpeed.METERS_PER_SECOND
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the current value."""
+        return self._numeric_value("wind_speed", 1000)
