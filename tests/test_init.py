@@ -60,7 +60,6 @@ def mock_config_entry():
             CONF_MOVING_TIMEOUT: 240,
             CONF_MIN_DIM_DURATION: 200,
             CONF_MAX_DIM_DURATION: 2000,
-            CONF_FORCE_UPDATE: True,
         },
         discovery_keys={},
         subentries_data={},
@@ -78,7 +77,6 @@ async def test_async_setup_entry_and_unload(
     mock_api = MagicMock()
     mock_api.async_config_entry_first_refresh = AsyncMock()
     mock_api.get_timezone = AsyncMock(return_value="Europe/Vienna")
-    mock_api.events = MagicMock()
     mock_api_connector_class.return_value = mock_api
 
     task_mock = MagicMock()
@@ -102,12 +100,10 @@ async def test_async_setup_entry_and_unload(
     assert config.moving_timeout == 240
     assert config.min_dim_duration == 200
     assert config.max_dim_duration == 2000
-    assert config.force_update is True
     assert call_args[2] == mock_config_entry
     assert isinstance(mock_config_entry.runtime_data, OnyxData)
     assert mock_config_entry.runtime_data.api == mock_api
     assert mock_config_entry.runtime_data.timezone == "Europe/Vienna"
-    assert hass.async_create_background_task.called
 
     unload_result = await async_unload_entry(hass, mock_config_entry)
     assert unload_result is True
@@ -138,7 +134,6 @@ async def test_async_migrate_entry_v1():
             CONF_SCAN_INTERVAL: 30,
             CONF_MIN_DIM_DURATION: 100,
             CONF_MAX_DIM_DURATION: 1500,
-            CONF_FORCE_UPDATE: True,
         },
         source="user",
         unique_id="test",
@@ -158,7 +153,6 @@ async def test_async_migrate_entry_v1():
             CONF_SCAN_INTERVAL: 30,
             CONF_MIN_DIM_DURATION: 100,
             CONF_MAX_DIM_DURATION: 1500,
-            CONF_FORCE_UPDATE: True,
         },
         version=2,
         minor_version=1,
@@ -195,7 +189,6 @@ async def test_async_migrate_entry_v1_defaults():
             CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
             CONF_MIN_DIM_DURATION: DEFAULT_MIN_DIM_DURATION,
             CONF_MAX_DIM_DURATION: DEFAULT_MAX_DIM_DURATION,
-            CONF_FORCE_UPDATE: False,
         },
         version=2,
         minor_version=1,
@@ -218,7 +211,6 @@ async def test_async_migrate_entry_v2():
             CONF_INTERPOLATION_FREQUENCY: 3,
             CONF_MIN_DIM_DURATION: 100,
             CONF_MAX_DIM_DURATION: 1500,
-            CONF_FORCE_UPDATE: False,
         },
         source="user",
         unique_id="test",
@@ -240,7 +232,6 @@ async def test_async_migrate_entry_v2():
             CONF_INTERPOLATION_FREQUENCY: 3,
             CONF_MIN_DIM_DURATION: 100,
             CONF_MAX_DIM_DURATION: 1500,
-            CONF_FORCE_UPDATE: False,
         },
         version=3,
         minor_version=1,
@@ -258,7 +249,6 @@ async def test_async_setup_entry_runtime_data_config_not_none(
     mock_api = MagicMock()
     mock_api.async_config_entry_first_refresh = AsyncMock()
     mock_api.get_timezone = AsyncMock(return_value="UTC")
-    mock_api.events = MagicMock()
     mock_api_connector_class.return_value = mock_api
     hass.async_create_background_task.return_value = MagicMock()
     hass.config_entries.async_forward_entry_setups = AsyncMock(return_value=True)
@@ -266,28 +256,6 @@ async def test_async_setup_entry_runtime_data_config_not_none(
     await async_setup_entry(hass, mock_config_entry)
 
     assert mock_config_entry.runtime_data.config is not None
-
-
-@pytest.mark.asyncio
-@patch("custom_components.hella_onyx.APIConnector")
-async def test_async_setup_entry_event_task_uses_events_not_none(
-    mock_api_connector_class, mock_config_entry
-):
-    """Mutmut: async_create_background_task(onyx_api.events(...)) -> (None, ...)."""
-    hass = MagicMock()
-    hass.data = {}
-    mock_api = MagicMock()
-    mock_api.async_config_entry_first_refresh = AsyncMock()
-    mock_api.get_timezone = AsyncMock(return_value="UTC")
-    mock_api_connector_class.return_value = mock_api
-    hass.async_create_background_task.return_value = MagicMock()
-    hass.config_entries.async_forward_entry_setups = AsyncMock(return_value=True)
-
-    await async_setup_entry(hass, mock_config_entry)
-
-    call_args = hass.async_create_background_task.call_args
-    # First positional arg must not be None
-    assert call_args[0][0] is not None
 
 
 @pytest.mark.asyncio
@@ -345,7 +313,6 @@ async def test_async_migrate_entry_v2_defaults():
             CONF_INTERPOLATION_FREQUENCY: DEFAULT_INTERPOLATION_FREQUENCY,
             CONF_MIN_DIM_DURATION: DEFAULT_MIN_DIM_DURATION,
             CONF_MAX_DIM_DURATION: DEFAULT_MAX_DIM_DURATION,
-            CONF_FORCE_UPDATE: False,
         },
         version=3,
         minor_version=1,
@@ -353,12 +320,8 @@ async def test_async_migrate_entry_v2_defaults():
 
 
 @pytest.mark.asyncio
-async def test_async_migrate_entry_v2_force_update_key_used():
-    """Mutmut: old_data.get(CONF_FORCE_UPDATE, False) -> old_data.get(None, False).
-
-    When old_data contains CONF_FORCE_UPDATE=True the real key must be used so
-    the value survives migration; using None as key returns the default (False).
-    """
+async def test_async_migrate_entry_v2_drops_force_update():
+    """The removed force_update option is not migrated."""
     hass = MagicMock()
     entry = ConfigEntry(
         version=2,
@@ -379,7 +342,7 @@ async def test_async_migrate_entry_v2_force_update_key_used():
     result = await async_migrate_entry(hass, entry)
     assert result is True
     call_kwargs = hass.config_entries.async_update_entry.call_args[1]
-    assert call_kwargs["options"][CONF_FORCE_UPDATE] is True
+    assert CONF_FORCE_UPDATE not in call_kwargs["options"]
 
 
 @pytest.mark.asyncio
@@ -424,10 +387,7 @@ async def test_async_setup_entry_options_fallbacks(
     assert config.moving_timeout == DEFAULT_MOVING_TIMEOUT
     assert config.min_dim_duration == DEFAULT_MIN_DIM_DURATION
     assert config.max_dim_duration == DEFAULT_MAX_DIM_DURATION
-    assert config.force_update is False
 
-    task_call_kwargs = hass.async_create_background_task.call_args[1]
-    assert task_call_kwargs["name"] == f"{DOMAIN}_{entry.entry_id}_events"
     hass.config_entries.async_forward_entry_setups.assert_called_once_with(
         entry, PLATFORMS
     )
@@ -466,7 +426,6 @@ async def test_async_setup_entry_custom_option_keys(
             CONF_MOVING_TIMEOUT: 55,
             CONF_MIN_DIM_DURATION: 77,
             CONF_MAX_DIM_DURATION: 666,
-            CONF_FORCE_UPDATE: True,
         },
         discovery_keys={},
         subentries_data={},
@@ -481,7 +440,6 @@ async def test_async_setup_entry_custom_option_keys(
     assert config.moving_timeout == 55
     assert config.min_dim_duration == 77
     assert config.max_dim_duration == 666
-    assert config.force_update is True
 
 
 @pytest.mark.asyncio
@@ -498,7 +456,6 @@ async def test_async_migrate_entry_v1_keys_and_defaults():
             CONF_SCAN_INTERVAL: 42,
             CONF_MIN_DIM_DURATION: 123,
             CONF_MAX_DIM_DURATION: 456,
-            CONF_FORCE_UPDATE: True,
         },
         source="user",
         unique_id="test",
@@ -512,7 +469,7 @@ async def test_async_migrate_entry_v1_keys_and_defaults():
     assert call_kwargs["options"][CONF_SCAN_INTERVAL] == 42
     assert call_kwargs["options"][CONF_MIN_DIM_DURATION] == 123
     assert call_kwargs["options"][CONF_MAX_DIM_DURATION] == 456
-    assert call_kwargs["options"][CONF_FORCE_UPDATE] is True
+    assert CONF_FORCE_UPDATE not in call_kwargs["options"]
 
 
 @pytest.mark.asyncio
@@ -531,7 +488,6 @@ async def test_async_migrate_entry_v2_keys():
             CONF_INTERPOLATION_FREQUENCY: 7,
             CONF_MIN_DIM_DURATION: 123,
             CONF_MAX_DIM_DURATION: 456,
-            CONF_FORCE_UPDATE: True,
         },
         source="user",
         unique_id="test",
@@ -547,7 +503,7 @@ async def test_async_migrate_entry_v2_keys():
     assert call_kwargs["options"][CONF_INTERPOLATION_FREQUENCY] == 7
     assert call_kwargs["options"][CONF_MIN_DIM_DURATION] == 123
     assert call_kwargs["options"][CONF_MAX_DIM_DURATION] == 456
-    assert call_kwargs["options"][CONF_FORCE_UPDATE] is True
+    assert CONF_FORCE_UPDATE not in call_kwargs["options"]
 
 
 def _v3_entry(minor_version, options):

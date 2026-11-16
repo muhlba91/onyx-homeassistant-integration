@@ -49,9 +49,9 @@ class OnyxSensorWeatherHumidity(OnyxEntity, SensorEntity):
         return PERCENTAGE
 
     @property
-    def native_value(self) -> int:
+    def native_value(self) -> float | None:
         """Return the current value."""
-        return self._device.humidity.value
+        return self._numeric_value("humidity")
 
 
 class OnyxSensorWeatherTemperature(OnyxEntity, SensorEntity):
@@ -88,9 +88,9 @@ class OnyxSensorWeatherTemperature(OnyxEntity, SensorEntity):
         return UnitOfTemperature.CELSIUS
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> float | None:
         """Return the current value."""
-        return self._device.temperature.value / 10
+        return self._numeric_value("temperature", 10)
 
 
 class OnyxSensorWeatherAirPressure(OnyxEntity, SensorEntity):
@@ -127,9 +127,9 @@ class OnyxSensorWeatherAirPressure(OnyxEntity, SensorEntity):
         return UnitOfPressure.HPA
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> float | None:
         """Return the current value."""
-        return self._device.air_pressure.value / 100
+        return self._numeric_value("air_pressure", 100)
 
 
 class OnyxSensorWeatherWindPeak(OnyxEntity, SensorEntity):
@@ -166,9 +166,9 @@ class OnyxSensorWeatherWindPeak(OnyxEntity, SensorEntity):
         return UnitOfSpeed.METERS_PER_SECOND
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> float | None:
         """Return the current value."""
-        return self._device.wind_peak.value / 1000
+        return self._numeric_value("wind_peak", 1000)
 
 
 class OnyxSensorWeatherSunBrightness(OnyxEntity, SensorEntity):
@@ -205,9 +205,9 @@ class OnyxSensorWeatherSunBrightness(OnyxEntity, SensorEntity):
         return LIGHT_LUX
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> float | None:
         """Return the current value."""
-        return self._device.sun_brightness.value
+        return self._numeric_value("sun_brightness")
 
 
 class OnyxSensorWeatherSunBrightnessPeak(OnyxEntity, SensorEntity):
@@ -244,9 +244,9 @@ class OnyxSensorWeatherSunBrightnessPeak(OnyxEntity, SensorEntity):
         return LIGHT_LUX
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> float | None:
         """Return the current value."""
-        return self._device.sun_brightness_peak.value
+        return self._numeric_value("sun_brightness_peak")
 
 
 class OnyxSensorWeatherSunBrightnessSink(OnyxEntity, SensorEntity):
@@ -283,6 +283,6 @@ class OnyxSensorWeatherSunBrightnessSink(OnyxEntity, SensorEntity):
         return LIGHT_LUX
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> float | None:
         """Return the current value."""
-        return self._device.sun_brightness_sink.value
+        return self._numeric_value("sun_brightness_sink")

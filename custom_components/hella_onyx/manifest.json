@@ -6,7 +6,7 @@
   "documentation": "https://github.com/muhlba91/onyx-homeassistant-integration",
   "issue_tracker": "https://github.com/muhlba91/onyx-homeassistant-integration/issues",
   "requirements": [
-    "onyx-client==11.2.1"
+    "onyx-client==12.0.0"
   ],
   "ssdp": [],
   "zeroconf": [],
@@ -15,6 +15,6 @@
   "codeowners": [
     "@muhlba91"
   ],
-  "iot_class": "cloud_polling",
+  "iot_class": "cloud_push",
   "version": "13.2.0"
 }

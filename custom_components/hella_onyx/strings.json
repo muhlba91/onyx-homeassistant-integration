@@ -23,18 +23,20 @@
           "moving_timeout": "[%key:common::config_flow::options::moving_timeout%]",
           "min_dim_duration": "[%key:common::config_flow::options::min_dim_duration%]",
           "max_dim_duration": "[%key:common::config_flow::options::max_dim_duration%]",
-          "scan_interval": "[%key:common::config_flow::options::scan_interval%]",
-          "force_update": "[%key:common::config_flow::options::force_update%]"
+          "scan_interval": "[%key:common::config_flow::options::scan_interval%]"
         }
       }
     },
     "error": {
       "invalid_code": "[%key:common::config_flow::error::invalid_code%]",
-      "invalid_connection_data": "[%key:common::config_flow::error::invalid_connection_data%]",
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "api_version_unsupported": "[%key:common::config_flow::error::api_version_unsupported%]",
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured%]"
+      "already_configured": "[%key:common::config_flow::abort::already_configured%]",
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
     }
   },
   "options": {
@@ -48,8 +50,7 @@
           "moving_timeout": "[%key:common::config_flow::data::moving_timeout%]",
           "min_dim_duration": "[%key:common::config_flow::data::min_dim_duration%]",
           "max_dim_duration": "[%key:common::config_flow::data::max_dim_duration%]",
-          "scan_interval": "[%key:common::config_flow::data::scan_interval%]",
-          "force_update": "[%key:common::config_flow::data::force_update%]"
+          "scan_interval": "[%key:common::config_flow::data::scan_interval%]"
         }
       }
     }

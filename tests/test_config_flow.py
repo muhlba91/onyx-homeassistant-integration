@@ -10,6 +10,7 @@ from homeassistant.const import (
     CONF_FORCE_UPDATE,
     CONF_SCAN_INTERVAL,
 )
+from onyx_client.enum.verify_result import VerifyResult
 
 from custom_components.hella_onyx.config_flow import (
     OnyxFlowHandler,
@@ -86,7 +87,7 @@ class TestOnyxFlowHandler:
         mock_async_abort_entries_match,
         mock_async_step_options,
     ):
-        mock_async_verify_conn.return_value = True
+        mock_async_verify_conn.return_value = VerifyResult.OK
         config_flow = OnyxFlowHandler()
         await config_flow.async_step_user(
             {
@@ -114,7 +115,7 @@ class TestOnyxFlowHandler:
         mock_async_verify_conn,
         mock_async_abort_entries_match,
     ):
-        mock_async_verify_conn.return_value = False
+        mock_async_verify_conn.return_value = VerifyResult.UNAUTHORIZED
 
         config_flow = OnyxFlowHandler()
         await config_flow.async_step_user(
@@ -145,7 +146,7 @@ class TestOnyxFlowHandler:
         mock_async_verify_conn,
         mock_async_abort_entries_match,
     ):
-        mock_async_verify_conn.return_value = True
+        mock_async_verify_conn.return_value = VerifyResult.OK
 
         config_flow = OnyxFlowHandler()
         await config_flow.async_step_user(
@@ -174,7 +175,7 @@ class TestOnyxFlowHandler:
         mock_async_verify_conn,
         mock_async_abort_entries_match,
     ):
-        mock_async_verify_conn.return_value = True
+        mock_async_verify_conn.return_value = VerifyResult.OK
 
         config_flow = OnyxFlowHandler()
         await config_flow.async_step_user(
@@ -215,7 +216,7 @@ class TestOnyxFlowHandler:
         mock_async_verify_conn,
         mock_async_abort_entries_match,
     ):
-        mock_async_verify_conn.return_value = True
+        mock_async_verify_conn.return_value = VerifyResult.OK
         mock_auth_config = MagicMock()
         mock_auth_config.fingerprint = "finger"
         mock_auth_config.access_token = "token"
@@ -257,7 +258,7 @@ class TestOnyxFlowHandler:
         mock_async_verify_conn,
         mock_async_abort_entries_match,
     ):
-        mock_async_verify_conn.return_value = True
+        mock_async_verify_conn.return_value = VerifyResult.OK
         mock_auth_config = MagicMock()
         mock_auth_config.fingerprint = "finger"
         mock_auth_config.access_token = "token"
@@ -298,7 +299,7 @@ class TestOnyxFlowHandler:
         mock_async_verify_conn,
         mock_async_abort_entries_match,
     ):
-        mock_async_verify_conn.return_value = True
+        mock_async_verify_conn.return_value = VerifyResult.OK
         mock_authorize.return_value = None
 
         config_flow = OnyxFlowHandler()
@@ -331,7 +332,7 @@ class TestOnyxFlowHandler:
         mock_async_verify_conn,
         mock_async_abort_entries_match,
     ):
-        mock_async_verify_conn.return_value = True
+        mock_async_verify_conn.return_value = VerifyResult.OK
 
         config_flow = OnyxFlowHandler()
         config_flow._entry = ConfigEntry(
@@ -412,7 +413,7 @@ class TestOnyxFlowHandler:
         assert CONF_MIN_DIM_DURATION in schema_keys
         assert CONF_MAX_DIM_DURATION in schema_keys
         assert CONF_INTERPOLATION_FREQUENCY in schema_keys
-        assert CONF_FORCE_UPDATE in schema_keys
+        assert CONF_FORCE_UPDATE not in schema_keys
         assert kwargs["errors"] == {}
 
     @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_show_form")
@@ -434,7 +435,6 @@ class TestOnyxFlowHandler:
                 CONF_ADDITIONAL_DELAY: 1000,
                 CONF_CLOSED_TOLERANCE: 3,
                 CONF_MOVING_TIMEOUT: 180,
-                CONF_FORCE_UPDATE: True,
                 CONF_INTERPOLATION_FREQUENCY: 5000,
             }
         )
@@ -449,7 +449,7 @@ class TestOnyxFlowHandler:
         assert entry_kwargs["options"][CONF_ADDITIONAL_DELAY] == 1000
         assert entry_kwargs["options"][CONF_CLOSED_TOLERANCE] == 3
         assert entry_kwargs["options"][CONF_MOVING_TIMEOUT] == 180
-        assert entry_kwargs["options"][CONF_FORCE_UPDATE] is True
+        assert CONF_FORCE_UPDATE not in entry_kwargs["options"]
         assert entry_kwargs["options"][CONF_INTERPOLATION_FREQUENCY] == 5000
         assert entry_kwargs["options"][CONF_LOCAL_ADDRESS] is None
 
@@ -472,7 +472,6 @@ class TestOnyxFlowHandler:
                 CONF_ADDITIONAL_DELAY: 1000,
                 CONF_CLOSED_TOLERANCE: 3,
                 CONF_MOVING_TIMEOUT: 180,
-                CONF_FORCE_UPDATE: True,
                 CONF_INTERPOLATION_FREQUENCY: 5000,
             }
         )
@@ -483,7 +482,7 @@ class TestOnyxFlowHandler:
         assert entry_kwargs["data"] == {CONF_FINGERPRINT: "finger"}
         assert entry_kwargs["options"][CONF_LOCAL_ADDRESS] == "192.168.1.1"
         assert entry_kwargs["options"][CONF_SCAN_INTERVAL] == 60
-        assert entry_kwargs["options"][CONF_FORCE_UPDATE] is True
+        assert CONF_FORCE_UPDATE not in entry_kwargs["options"]
 
     @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_user")
     @pytest.mark.asyncio
@@ -509,7 +508,7 @@ class TestOnyxFlowHandler:
         self,
         mock_async_verify_conn,
     ):
-        mock_async_verify_conn.return_value = True
+        mock_async_verify_conn.return_value = VerifyResult.OK
         config_flow = OnyxFlowHandler()
         mock_entry = MagicMock()
         mock_entry.entry_id = "entry_123"
@@ -616,7 +615,7 @@ class TestOnyxFlowHandler:
         mock_async_abort_entries_match,
     ):
         """Mutmut: client_session=... -> client_session=None in authorize call."""
-        mock_async_verify_conn.return_value = True
+        mock_async_verify_conn.return_value = VerifyResult.OK
         mock_auth_config = MagicMock()
         mock_auth_config.fingerprint = "finger"
         mock_auth_config.access_token = "token"
@@ -644,16 +643,20 @@ class TestOnyxFlowHandler:
         mock_async_show_form,
         mock_async_verify_conn,
     ):
-        """Mutmut: errors[CONF_ACCESS_TOKEN] = 'invalid_connection_data' -> None."""
-        mock_async_verify_conn.return_value = False
+        for result, error in (
+            (VerifyResult.UNREACHABLE, "cannot_connect"),
+            (VerifyResult.UNAUTHORIZED, "invalid_auth"),
+            (VerifyResult.VERSION_UNSUPPORTED, "api_version_unsupported"),
+        ):
+            mock_async_verify_conn.return_value = result
 
-        config_flow = OnyxFlowHandler()
-        config_flow.hass = MagicMock()
-        await config_flow.async_step_user(
-            {CONF_FINGERPRINT: "finger", CONF_ACCESS_TOKEN: "token"}
-        )
-        _, kwargs = mock_async_show_form.call_args
-        assert kwargs["errors"][CONF_ACCESS_TOKEN] == "invalid_connection_data"
+            config_flow = OnyxFlowHandler()
+            config_flow.hass = MagicMock()
+            await config_flow.async_step_user(
+                {CONF_FINGERPRINT: "finger", CONF_ACCESS_TOKEN: "token"}
+            )
+            _, kwargs = mock_async_show_form.call_args
+            assert kwargs["errors"] == {"base": error}
 
     @pytest.mark.asyncio
     async def test_async_step_options_initialises_options_as_dict(self):
@@ -678,7 +681,6 @@ class TestOnyxFlowHandler:
                     CONF_ADDITIONAL_DELAY: 0,
                     CONF_CLOSED_TOLERANCE: 3,
                     CONF_MOVING_TIMEOUT: 180,
-                    CONF_FORCE_UPDATE: False,
                     CONF_INTERPOLATION_FREQUENCY: 5000,
                 }
             )
@@ -722,7 +724,6 @@ class TestOnyxFlowHandler:
                 CONF_ADDITIONAL_DELAY: 1000,
                 CONF_CLOSED_TOLERANCE: closed_tolerance,
                 CONF_MOVING_TIMEOUT: moving_timeout,
-                CONF_FORCE_UPDATE: False,
                 CONF_INTERPOLATION_FREQUENCY: 5,
             }
         )
@@ -755,7 +756,6 @@ class TestOnyxOptionsFlowHandler:
             CONF_SCAN_INTERVAL: 10,
             CONF_MIN_DIM_DURATION: 0,
             CONF_MAX_DIM_DURATION: 100,
-            CONF_FORCE_UPDATE: False,
             CONF_INTERPOLATION_FREQUENCY: 5000,
         }
         entry.options.return_value = value
@@ -768,7 +768,7 @@ class TestOnyxOptionsFlowHandler:
         assert "min_dim_duration" in form["data_schema"].schema
         assert "additional_delay" in form["data_schema"].schema
         assert "scan_interval" in form["data_schema"].schema
-        assert "force_update" in form["data_schema"].schema
+        assert CONF_FORCE_UPDATE not in form["data_schema"].schema
 
     @patch("homeassistant.core.HomeAssistant")
     @pytest.mark.asyncio
@@ -781,7 +781,6 @@ class TestOnyxOptionsFlowHandler:
             CONF_SCAN_INTERVAL: 10,
             CONF_MIN_DIM_DURATION: 0,
             CONF_MAX_DIM_DURATION: 100,
-            CONF_FORCE_UPDATE: False,
             CONF_INTERPOLATION_FREQUENCY: 5000,
         }
         options_flow = OnyxOptionsFlowHandler()
@@ -791,7 +790,6 @@ class TestOnyxOptionsFlowHandler:
             CONF_MIN_DIM_DURATION: 10,
             CONF_MAX_DIM_DURATION: 10,
             CONF_ADDITIONAL_DELAY: 10,
-            CONF_FORCE_UPDATE: False,
         }
         mock_hass.config_entries.async_get_entry.return_value = entry
         form = await options_flow.async_step_init(user_input)
@@ -851,9 +849,7 @@ class TestGetOptionsSchema:
         assert v_scan.config["min"] == 0
         assert v_scan.config["max"] == 720
 
-        assert CONF_FORCE_UPDATE in field_map
-        k_force, _ = field_map[CONF_FORCE_UPDATE]
-        assert k_force.default() is False
+        assert CONF_FORCE_UPDATE not in field_map
 
     def test_get_options_schema_custom_data(self):
         custom = {
@@ -865,7 +861,6 @@ class TestGetOptionsSchema:
             CONF_MIN_DIM_DURATION: 100,
             CONF_MAX_DIM_DURATION: 3000,
             CONF_SCAN_INTERVAL: 15,
-            CONF_FORCE_UPDATE: True,
         }
         schema = _get_options_schema(custom)
         field_map = {k.schema: (k, v) for k, v in schema.schema.items()}
@@ -877,7 +872,6 @@ class TestGetOptionsSchema:
         assert field_map[CONF_MIN_DIM_DURATION][0].default() == 100
         assert field_map[CONF_MAX_DIM_DURATION][0].default() == 3000
         assert field_map[CONF_SCAN_INTERVAL][0].default() == 15
-        assert field_map[CONF_FORCE_UPDATE][0].default() is True
 
 
 def test_flow_version_matches_migration():

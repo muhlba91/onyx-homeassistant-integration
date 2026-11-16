@@ -5,7 +5,6 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
-    CONF_FORCE_UPDATE,
     CONF_SCAN_INTERVAL,
     Platform,
 )
@@ -66,15 +65,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: OnyxConfigEntry) -> bool
     max_dim_duration = entry.options.get(
         CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION
     )
-    force_update = entry.options.get(CONF_FORCE_UPDATE, False)
 
     _LOGGER.debug("setting up %s integration with fingerprint %s", DOMAIN, fingerprint)
-    if force_update:
-        _LOGGER.warning(
-            "Disabling partial updates. "
-            "This may lead to a higher amount of API calls to Hella, "
-            "and performance impacts. It is advised to not enable this option."
-        )
 
     onyx_config = Configuration(
         scan_interval,
@@ -84,7 +76,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: OnyxConfigEntry) -> bool
         interpolation_frequency,
         closed_tolerance,
         moving_timeout,
-        force_update,
         fingerprint,
         token,
         local_address,
@@ -99,11 +90,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: OnyxConfigEntry) -> bool
         config=onyx_config,
         timezone=onyx_timezone,
     )
-
-    event_task = hass.async_create_background_task(
-        onyx_api.events(force_update), name=f"{DOMAIN}_{entry.entry_id}_events"
-    )
-    entry.async_on_unload(event_task.cancel)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
@@ -142,7 +128,6 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
             CONF_MAX_DIM_DURATION: old_data.get(
                 CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION
             ),
-            CONF_FORCE_UPDATE: old_data.get(CONF_FORCE_UPDATE, False),
         }
         hass.config_entries.async_update_entry(
             config_entry, data=new_data, options=new_options, version=2, minor_version=1
@@ -167,7 +152,6 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
             CONF_MAX_DIM_DURATION: old_data.get(
                 CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION
             ),
-            CONF_FORCE_UPDATE: old_data.get(CONF_FORCE_UPDATE, False),
         }
         hass.config_entries.async_update_entry(
             config_entry, data=new_data, options=new_options, version=3, minor_version=1

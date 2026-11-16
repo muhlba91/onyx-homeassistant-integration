@@ -1,8 +1,6 @@
 """The ONYX light entity."""
 
 import logging
-import time
-from datetime import timedelta
 from math import ceil
 from typing import Any
 
@@ -12,19 +10,12 @@ from homeassistant.components.light import (
     LightEntity,
     LightEntityFeature,
 )
-from homeassistant.core import callback
-from homeassistant.helpers.event import (
-    async_track_point_in_utc_time,
-)
-from homeassistant.util import utcnow
-from onyx_client.data.animation_value import AnimationValue
 from onyx_client.data.numeric_value import NumericValue
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
 from ..api_connector import APIConnector
 from ..sensors.onyx_entity import OnyxEntity
-from ..util.interpolation import interpolate
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,18 +33,6 @@ class OnyxLight(OnyxEntity, LightEntity):
     ):
         """Initialize a light entity."""
         super().__init__(api, timezone, name, device_type, uuid)
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        animation = self._device.actual_brightness.animation
-        if animation is not None and len(animation.keyframes) > 0:
-            _LOGGER.debug(
-                "received animation for light %s: %s",
-                self._uuid,
-                animation,
-            )
-            self._start_dim_device(animation)
-        super()._handle_coordinator_update()
 
     @property
     def icon(self) -> str:
@@ -80,7 +59,7 @@ class OnyxLight(OnyxEntity, LightEntity):
         """Return the color mode of the light."""
         return (
             ColorMode.ONOFF
-            if self._device.device_type == DeviceType.BASIC_LIGHT
+            if self._type == DeviceType.BASIC_LIGHT
             else ColorMode.BRIGHTNESS
         )
 
@@ -94,22 +73,16 @@ class OnyxLight(OnyxEntity, LightEntity):
     def brightness(self) -> int | None:
         """Return the brightness of this light between 0..255."""
         brightness = self._actual_brightness
-        _LOGGER.debug(
-            "received brightness for light %s: %s",
-            self._uuid,
-            brightness,
-        )
         if not brightness or not brightness.maximum:
             return 0
-        return brightness.value / brightness.maximum * 255
+        return round(self._effective_brightness() / brightness.maximum * 255)
 
     @property
     def is_on(self) -> bool | None:
         """Return whether the light is turned on."""
-        brightness = self._actual_brightness
-        if not brightness:
+        if not self._actual_brightness:
             return None
-        return brightness.value > 0
+        return self._effective_brightness() > 0
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turns the light on."""
@@ -124,14 +97,12 @@ class OnyxLight(OnyxEntity, LightEntity):
                 Action.LIGHT_ON,
             )
         else:
+            brightness = self._actual_brightness
             target_max = (
-                self._device.actual_brightness.maximum
-                if self._device.actual_brightness
-                and self._device.actual_brightness.maximum
-                else 255
+                brightness.maximum if brightness and brightness.maximum else 255
             )
             hella_brightness = ceil(brightness_attribute / 255 * target_max)
-            dim_duration = self._get_dim_duration(hella_brightness)
+            dim_duration = self._get_dim_duration(hella_brightness, target_max)
             _LOGGER.debug(
                 "setting brightness for light %s: %s (%s ms)",
                 self._uuid,
@@ -154,149 +125,27 @@ class OnyxLight(OnyxEntity, LightEntity):
         )
         await self.api.send_device_command_action(self._uuid, Action.LIGHT_OFF)
 
-    # pragma: no mutate start
-    def _start_dim_device(self, animation: AnimationValue):
-        """Start the update loop."""
-        if not animation.keyframes:
-            return
-
-        usable_keyframes = [kf for kf in animation.keyframes if kf is not None]
-        if not usable_keyframes:
-            return
-
-        keyframe = usable_keyframes[-1]
-
-        utc_now = utcnow()
-        current_time = time.time()
-        end_time = (
-            animation.start
-            + keyframe.duration
-            + keyframe.delay
-            + self.api.config.additional_delay / 1000
-        )
-        time_delta = timedelta(seconds=end_time - current_time)
-        is_dimming = current_time < end_time
-
-        _LOGGER.debug(
-            "dimming device %s with current_time %s < end_time %s (delta: %s): %s",
-            self._uuid,
-            current_time,
-            end_time,
-            time_delta,
-            is_dimming,
-        )
-
-        if is_dimming:
-            interpolation_frequency = self.api.config.interpolation_frequency
-            if interpolation_frequency > 0:
-                for slice in range(
-                    int(time_delta.total_seconds() // interpolation_frequency)
-                ):
-                    utc_intermediate_time = utc_now + timedelta(
-                        seconds=slice * interpolation_frequency
-                    )
-                    async_track_point_in_utc_time(
-                        self.hass,
-                        self._end_dim_device,
-                        utc_intermediate_time,
-                    )
-                    _LOGGER.debug(
-                        "scheduled intermediate end_dim_device for device %s at %s",
-                        self._uuid,
-                        utc_intermediate_time,
-                    )
-            utc_end_time = utc_now + time_delta
-            async_track_point_in_utc_time(
-                self.hass,
-                self._end_dim_device,
-                utc_end_time,
-            )
-            _LOGGER.debug(
-                "scheduled end_dim_device for device %s at %s",
-                self._uuid,
-                utc_end_time,
-            )
-        else:
-            self._end_dim_device()
-
-    def _end_dim_device(self, *args: Any):
-        """Interpolate the brightness of a dimming device, or set the end value."""
-        _LOGGER.debug("ending dimming device %s", self._uuid)
-
-        animation = self._actual_brightness.animation
-        usable_keyframes = (
-            [kf for kf in animation.keyframes if kf is not None]
-            if animation is not None and animation.keyframes
-            else []
-        )
-        keyframe = usable_keyframes[-1] if usable_keyframes else None
-        start_time = (
-            (animation.start + keyframe.delay)
-            if animation is not None and keyframe is not None
-            else None
-        )
-        end_time = (
-            (start_time + keyframe.duration)
-            if animation is not None and keyframe is not None
-            else None
-        )
-
-        current_time = time.time()
-
-        if end_time is not None and current_time > end_time:
-            # ONYX keeps reporting the start value together with the animation
-            # and sends no extra event when it ends: take the end value.
-            target = self._device.target_brightness
-            end_value = (
-                target.value
-                if target is not None and target.value is not None
-                else keyframe.value
-            )
-            if end_value is not None:
-                self._device.actual_brightness.value = end_value
-            self.schedule_update_ha_state()
-        elif (
-            start_time is not None
-            and current_time > start_time
-            and keyframe.duration > 0
-        ):
-            update = interpolate(
-                animation.current_value,
-                self._device.target_brightness.value,
-                keyframe.duration,
-                current_time,
-                start_time,
-            )
-            _LOGGER.debug(
-                "interpolating actual_brightness update for device %s: %d",
-                self._uuid,
-                update,
-            )
-            self._device.actual_brightness.value = update
-
-            self.schedule_update_ha_state()
-
-    # pragma: no mutate end
+    @property
+    def _animated_values(self) -> list[NumericValue | None]:
+        return [self._actual_brightness]
 
     @property
-    def _actual_brightness(self) -> NumericValue:
-        """Get the actual brightness."""
-        brightness = self._device.actual_brightness
-        return NumericValue(
-            0 if brightness.value is None else brightness.value,
-            brightness.minimum,
-            brightness.maximum,
-            brightness.read_only,
-            brightness.animation,
-        )
+    def _actual_brightness(self) -> NumericValue | None:
+        device = self._device
+        return device.actual_brightness if device else None
 
-    def _get_dim_duration(self, target) -> int:
-        """Get the dim duration."""
+    def _effective_brightness(self) -> float:
+        """The brightness at the current ONYX.CENTER time; unknown is 0."""
         brightness = self._actual_brightness
+        value = brightness.effective_value(self.api.now()) if brightness else None
+        return 0 if value is None else value
+
+    def _get_dim_duration(self, target: int, maximum: int) -> int:
+        """Get the dim duration."""
         duration = abs(
             int(
-                abs(target - brightness.value)
-                / brightness.maximum
+                abs(target - self._effective_brightness())
+                / maximum
                 * (self.api.config.max_dim_duration - self.api.config.min_dim_duration)
                 + self.api.config.min_dim_duration
             )

@@ -47,13 +47,10 @@ async def async_setup_entry(
         # we only support shutters, lights, weather stations and tags
         for device_id, device in filter(
             lambda item: (
-                item[1].device_type is not None
-                and (
-                    item[1].device_type.is_shutter()
-                    or item[1].device_type.is_light()
-                    or item[1].device_type == DeviceType.WEATHER
-                    or item[1].device_type.is_tag()
-                )
+                item[1].device_type.is_shutter()
+                or item[1].device_type.is_light()
+                or item[1].device_type == DeviceType.WEATHER
+                or item[1].device_type.is_tag()
             ),
             api.devices.items(),
         )
@@ -63,11 +60,8 @@ async def async_setup_entry(
         _collect_weather_sensors(api, timezone, device, device_id)
         for device_id, device in filter(
             lambda item: (
-                item[1].device_type is not None
-                and (
-                    item[1].device_type == DeviceType.WEATHER
-                    or item[1].device_type.is_tag()
-                )
+                item[1].device_type == DeviceType.WEATHER
+                or item[1].device_type.is_tag()
             ),
             api.devices.items(),
         )
@@ -75,7 +69,7 @@ async def async_setup_entry(
     sensors = [item for sublist in sensors for item in sublist]
 
     _LOGGER.info("adding %s hella_onyx sensor entities", len(sensors))
-    async_add_entities(sensors, True)
+    async_add_entities(sensors)
 
 
 def _collect_weather_sensors(

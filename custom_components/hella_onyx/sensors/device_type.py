@@ -26,6 +26,5 @@ class OnyxSensorDeviceType(OnyxEntity, SensorEntity):
     @property
     def native_value(self) -> str | None:
         """Return the current value."""
-        if self._device.device_type is not None:
-            return self._device.device_type.string()
-        return None
+        device = self._device
+        return device.device_type.string() if device else None

@@ -10,7 +10,7 @@
 
 This component creates an integration that provides the following entities to control [Hella's ONYX.CENTER](https://www.hella.info/) via Home Assistant:
 
-- **raffstore/shutter** entities
+- **raffstore/shutter/screen** entities
 - **(dimmable) light** entities
 - **weather station** sensor entities
 - **tag** (ONYX.TAG sun / temperature) sensor entities
@@ -24,23 +24,23 @@ interpretation of values diverges in a few aspects.
 
 Therefore, a few limitations are imposed on/by this integration:
 
-| Limitation | Description| Bound By |
-|------------|------------|----------|
+| Limitation | Description | Bound By |
+| --- | --- | --- |
 | Shutter Position | Home Assistant takes the position 0 as closed and 100 as open, Hella the opposite. | Home Assistant |
 | Tilt Position | Home Assistant takes the position 0 as closed and 100 as open, Hella's values range between 0-90 and 0-180. | Home Assistant / Hella |
 | Light Brightness | Home Assistant takes the dim value 0 as off and 100 as on, Hella's values range between 0-65535. | Home Assistant / Hella |
 
 ### Realtime Updates / Streaming API
 
-Since `v2` of the ONYX API, a dedicated event streaming endpoint is available which pushed occurring events from the
-ONYX.CENTER to all clients; however, pushes only include partial updates.
+The integration keeps a connection to the ONYX API's event stream open, which sends the complete state on connect and
+changes afterwards. Positions and brightness of moving devices are calculated from the reported animations.
+Every scan interval, the stream is reconnected to replace the state with a fresh one from the ONYX.CENTER. A shorter
+scan interval corrects deviations sooner but reconnects more often; 30-180 minutes are suggested.
 
-The integration makes use of this and keeps a connection open to the ONYX API server to update the devices in
-near-realtime. Since exceptions can occur, and the endpoint only pushes partial updates, all device states are updated
-periodically as well to ensure current states are available and correct. Please ensure a proper update interval,
-suggested is anywhere between 30-180 minutes.
+This integration requires API `v6`. If your ONYX.CENTER does not support it, update its firmware.
 
-This integration uses API `v3`.
+Devices removed from the ONYX.CENTER become unavailable; remove them from Home Assistant manually. New devices are
+detected automatically; the integration reloads to add their entities.
 
 ---
 
@@ -63,19 +63,18 @@ The integration offers the following possibilities:
 Add it from the **Integrations** menu, set the configuration, and you're good to go.
 
 | Configuration Key | Description |
-|-------------------|-------------|
+| --- | --- |
 | API Code | The code retrieved by the ONYX app when allowing a new client to connect. |
 | Fingerprint | Your ONYX.CENTER fingerprint. |
 | Access Token | The access token. |
 | Local Address | Your ONYX.CENTER local IP address. |
-| Interpolation Frequency | Frequency (in ms) to interpolate the position or light intensity while moving. A lower value results in smoother transitions but more updates. Set to 0 to disable interpolation. (Default: 5000) |
-| Additional Delay for forced STOP | Additional delay (in ms) to wait before sending a forced STOP command to update the shutter position. (Default: 1000) |
+| Interpolation Frequency | Frequency (in s) to update the position or light intensity while moving. A lower value results in smoother transitions but more updates. Set to 0 to disable interpolation. (Default: 5) |
+| Additional Moving Delay | Additional time (in ms) after the end of a movement or dimming during which the device is still shown as moving. (Default: 1000) |
 | \[Shutters] Closed Tolerance | Tolerance (in %) within which a shutter counts as closed, as shutters often stop a few percent short of fully closed. (Default: 3) |
-| \[Shutters] Moving Timeout | Maximum time (in s) a shutter may be shown as opening/closing. After that, a STOP is sent to retrieve the real values and the shutter is shown as idle again. Increase it for large or slow shutters. (Default: 180) |
+| \[Shutters] Moving Timeout | Maximum time (in s) a shutter is shown as opening/closing after a command if the ONYX.CENTER reports no movement. (Default: 180) |
 | \[Lights] Minimum Dim Duration | The minimum dim duration to use when dimming a light. (Default: 200) |
-| \[Lights] Maximum Dim Duration | The maximum dim duration to use when dimming a light. (Default: 200) |
-| Scan Interval | Interval for polling for updates. This is used as a fallback if near realtime updates are failing and can be set to a higher value. |
-| Disable partial updates? | The integration relies on the streaming API. Hence, only partial device data will be retrieved. Enable this option to always retrieve the full device data. *Attention*: this may lead to more API requests and is discouraged. |
+| \[Lights] Maximum Dim Duration | The maximum dim duration to use when dimming a light. (Default: 2000) |
+| Scan Interval | Interval (in min) to reconnect the event stream and replace the state with a fresh one. (Default: 60) |
 
 ### Authentication
 
@@ -95,9 +94,9 @@ If a local address is provided, the integration will always try to connect to th
 Once configured, the integration creates entities for:
 
 | Entity | Description |
-|--------|-------------|
-| Cover | Manage the shutter. ([API Reference](https://developers.home-assistant.io/docs/core/entity/cover/)) |
-| Light | Manage the (dimmable) light. ([API Reference](https://developers.home-assistant.io/docs/core/entity/light/)) |
+| --- | --- |
+| Cover | Manage the shutter, raffstore, awning, pergola or screen. ([API Reference](https://developers.home-assistant.io/docs/core/entity/cover/)) |
+| Light | Manage the (dimmable) light. RGBW lights are controlled by brightness only. ([API Reference](https://developers.home-assistant.io/docs/core/entity/light/)) |
 | Sensor (Device Type) | The device type of the ONYX device. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Humidity) | The humidity of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
 | Sensor (Weather Temperature) | The temperature of the weather sensor. ([API Reference](https://developers.home-assistant.io/docs/core/entity/sensor/)) |
@@ -112,6 +111,11 @@ The **following ONYX devices** are **only community tested** due to the lack of 
 - Light (thank you [@clostermannshof](https://github.com/clostermannshof))
 - Weather Station (thank you [@mrogin-technic](https://github.com/mrogin-technic))
 - Tags (sun, temperature)
+
+The following ONYX devices are **experimental** as they are untested; please report your experience in an issue:
+
+- Screens
+- RGBW lights
 
 ---
 

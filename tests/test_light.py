@@ -48,8 +48,8 @@ async def test_async_setup_entry(mock_hass):
         "none": Shutter(
             "none",
             "name",
-            None,
-            None,
+            DeviceType.UNKNOWN,
+            DeviceMode(DeviceType.UNKNOWN),
             [],
         ),
     }
@@ -58,7 +58,7 @@ async def test_async_setup_entry(mock_hass):
 
     await async_setup_entry(mock_hass, config_entry, async_add_entries.call)
     assert async_add_entries.called_async_add_entities
-    assert async_add_entries.update_before_add is True
+    assert async_add_entries.update_before_add is False
     assert len(async_add_entries.data) == 1
     entity = async_add_entries.data[0]
     assert entity._uuid == "light"
@@ -109,7 +109,7 @@ class AsyncAddEntries:
         self.data = []
         self.update_before_add = None
 
-    def call(self, data, boolean):
+    def call(self, data, boolean=False):
         self.data = data
         self.called_async_add_entities = True
         self.update_before_add = boolean
