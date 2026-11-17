@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [14.0.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v14.0.0...v14.0.1) (2026-11-17)
+
+
+### Bug Fixes
+
+* retry failed commands and keep access tokens out of logs ([0ebefe6](https://github.com/muhlba91/onyx-homeassistant-integration/commit/0ebefe6809c750564dd16a07e310df3c4764b51b))
+
 ## [14.0.0](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v13.2.0...v14.0.0) (2026-11-16)
 
 
