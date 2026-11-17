@@ -45,7 +45,6 @@ norecursedirs = [".git"]
 filterwarnings = ["ignore:.*asyncio.get_event_loop_policy.*:DeprecationWarning"]
 
 [tool.coverage.run]
-relative_files = true
 source = ["custom_components"]
 
 [tool.coverage.report]
@@ -56,6 +55,8 @@ exclude_lines = [
     "main()",
     "parser\\..",
     "argparse\\..",
+    # log statements (see [tool.mutmut])
+    "_LOGGER\\.",
 ]
 fail_under = 95
 show_missing = true
@@ -64,6 +65,9 @@ show_missing = true
 source_paths = ["custom_components/hella_onyx"]
 pytest_add_cli_args = ["--no-cov"]
 pytest_add_cli_args_test_selection = ["tests"]
+# log statements are not behaviour: the coverage exclusion in [tool.coverage.report] makes mutmut skip
+# each whole (multi-line) _LOGGER call (needs absolute paths: no relative_files in [tool.coverage.run])
+mutate_only_covered_lines = true
 do_not_mutate_patterns = [
     "_LOGGER\\.",
     ".*__str__.*",
