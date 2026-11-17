@@ -1,6 +1,7 @@
 """Test for the ONYX Shutter Entity."""
 
-from unittest.mock import MagicMock, patch
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant.components.cover import (
@@ -9,11 +10,13 @@ from homeassistant.components.cover import (
     CoverDeviceClass,
     CoverEntityFeature,
 )
+from onyx_client.data.device_command import DeviceCommand
 from onyx_client.data.device_mode import DeviceMode
 from onyx_client.device.shutter import Shutter
 from onyx_client.enum.action import Action
 from onyx_client.enum.device_type import DeviceType
 
+from custom_components.hella_onyx.api_connector import APIConnector
 from custom_components.hella_onyx.cover import OnyxShutter
 from custom_components.hella_onyx.enum.moving_state import MovingState
 
@@ -253,6 +256,30 @@ class TestOnyxShutter:
         with pytest.raises(RuntimeError):
             await entity.async_set_cover_tilt_position(**{ATTR_TILT_POSITION: 0})
         assert not entity.is_opening
+
+    async def test_state_kept_while_command_retries(self, api, entity, device):
+        """The requested state shows during the backoff of the real retry."""
+        states = []
+
+        async def backoff(_delay):
+            states.append(entity.is_closing)
+
+        client = MagicMock()
+        client.send_command = AsyncMock(side_effect=[False, True])
+        # the real retry of the connector, without a Home Assistant instance
+        connector = SimpleNamespace(_client=lambda: client)
+
+        async def send(uuid, action):
+            await APIConnector._send_command(
+                connector, uuid, DeviceCommand(action=action)
+            )
+
+        api.send_device_command_action.side_effect = send
+        with patch("custom_components.hella_onyx.api_connector.asyncio.sleep", backoff):
+            await entity.async_close_cover()
+        assert client.send_command.await_count == 2
+        assert states == [True]
+        assert entity.is_closing
 
     async def test_open_close_tilt_not_supported(self, entity):
         with pytest.raises(NotImplementedError):

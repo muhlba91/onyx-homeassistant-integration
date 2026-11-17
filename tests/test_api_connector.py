@@ -1,15 +1,18 @@
 """Test for the ONYX API Connector."""
 
 import asyncio
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from aiohttp import ClientResponseError
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError
+from aiohttp import ClientConnectionError, ClientResponseError, InvalidURL
+from homeassistant.exceptions import (
+    ConfigEntryAuthFailed,
+    ConfigEntryError,
+    HomeAssistantError,
+)
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from onyx_client.client import OnyxClient
-from onyx_client.data.automation import Automation
-from onyx_client.data.date_information import DateInformation
 from onyx_client.data.update_status import UpdateStatus
 from onyx_client.enum.action import Action
 from onyx_client.enum.verify_result import VerifyResult
@@ -22,15 +25,16 @@ from onyx_client.stream.events import (
     GroupsChanged,
     Pulse,
     Resynced,
-    Snapshot,
     UpdateChanged,
 )
-from onyx_client.utils.mapper import init_device
 
 from custom_components.hella_onyx.api_connector import APIConnector, CommandException
 from custom_components.hella_onyx.configuration import Configuration
 from custom_components.hella_onyx.const import (
     AUTOMATION_CONTEXT,
+    COMMAND_RETRY_DELAY_MAX,
+    COMMAND_RETRY_DELAY_MIN,
+    COMMAND_TIMEOUT,
     DEFAULT_ADDITIONAL_DELAY,
     DEFAULT_CLOSED_TOLERANCE,
     DEFAULT_INTERPOLATION_FREQUENCY,
@@ -43,54 +47,7 @@ from custom_components.hella_onyx.const import (
     UPDATE_CONTEXT,
 )
 
-MODULE = "custom_components.hella_onyx.api_connector"
-
-
-def shutter(identifier: str, position: int = 0):
-    return init_device(
-        identifier,
-        {
-            "name": identifier,
-            "type": "rollershutter",
-            "properties": {"actual_position": {"value": position, "maximum": 100}},
-        },
-    )
-
-
-def automation(identifier: str, enabled: bool = True):
-    return Automation(identifier, identifier, None, "wind", enabled)
-
-
-def snapshot(*devices, automations=()):
-    return Snapshot(
-        {device.identifier: device for device in devices},
-        {"group": Group("group", "Group", ["a"])},
-        list(automations),
-        UpdateStatus("2.13.4"),
-    )
-
-
-class FakeClient:
-    """A client streaming the given events, then staying connected."""
-
-    def __init__(self, events=(), error=None):
-        self.events = list(events)
-        self.error = error
-        self.verify = AsyncMock(return_value=VerifyResult.OK)
-        self.resync = MagicMock()
-        self.close = AsyncMock()
-        self.now = MagicMock(return_value=1.5)
-        self.send_command = AsyncMock(return_value=True)
-        self.date_information = AsyncMock(
-            return_value=DateInformation(0, "Europe/Vienna", 0)
-        )
-
-    async def stream(self):
-        for event in self.events:
-            yield event
-        if self.error is not None:
-            raise self.error
-        await asyncio.Event().wait()
+from .helpers import MODULE, FakeClient, automation, shutter, snapshot
 
 
 class TestAPIConnector:
@@ -657,10 +614,183 @@ class TestAPIConnector:
         assert identifier == "id"
         assert command.properties == {"target_position": 1}
 
+    def test_command_exception_is_home_assistant_error(self):
+        """Automations can only continue on errors of this type."""
+        assert issubclass(CommandException, HomeAssistantError)
+
     async def test_send_device_command_failed(self, api, client):
         client.send_command.return_value = False
-        with pytest.raises(CommandException) as ex:
+        with patch("custom_components.hella_onyx.api_connector.asyncio.sleep"):
+            with pytest.raises(CommandException) as ex:
+                await api.send_device_command_action("id", Action.CLOSE)
+            assert ex.value.uuid == "id"
+            with pytest.raises(CommandException):
+                await api.send_device_command_properties("id", {})
+        # one retry each, never more
+        assert client.send_command.await_count == 4
+
+    async def test_send_device_command_retries_once(self, api, client):
+        client.send_command.side_effect = [False, True]
+        with patch("custom_components.hella_onyx.api_connector.asyncio.sleep") as sleep:
             await api.send_device_command_action("id", Action.CLOSE)
-        assert ex.value.uuid == "id"
-        with pytest.raises(CommandException):
-            await api.send_device_command_properties("id", {})
+        assert client.send_command.await_count == 2
+        # same command both times, after a short jittered backoff
+        first, second = client.send_command.await_args_list
+        assert first.args == second.args
+        delay = sleep.await_args.args[0]
+        assert COMMAND_RETRY_DELAY_MIN <= delay <= COMMAND_RETRY_DELAY_MAX
+
+    @pytest.mark.parametrize("error", [TimeoutError(), ClientConnectionError()])
+    async def test_send_device_command_retries_on_error(self, api, client, error):
+        client.send_command.side_effect = [error, True]
+        with patch("custom_components.hella_onyx.api_connector.asyncio.sleep"):
+            await api.send_device_command_properties("id", {"target_position": 1})
+        assert client.send_command.await_count == 2
+
+    async def test_send_device_command_error_twice(self, api, client):
+        client.send_command.side_effect = TimeoutError()
+        with (
+            patch("custom_components.hella_onyx.api_connector.asyncio.sleep"),
+            pytest.raises(CommandException) as ex,
+        ):
+            await api.send_device_command_action("id", Action.CLOSE)
+        assert isinstance(ex.value.__cause__, TimeoutError)
+        assert client.send_command.await_count == 2
+
+    async def test_send_device_command_no_retry_on_success(self, api, client):
+        with patch("custom_components.hella_onyx.api_connector.asyncio.sleep") as sleep:
+            await api.send_device_command_action("id", Action.CLOSE)
+        assert client.send_command.await_count == 1
+        sleep.assert_not_called()
+
+    async def test_send_device_command_retry_warns(self, api, client, caplog):
+        client.send_command.side_effect = [False, True]
+        with patch("custom_components.hella_onyx.api_connector.asyncio.sleep"):
+            await api.send_device_command_action("id", Action.CLOSE)
+        assert "retrying" in caplog.text
+        assert "see the logged HTTP status" in caplog.text
+
+    async def test_send_device_command_jitter_bounds(self, api, client):
+        client.send_command.side_effect = [False, True]
+        with (
+            patch(f"{MODULE}.asyncio.sleep") as sleep,
+            patch(f"{MODULE}.random.uniform", return_value=0.7) as uniform,
+        ):
+            await api.send_device_command_action("id", Action.CLOSE)
+        uniform.assert_called_once_with(
+            COMMAND_RETRY_DELAY_MIN, COMMAND_RETRY_DELAY_MAX
+        )
+        sleep.assert_awaited_once_with(0.7)
+
+    async def test_send_device_command_sleeps_once_when_both_fail(self, api, client):
+        client.send_command.return_value = False
+        with (
+            patch(f"{MODULE}.asyncio.sleep") as sleep,
+            pytest.raises(CommandException),
+        ):
+            await api.send_device_command_action("id", Action.CLOSE)
+        sleep.assert_awaited_once()
+
+    async def test_send_device_command_exception_message(self, api, client):
+        client.send_command.return_value = False
+        with (
+            patch(f"{MODULE}.asyncio.sleep"),
+            pytest.raises(CommandException) as ex,
+        ):
+            await api.send_device_command_action("id", Action.CLOSE)
+        assert str(ex.value) == ("ONYX_ACTION_ERROR: rejected by the ONYX API")
+
+    async def test_send_device_command_stale_cause_is_dropped(self, api, client):
+        """A timeout followed by a rejection is not the cause of the rejection."""
+        client.send_command.side_effect = [TimeoutError(), False]
+        with (
+            patch(f"{MODULE}.asyncio.sleep"),
+            pytest.raises(CommandException) as ex,
+        ):
+            await api.send_device_command_action("id", Action.CLOSE)
+        assert ex.value.__cause__ is None
+        assert "rejected by the ONYX API" in str(ex.value)
+
+    async def test_send_device_command_cancelled_attempt_propagates(self, api, client):
+        client.send_command.side_effect = asyncio.CancelledError()
+        with (
+            patch(f"{MODULE}.asyncio.sleep") as sleep,
+            pytest.raises(asyncio.CancelledError),
+        ):
+            await api.send_device_command_action("id", Action.CLOSE)
+        assert client.send_command.await_count == 1
+        sleep.assert_not_called()
+
+    async def test_send_device_command_cancelled_backoff_propagates(self, api, client):
+        client.send_command.return_value = False
+        with (
+            patch(f"{MODULE}.asyncio.sleep", side_effect=asyncio.CancelledError),
+            pytest.raises(asyncio.CancelledError),
+        ):
+            await api.send_device_command_action("id", Action.CLOSE)
+        assert client.send_command.await_count == 1
+
+    @pytest.mark.parametrize(
+        "error", [ValueError("bad"), json.JSONDecodeError("bad", "{", 0)]
+    )
+    async def test_send_device_command_value_error_not_retried(
+        self, api, client, error
+    ):
+        client.send_command.side_effect = error
+        with (
+            patch(f"{MODULE}.asyncio.sleep") as sleep,
+            pytest.raises(CommandException) as ex,
+        ):
+            await api.send_device_command_action("id", Action.CLOSE)
+        assert client.send_command.await_count == 1
+        sleep.assert_not_called()
+        assert ex.value.__cause__ is error
+        assert str(ex.value).startswith(f"ONYX_ACTION_ERROR: {type(error).__name__}")
+
+    async def test_send_device_command_timeout(self, api, client, caplog):
+        """A hanging attempt is cut after COMMAND_TIMEOUT and retried once."""
+
+        async def hang(*args):
+            await asyncio.Event().wait()
+
+        client.send_command.side_effect = hang
+        # fail fast instead of hanging if the attempt timeout is ever removed
+        async with asyncio.timeout(2):
+            with (
+                patch(f"{MODULE}.COMMAND_TIMEOUT", 0.01),
+                patch(f"{MODULE}.asyncio.sleep"),
+                pytest.raises(CommandException) as ex,
+            ):
+                await api.send_device_command_action("id", Action.CLOSE)
+        assert client.send_command.await_count == 2
+        assert isinstance(ex.value.__cause__, TimeoutError)
+        assert str(ex.value) == "ONYX_ACTION_ERROR: timed out after 0.01 s"
+        assert caplog.text.count("retrying") == 1
+
+    async def test_send_device_command_client_timeout_keeps_description(
+        self, api, client
+    ):
+        """A TimeoutError raised by the client is not our attempt timeout."""
+        client.send_command.side_effect = TimeoutError()
+        with (
+            patch(f"{MODULE}.asyncio.sleep"),
+            pytest.raises(CommandException) as ex,
+        ):
+            await api.send_device_command_action("id", Action.CLOSE)
+        assert str(ex.value) == "ONYX_ACTION_ERROR: TimeoutError"
+
+    async def test_send_device_command_invalid_url_not_retried(self, api, client):
+        """InvalidURL is a ClientError and a ValueError; it is deterministic."""
+        error = InvalidURL("bad url")
+        client.send_command.side_effect = error
+        with (
+            patch(f"{MODULE}.asyncio.sleep") as sleep,
+            pytest.raises(CommandException) as ex,
+        ):
+            await api.send_device_command_action("id", Action.CLOSE)
+        assert client.send_command.await_count == 1
+        sleep.assert_not_called()
+        assert ex.value.__cause__ is error
+
+    def test_command_timeout_value(self):
+        assert COMMAND_TIMEOUT == 10

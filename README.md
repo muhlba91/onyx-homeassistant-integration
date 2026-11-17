@@ -73,11 +73,11 @@ Add it from the **Integrations** menu, set the configuration, and you're good to
 | API Code | The code retrieved by the ONYX app when allowing a new client to connect. |
 | Fingerprint | Your ONYX.CENTER fingerprint. |
 | Access Token | The access token. |
-| Local Address | Your ONYX.CENTER local IP address. |
+| Local Address | Optional. The local IP address of your ONYX.CENTER; leave empty to use the cloud API (see Local API Access). |
 | Interpolation Frequency | Frequency (in s) to update the position or light intensity while moving. A lower value results in smoother transitions but more updates. Set to 0 to disable interpolation. (Default: 5) |
 | Additional Moving Delay | Additional time (in ms) after the end of a movement or dimming during which the device is still shown as moving. (Default: 1000) |
 | \[Shutters] Closed Tolerance | Tolerance (in %) within which a shutter counts as closed, as shutters often stop a few percent short of fully closed. (Default: 3) |
-| \[Shutters] Moving Timeout | Maximum time (in s) a shutter is shown as opening/closing after a command if the ONYX.CENTER reports no movement. (Default: 180) |
+| \[Shutters] Moving Timeout | Maximum time (in s) a shutter is shown as opening/closing after a command if the ONYX.CENTER reports no movement. (Minimum: 30, longer than the 21 s a command can take with its retry; Default: 180) |
 | \[Lights] Minimum Dim Duration | The minimum dim duration (in ms) to use when dimming a light. A range reported by the light itself overrides it. (Default: 200) |
 | \[Lights] Maximum Dim Duration | The maximum dim duration (in ms) to use when dimming a light. A range reported by the light itself overrides it. (Default: 2000) |
 | Scan Interval | Interval (in min) to reconnect the event stream and replace the state with a fresh one. (Default: 60) |
@@ -90,10 +90,29 @@ The integration will then exchange this code through the API to retrieve the fin
 
 ### Local API Access
 
+> **Recommended:** use the local API for better stability and resilience.
+> The cloud API depends on the Hella cloud relay and your internet connection; when the relay cannot reach your
+> ONYX.CENTER, the event stream drops and commands (e.g. shutters in automations) can fail.
+> The local API talks to the ONYX.CENTER directly and avoids this dependency.
+> Give the ONYX.CENTER a fixed address (e.g. a DHCP reservation) so that it stays reachable.
+> Note that the local API does not verify the TLS certificate of the ONYX.CENTER, as it is self-signed; use it only
+> in a network you trust.
+
 To use local API access, you need to provide the local IP address of your ONYX.CENTER device.
 Additionally, follow [Authentication](#authentication) to provide the necessary credentials.
 
 If a local address is provided, the integration will always try to connect to the local API.
+
+If the local address is empty, the integration uses the cloud API. At startup, the integration logs at info level
+whether it uses the `local` or the `cloud` API (`using the local API: ...`); check this line if you expect local access.
+The line contains the fingerprint and the local address, not the access token.
+To see it, enable info logs of the integration, e.g. in `configuration.yaml`:
+
+```yaml
+logger:
+  logs:
+    custom_components.hella_onyx: info
+```
 
 ## Entities
 
@@ -143,6 +162,19 @@ their switches. Removed automations become unavailable; remove them from Home As
 
 The API does not document how an RGBW light switches between color and white tone; the integration assumes that
 setting a color or a color temperature switches it. If your light behaves differently, please report it in an issue.
+
+A device command (cover, light, button, ...) which fails, for example because the ONYX API rejects it or the connection fails, is retried once after
+a short random delay of 0.5 to 1 second. Each attempt is cut after 10 seconds, so a command takes about 21 seconds at
+most. A malformed response (or an invalid URL) is not retried; it fails with an error, but logs no retry warning. Switching automations, installing an update and cancelling have no timeout and no retry. If the retry fails as well, the action fails with an error (a Home
+Assistant error, so automations and scripts can continue on error with `continue_on_error: true`). The integration
+logs one warning for the retry and one error for the final failure; the client additionally logs the HTTP status of a
+rejected request.
+
+A retry after a timeout can repeat a command the ONYX.CENTER already ran. Open, close, stop and position commands
+are idempotent; other commands may repeat their effect.
+
+The integration takes care not to write the access token to the log: log messages (not tracebacks) and the update
+errors Home Assistant logs are redacted, and the integration does not log the token or the request headers.
 
 Installing an update restarts the ONYX.CENTER, which can take several minutes: the devices cannot be controlled, and
 their entities become unavailable after 90 seconds without events until it is back. The update entity stays available

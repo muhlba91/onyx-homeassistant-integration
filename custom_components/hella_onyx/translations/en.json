@@ -24,7 +24,7 @@
         "data_description": {
           "code": "Either specify the API Code from the ONYX app, or a fingerprint & token pair!",
           "fingerprint": "Attention: if you specify an API code, fingerprint & token are ignored!",
-          "local_address": "Attention: if a local address is specified, the integration will not attempt to connect via the public API!"
+          "local_address": "Attention: if a local address is specified, the integration will not attempt to connect via the public API! Leave empty to use the cloud API."
         }
       },
       "options": {
@@ -38,6 +38,9 @@
           "min_dim_duration": "[Lights] Minimum Dim Duration [ms]",
           "max_dim_duration": "[Lights] Maximum Dim Duration [ms]",
           "scan_interval": "Scan Interval [min]"
+        },
+        "data_description": {
+          "local_address": "Leave empty to use the cloud API."
         }
       }
     }
@@ -55,6 +58,9 @@
           "min_dim_duration": "[Lights] Minimum Dim Duration [ms]",
           "max_dim_duration": "[Lights] Maximum Dim Duration [ms]",
           "scan_interval": "Scan Interval [min]"
+        },
+        "data_description": {
+          "local_address": "Leave empty to use the cloud API."
         }
       }
     }

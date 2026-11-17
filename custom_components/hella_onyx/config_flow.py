@@ -20,6 +20,7 @@ from onyx_client.authorizer import authorize
 from onyx_client.client import create
 from onyx_client.enum.verify_result import VerifyResult
 
+from .configuration import normalize_local_address
 from .const import (
     CONF_ADDITIONAL_DELAY,
     CONF_CLOSED_TOLERANCE,
@@ -88,10 +89,10 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
             fingerprint = user_input.get(CONF_FINGERPRINT)
             token = user_input.get(CONF_ACCESS_TOKEN)
             code = user_input.get(CONF_CODE)
-            local_address = user_input.get(CONF_LOCAL_ADDRESS)
+            local_address = normalize_local_address(user_input.get(CONF_LOCAL_ADDRESS))
 
             options.update(self._options)
-            options[CONF_LOCAL_ADDRESS] = local_address
+            _store_local_address(options, local_address)
             data.pop(CONF_LOCAL_ADDRESS, None)
 
             if code is not None:
@@ -162,7 +163,9 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
                     ),
                     vol.Optional(
                         CONF_LOCAL_ADDRESS,
-                        default=data.get(CONF_LOCAL_ADDRESS, vol.UNDEFINED),
+                        description={
+                            "suggested_value": options.get(CONF_LOCAL_ADDRESS)
+                        },
                     ): selector.TextSelector(
                         selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
                     ),
@@ -177,7 +180,7 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            local_address = user_input.get(CONF_LOCAL_ADDRESS)
+            local_address = normalize_local_address(user_input.get(CONF_LOCAL_ADDRESS))
             scan_interval = user_input[CONF_SCAN_INTERVAL]
             additional_delay = max(
                 MIN_ADDITIONAL_DELAY, user_input[CONF_ADDITIONAL_DELAY]
@@ -197,7 +200,6 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
             max_dim_duration = min(MAX_DIM_DURATION, user_input[CONF_MAX_DIM_DURATION])
 
             options = {
-                CONF_LOCAL_ADDRESS: local_address,
                 CONF_SCAN_INTERVAL: scan_interval,
                 CONF_INTERPOLATION_FREQUENCY: interpolation_frequency,
                 CONF_ADDITIONAL_DELAY: additional_delay,
@@ -206,8 +208,11 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
                 CONF_MIN_DIM_DURATION: min_dim_duration,
                 CONF_MAX_DIM_DURATION: max_dim_duration,
             }
+            _store_local_address(options, local_address)
 
             if not errors:
+                # the address is not a default, so a cleared one is not submitted
+                self._options.pop(CONF_LOCAL_ADDRESS, None)
                 self._options.update(options)
 
                 return self.async_create_entry(
@@ -225,7 +230,16 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
     async def async_step_reauth(self, data) -> FlowResult:
         """Handle initiation of re-authentication."""
         self._entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
-        return await self.async_step_user(data)
+        # the entry data holds no local address and all options must survive: seed
+        # both from the entry, so the credentials are verified against the stored
+        # address and the entry stays on the local API. The form still lets the
+        # user change or clear the address.
+        self._options = dict(self._entry.options)
+        user_input = dict(data)
+        stored_address = self._options.get(CONF_LOCAL_ADDRESS)
+        if stored_address:
+            user_input.setdefault(CONF_LOCAL_ADDRESS, stored_address)
+        return await self.async_step_user(user_input)
 
     async def _async_verify_conn(
         self, fingerprint, token, local_address
@@ -239,6 +253,14 @@ class OnyxFlowHandler(ConfigFlow, domain=DOMAIN):
         ).verify()
 
 
+def _store_local_address(options: dict, local_address: str | None) -> None:
+    """Store the local address, or remove it for the cloud API; never store None."""
+    if local_address:
+        options[CONF_LOCAL_ADDRESS] = local_address
+    else:
+        options.pop(CONF_LOCAL_ADDRESS, None)
+
+
 # pragma: no mutate start
 class OnyxOptionsFlowHandler(OptionsFlow):
     """Handle a option flow for ONYX."""
@@ -250,9 +272,13 @@ class OnyxOptionsFlowHandler(OptionsFlow):
     async def async_step_init(self, user_input=None) -> FlowResult:
         """Handle options flow."""
         if user_input is not None:
-            return self.async_create_entry(
-                title=self.config_entry.title, data=user_input
+            data = dict(user_input)
+            # the frontend omits a cleared field; the options replace the stored
+            # ones, so an omitted or empty address selects the cloud API
+            _store_local_address(
+                data, normalize_local_address(data.get(CONF_LOCAL_ADDRESS))
             )
+            return self.async_create_entry(title=self.config_entry.title, data=data)
 
         if user_input is None:
             user_input = self.config_entry.options
@@ -273,7 +299,7 @@ def _get_options_schema(data: dict | None = None):
         {
             vol.Optional(
                 CONF_LOCAL_ADDRESS,
-                default=data.get(CONF_LOCAL_ADDRESS, vol.UNDEFINED),
+                description={"suggested_value": data.get(CONF_LOCAL_ADDRESS)},
             ): selector.TextSelector(
                 selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
             ),

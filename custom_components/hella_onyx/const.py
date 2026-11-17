@@ -22,7 +22,8 @@ MIN_INTERPOLATION_FREQUENCY = 0
 MAX_INTERPOLATION_FREQUENCY = 10
 MIN_CLOSED_TOLERANCE = 0
 MAX_CLOSED_TOLERANCE = 20
-MIN_MOVING_TIMEOUT = 10
+# above the longest command (two attempts and the backoff, about 21 s)
+MIN_MOVING_TIMEOUT = 30
 MAX_MOVING_TIMEOUT = 3600
 MIN_ADDITIONAL_DELAY = 0
 MAX_ADDITIONAL_DELAY = 20000
@@ -35,6 +36,11 @@ DEFAULT_MAX_COLOR_TEMPERATURE = 10500
 COLOR_MODE_TEMPERATURE = "temperature"
 
 SNAPSHOT_TIMEOUT = 30
+# the longest wait (in s) for the response to one attempt of a command
+COMMAND_TIMEOUT = 10
+# the randomized backoff (in s) before the single retry of a failed command
+COMMAND_RETRY_DELAY_MIN = 0.5
+COMMAND_RETRY_DELAY_MAX = 1.0
 STREAM_RESTART_DELAY = 60
 STREAM_CHECK_INTERVAL = 10
 # the ONYX.CENTER sends a pulse every 30 seconds; three missed pulses

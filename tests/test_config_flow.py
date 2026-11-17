@@ -3,7 +3,7 @@
 from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntry
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
     CONF_CODE,
@@ -11,11 +11,16 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
 )
 from onyx_client.enum.verify_result import VerifyResult
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hella_onyx.config_flow import (
     OnyxFlowHandler,
     OnyxOptionsFlowHandler,
     _get_options_schema,
+)
+from custom_components.hella_onyx.configuration import (
+    Configuration,
+    normalize_local_address,
 )
 from custom_components.hella_onyx.const import (
     CONF_ADDITIONAL_DELAY,
@@ -33,6 +38,7 @@ from custom_components.hella_onyx.const import (
     DEFAULT_MIN_DIM_DURATION,
     DEFAULT_MOVING_TIMEOUT,
     DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
     MAX_ADDITIONAL_DELAY,
     MAX_CLOSED_TOLERANCE,
     MAX_DIM_DURATION,
@@ -158,6 +164,34 @@ class TestOnyxFlowHandler:
         assert mock_async_abort_entries_match.called
         assert mock_async_verify_conn.called
         assert mock_async_step_options.called
+
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_verify_conn"
+    )
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_step_options"
+    )
+    @pytest.mark.asyncio
+    async def test_async_step_user_empty_local_address_is_cloud(
+        self,
+        mock_async_step_options,
+        mock_async_verify_conn,
+        mock_async_abort_entries_match,
+    ):
+        mock_async_verify_conn.return_value = VerifyResult.OK
+        config_flow = OnyxFlowHandler()
+        await config_flow.async_step_user(
+            {
+                CONF_FINGERPRINT: "finger",
+                CONF_ACCESS_TOKEN: "token",
+                CONF_LOCAL_ADDRESS: "",
+            }
+        )
+        mock_async_verify_conn.assert_called_once_with("finger", "token", None)
+        assert CONF_LOCAL_ADDRESS not in config_flow._options
 
     @patch(
         "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_abort_entries_match"
@@ -406,7 +440,9 @@ class TestOnyxFlowHandler:
         schema_keys = {k.schema: k for k in kwargs["data_schema"].schema}
         assert CONF_SCAN_INTERVAL in schema_keys
         assert CONF_LOCAL_ADDRESS in schema_keys
-        assert schema_keys[CONF_LOCAL_ADDRESS].default() == "192.168.1.99"
+        assert schema_keys[CONF_LOCAL_ADDRESS].description == {
+            "suggested_value": "192.168.1.99"
+        }
         assert CONF_ADDITIONAL_DELAY in schema_keys
         assert CONF_CLOSED_TOLERANCE in schema_keys
         assert CONF_MOVING_TIMEOUT in schema_keys
@@ -415,6 +451,30 @@ class TestOnyxFlowHandler:
         assert CONF_INTERPOLATION_FREQUENCY in schema_keys
         assert CONF_FORCE_UPDATE not in schema_keys
         assert kwargs["errors"] == {}
+
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_create_entry"
+    )
+    @pytest.mark.asyncio
+    async def test_async_step_options_empty_local_address(
+        self, mock_async_create_entry
+    ):
+        config_flow = OnyxFlowHandler()
+        config_flow._data = {CONF_FINGERPRINT: "finger"}
+        await config_flow.async_step_options(
+            {
+                CONF_LOCAL_ADDRESS: " ",
+                CONF_SCAN_INTERVAL: 60,
+                CONF_MIN_DIM_DURATION: 0,
+                CONF_MAX_DIM_DURATION: 2000,
+                CONF_ADDITIONAL_DELAY: 1000,
+                CONF_CLOSED_TOLERANCE: 3,
+                CONF_MOVING_TIMEOUT: 180,
+                CONF_INTERPOLATION_FREQUENCY: 5000,
+            }
+        )
+        options = mock_async_create_entry.call_args.kwargs["options"]
+        assert CONF_LOCAL_ADDRESS not in options
 
     @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_show_form")
     @patch(
@@ -451,7 +511,7 @@ class TestOnyxFlowHandler:
         assert entry_kwargs["options"][CONF_MOVING_TIMEOUT] == 180
         assert CONF_FORCE_UPDATE not in entry_kwargs["options"]
         assert entry_kwargs["options"][CONF_INTERPOLATION_FREQUENCY] == 5000
-        assert entry_kwargs["options"][CONF_LOCAL_ADDRESS] is None
+        assert CONF_LOCAL_ADDRESS not in entry_kwargs["options"]
 
     @patch("custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_show_form")
     @patch(
@@ -797,6 +857,97 @@ class TestOnyxOptionsFlowHandler:
         assert form["title"] != ""
         assert form["data"] == user_input
 
+    @pytest.mark.parametrize(
+        ("value", "expected"), [("", None), ("  ", None), (" 10.0.0.1 ", "10.0.0.1")]
+    )
+    @patch("homeassistant.core.HomeAssistant")
+    @pytest.mark.asyncio
+    async def test_async_step_init_normalizes_local_address(
+        self, mock_hass, value, expected
+    ):
+        """An empty local address must not select the local API."""
+        options_flow = OnyxOptionsFlowHandler()
+        options_flow.hass = mock_hass
+        mock_hass.config_entries.async_get_entry.return_value = MagicMock()
+        result = await options_flow.async_step_init(
+            {CONF_LOCAL_ADDRESS: value, CONF_SCAN_INTERVAL: 100}
+        )
+        expected_data = {CONF_SCAN_INTERVAL: 100}
+        if expected is not None:
+            expected_data[CONF_LOCAL_ADDRESS] = expected
+        assert result["data"] == expected_data
+
+    @patch("homeassistant.core.HomeAssistant")
+    @pytest.mark.asyncio
+    async def test_async_step_init_cleared_local_address_is_cloud(self, mock_hass):
+        """The frontend omits a cleared field; the stored address must go."""
+        options_flow = OnyxOptionsFlowHandler()
+        options_flow.hass = mock_hass
+        entry = MagicMock()
+        entry.options = {CONF_LOCAL_ADDRESS: "10.0.0.1"}
+        mock_hass.config_entries.async_get_entry.return_value = entry
+        form = await options_flow.async_step_init()
+        # the stored address is only suggested, so it can be cleared
+        key = next(k for k in form["data_schema"].schema if k == CONF_LOCAL_ADDRESS)
+        assert key.description == {"suggested_value": "10.0.0.1"}
+        submitted = form["data_schema"]({})
+        assert CONF_LOCAL_ADDRESS not in submitted
+        result = await options_flow.async_step_init(submitted)
+        assert CONF_LOCAL_ADDRESS not in result["data"]
+        assert (
+            Configuration(
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                "f",
+                "t",
+                normalize_local_address(result["data"].get(CONF_LOCAL_ADDRESS)),
+            ).is_local
+            is False
+        )
+
+    @patch("homeassistant.core.HomeAssistant")
+    @pytest.mark.asyncio
+    async def test_async_step_init_stored_none_still_works(self, mock_hass):
+        """Entries stored None before the key was removed for the cloud API."""
+        options_flow = OnyxOptionsFlowHandler()
+        options_flow.hass = mock_hass
+        entry = MagicMock()
+        entry.options = {CONF_LOCAL_ADDRESS: None}
+        mock_hass.config_entries.async_get_entry.return_value = entry
+        form = await options_flow.async_step_init()
+        submitted = form["data_schema"]({})
+        result = await options_flow.async_step_init(submitted)
+        assert CONF_LOCAL_ADDRESS not in result["data"]
+
+    @patch("homeassistant.core.HomeAssistant")
+    @pytest.mark.asyncio
+    async def test_async_step_init_keeps_submitted_local_address(self, mock_hass):
+        options_flow = OnyxOptionsFlowHandler()
+        options_flow.hass = mock_hass
+        mock_hass.config_entries.async_get_entry.return_value = MagicMock()
+        result = await options_flow.async_step_init({CONF_LOCAL_ADDRESS: "10.0.0.1"})
+        assert result["data"] == {CONF_LOCAL_ADDRESS: "10.0.0.1"}
+
+    @patch(
+        "custom_components.hella_onyx.config_flow.OnyxFlowHandler.async_create_entry"
+    )
+    @pytest.mark.asyncio
+    async def test_async_step_options_clears_address_of_user_step(self, mock_create):
+        """An address entered in the user step is cleared in the options step."""
+        config_flow = OnyxFlowHandler()
+        config_flow._data = {CONF_FINGERPRINT: "finger"}
+        config_flow._options = {CONF_LOCAL_ADDRESS: "10.0.0.1"}
+        await config_flow.async_step_options(
+            _get_options_schema(config_flow._options)({})
+        )
+        assert CONF_LOCAL_ADDRESS not in mock_create.call_args.kwargs["options"]
+        assert CONF_LOCAL_ADDRESS not in config_flow._options
+
 
 class TestGetOptionsSchema:
     def test_get_options_schema_defaults_and_selectors(self):
@@ -864,7 +1015,9 @@ class TestGetOptionsSchema:
         }
         schema = _get_options_schema(custom)
         field_map = {k.schema: (k, v) for k, v in schema.schema.items()}
-        assert field_map[CONF_LOCAL_ADDRESS][0].default() == "10.0.0.1"
+        assert field_map[CONF_LOCAL_ADDRESS][0].description == {
+            "suggested_value": "10.0.0.1"
+        }
         assert field_map[CONF_INTERPOLATION_FREQUENCY][0].default() == 10
         assert field_map[CONF_ADDITIONAL_DELAY][0].default() == 500
         assert field_map[CONF_CLOSED_TOLERANCE][0].default() == 7
@@ -872,6 +1025,103 @@ class TestGetOptionsSchema:
         assert field_map[CONF_MIN_DIM_DURATION][0].default() == 100
         assert field_map[CONF_MAX_DIM_DURATION][0].default() == 3000
         assert field_map[CONF_SCAN_INTERVAL][0].default() == 15
+
+    def test_get_options_schema_stored_none_local_address(self):
+        """Entries created before None was dropped must still show the form."""
+        schema = _get_options_schema({CONF_LOCAL_ADDRESS: None})
+        assert CONF_LOCAL_ADDRESS not in schema({})
+
+    def test_get_options_schema_local_address_is_not_a_default(self):
+        schema = _get_options_schema({CONF_LOCAL_ADDRESS: "10.0.0.1"})
+        assert CONF_LOCAL_ADDRESS not in schema({})
+        assert (
+            schema({CONF_LOCAL_ADDRESS: "10.0.0.2"})[CONF_LOCAL_ADDRESS] == "10.0.0.2"
+        )
+
+
+class TestReauthRealHass:
+    """Reauth through a real flow manager."""
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, enable_custom_integrations):
+        """Make the custom integration loadable."""
+
+    async def _start(self, hass, options):
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            version=3,
+            minor_version=3,
+            data={CONF_FINGERPRINT: "fp", CONF_ACCESS_TOKEN: "tok"},
+            options=options,
+        )
+        entry.add_to_hass(hass)
+        with (
+            patch(
+                "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_verify_conn",
+                return_value=VerifyResult.OK,
+            ) as verify,
+            patch.object(hass.config_entries, "async_reload", AsyncMock()),
+        ):
+            result = await hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": SOURCE_REAUTH, "entry_id": entry.entry_id},
+                data=dict(entry.data),
+            )
+            await hass.async_block_till_done()
+        return entry, result, verify
+
+    async def test_reauth_keeps_local_address_and_options(self, hass):
+        options = {CONF_LOCAL_ADDRESS: "10.0.0.7", CONF_SCAN_INTERVAL: 77}
+        entry, result, verify = await self._start(hass, options)
+        assert result["type"] == "abort"
+        assert result["reason"] == "reauth_successful"
+        verify.assert_awaited_once_with("fp", "tok", "10.0.0.7")
+        assert entry.options == options
+        assert entry.data == {CONF_FINGERPRINT: "fp", CONF_ACCESS_TOKEN: "tok"}
+
+    async def test_reauth_without_local_address(self, hass):
+        entry, result, verify = await self._start(hass, {CONF_SCAN_INTERVAL: 77})
+        assert result["reason"] == "reauth_successful"
+        verify.assert_awaited_once_with("fp", "tok", None)
+        assert entry.options == {CONF_SCAN_INTERVAL: 77}
+
+    async def test_reauth_failure_shows_form_and_keeps_entry(self, hass):
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            data={CONF_FINGERPRINT: "fp", CONF_ACCESS_TOKEN: "tok"},
+            options={CONF_LOCAL_ADDRESS: "10.0.0.7", CONF_SCAN_INTERVAL: 77},
+        )
+        entry.add_to_hass(hass)
+        with patch(
+            "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_verify_conn",
+            return_value=VerifyResult.UNAUTHORIZED,
+        ):
+            result = await hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": SOURCE_REAUTH, "entry_id": entry.entry_id},
+                data=dict(entry.data),
+            )
+        assert result["type"] == "form"
+        assert result["errors"]["base"]
+        assert entry.options == {CONF_LOCAL_ADDRESS: "10.0.0.7", CONF_SCAN_INTERVAL: 77}
+
+        # the user can still clear the address in the form; other options stay
+        with (
+            patch(
+                "custom_components.hella_onyx.config_flow.OnyxFlowHandler._async_verify_conn",
+                return_value=VerifyResult.OK,
+            ) as verify,
+            patch.object(hass.config_entries, "async_reload", AsyncMock()),
+        ):
+            result = await hass.config_entries.flow.async_configure(
+                result["flow_id"],
+                {CONF_FINGERPRINT: "fp", CONF_ACCESS_TOKEN: "tok2"},
+            )
+            await hass.async_block_till_done()
+        assert result["reason"] == "reauth_successful"
+        verify.assert_awaited_once_with("fp", "tok2", None)
+        assert entry.options == {CONF_SCAN_INTERVAL: 77}
+        assert entry.data[CONF_ACCESS_TOKEN] == "tok2"
 
 
 def test_flow_version_matches_migration():

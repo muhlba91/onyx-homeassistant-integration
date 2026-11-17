@@ -2,13 +2,18 @@
 
 import asyncio
 import logging
+import random
 import time
 from contextlib import aclosing
 from datetime import timedelta
 
-from aiohttp import ClientResponseError
+from aiohttp import ClientError, ClientResponseError, InvalidURL
 from homeassistant.core import callback
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError
+from homeassistant.exceptions import (
+    ConfigEntryAuthFailed,
+    ConfigEntryError,
+    HomeAssistantError,
+)
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.event import async_call_later, async_track_time_interval
@@ -29,10 +34,14 @@ from onyx_client.stream.events import (
     Snapshot,
     UpdateChanged,
 )
+from onyx_client.utils.sanitize import describe_exception, protect
 
 from .configuration import Configuration
 from .const import (
     AUTOMATION_CONTEXT,
+    COMMAND_RETRY_DELAY_MAX,
+    COMMAND_RETRY_DELAY_MIN,
+    COMMAND_TIMEOUT,
     DOMAIN,
     SNAPSHOT_TIMEOUT,
     STREAM_CHECK_INTERVAL,
@@ -41,7 +50,7 @@ from .const import (
     UPDATE_CONTEXT,
 )
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = protect(logging.getLogger(__name__))
 
 
 class APIConnector(DataUpdateCoordinator):
@@ -228,17 +237,70 @@ class APIConnector(DataUpdateCoordinator):
 
     async def send_device_command_action(self, uuid: str, action: Action):
         _LOGGER.info("executing %s for device %s", action.string(), uuid)
-        success = await self._client().send_command(uuid, DeviceCommand(action=action))
-        if not success:
-            raise CommandException("ONYX_ACTION_ERROR", uuid)
+        await self._send_command(uuid, DeviceCommand(action=action))
 
     async def send_device_command_properties(self, uuid: str, properties: dict):
         _LOGGER.info("executing %s for device %s", properties, uuid)
-        success = await self._client().send_command(
-            uuid, DeviceCommand(properties=properties)
-        )
-        if not success:
-            raise CommandException("ONYX_ACTION_ERROR", uuid)
+        await self._send_command(uuid, DeviceCommand(properties=properties))
+
+    async def _send_command(self, uuid: str, command: DeviceCommand):
+        """Send the command, retrying once after a short randomized backoff.
+
+        The ONYX.CENTER sometimes rejects or drops a burst of concurrent
+        commands transiently. The client reports a failed response only as
+        False, without its status code, so every rejected response is retried
+        once, as are timeouts and connection errors. Each attempt is cut after
+        COMMAND_TIMEOUT seconds, so a command takes about 21 seconds at most.
+        The jitter keeps concurrent commands from retrying at the same instant.
+        A malformed response (ValueError, including invalid JSON) and an invalid
+        URL (aiohttp.InvalidURL, both a ClientError and a ValueError) are not
+        retried and fail the command at once.
+
+        A retry after a timeout can repeat a command the ONYX.CENTER already
+        ran. That is harmless for open, close, stop, position, light on/off and
+        brightness; it restarts a dim and makes a wink blink twice.
+        """
+        reason = None
+        for attempt in (1, 2):
+            error = None
+            log_reason = None
+            timeout = asyncio.timeout(COMMAND_TIMEOUT)
+            try:
+                async with timeout:
+                    sent = await self._client().send_command(uuid, command)
+                if sent:
+                    return
+                reason = "rejected by the ONYX API"
+                log_reason = f"{reason} (see the logged HTTP status)"
+            except InvalidURL as ex:
+                # also a ValueError: a bad URL is deterministic and not retried
+                raise CommandException(
+                    "ONYX_ACTION_ERROR", uuid, describe_exception(ex)
+                ) from ex
+            except (ClientError, TimeoutError) as ex:
+                # never the exception itself; the client logs rejected responses, raised
+                # errors are logged only here
+                if timeout.expired():
+                    reason = f"timed out after {COMMAND_TIMEOUT} s"
+                else:
+                    reason = describe_exception(ex)
+                log_reason = reason
+                error = ex
+            except ValueError as ex:
+                # a malformed response will not get better by a retry
+                raise CommandException(
+                    "ONYX_ACTION_ERROR", uuid, describe_exception(ex)
+                ) from ex
+            if attempt == 1:
+                delay = random.uniform(COMMAND_RETRY_DELAY_MIN, COMMAND_RETRY_DELAY_MAX)
+                _LOGGER.warning(
+                    "command for device %s failed (%s), retrying in %.1f seconds",
+                    uuid,
+                    log_reason,
+                    delay,
+                )
+                await asyncio.sleep(delay)
+        raise CommandException("ONYX_ACTION_ERROR", uuid, reason) from error
 
     async def set_automation_enabled(self, identifier: str, enabled: bool) -> bool:
         """Enable or disable an automation; disabling cancels its commands."""
@@ -273,18 +335,29 @@ class APIConnector(DataUpdateCoordinator):
             if asyncio.current_task().cancelling():
                 return  # stopped by _stop_stream while failing
             # the client raises only for rejected credentials (401/403)
-            _LOGGER.error("event stream rejected the credentials: %s", ex)
-            self.async_set_update_error(ex)
+            # never log the exception itself: its repr contains the request headers
+            _LOGGER.error(
+                "event stream rejected the credentials: %s", describe_exception(ex)
+            )
+            self.async_set_update_error(UpdateFailed(describe_exception(ex)))
             if self.config_entry is not None:
                 self.config_entry.async_start_reauth(self.hass)
         except Exception as ex:
             if asyncio.current_task().cancelling():
                 return  # stopped by _stop_stream while failing
             # the client reconnects by itself, so this is unexpected
-            _LOGGER.exception(
-                "event stream failed, restarting in %s seconds", STREAM_RESTART_DELAY
+            # no traceback for HTTP/connection errors: they may carry request data
+            _LOGGER.error(
+                "event stream failed (%s), restarting in %s seconds",
+                describe_exception(ex),
+                STREAM_RESTART_DELAY,
+                exc_info=not isinstance(ex, ClientError),
             )
-            self.async_set_update_error(ex)
+            self.async_set_update_error(
+                UpdateFailed(describe_exception(ex))
+                if isinstance(ex, ClientError)
+                else ex
+            )
             self._restarting = True
             self._schedule_restart()
 
@@ -416,10 +489,14 @@ class APIConnector(DataUpdateCoordinator):
             self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
 
 
-class CommandException(Exception):
-    """Exception for a failed command."""
+class CommandException(HomeAssistantError):
+    """Exception for a failed command.
 
-    def __init__(self, msg: str, uuid: str):
-        super().__init__(msg)
+    A HomeAssistantError, so that automations can continue on error.
+    """
+
+    def __init__(self, msg: str, uuid: str, reason: str | None = None):
+        super().__init__(f"{msg}: {reason}" if reason else msg)
         self.uuid = uuid
-        _LOGGER.error("command errored: %s for id %s", msg, uuid)
+        # the single error log of a failed command; the reason is token-free
+        _LOGGER.error("command errored: %s for id %s (%s)", msg, uuid, reason)

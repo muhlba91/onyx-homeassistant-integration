@@ -10,9 +10,10 @@ from homeassistant.const import (
     Platform,
 )
 from homeassistant.core import HomeAssistant
+from onyx_client.utils.sanitize import protect
 
 from .api_connector import APIConnector
-from .configuration import Configuration
+from .configuration import Configuration, normalize_local_address
 from .const import (
     CONF_ADDITIONAL_DELAY,
     CONF_CLOSED_TOLERANCE,
@@ -33,7 +34,7 @@ from .const import (
 )
 from .models import OnyxData
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = protect(logging.getLogger(__name__))
 
 PLATFORMS = [
     Platform.BINARY_SENSOR,
@@ -52,7 +53,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: OnyxConfigEntry) -> bool
     """Set up ONYX from a config entry."""
     fingerprint = entry.data[CONF_FINGERPRINT]
     token = entry.data[CONF_ACCESS_TOKEN]
-    local_address = entry.options.get(CONF_LOCAL_ADDRESS)
+    local_address = normalize_local_address(entry.options.get(CONF_LOCAL_ADDRESS))
     scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     interpolation_frequency = entry.options.get(
         CONF_INTERPOLATION_FREQUENCY, DEFAULT_INTERPOLATION_FREQUENCY
@@ -71,7 +72,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: OnyxConfigEntry) -> bool
         CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION
     )
 
-    _LOGGER.debug("setting up %s integration with fingerprint %s", DOMAIN, fingerprint)
+    _LOGGER.debug("setting up %s integration", DOMAIN)
 
     onyx_config = Configuration(
         scan_interval,
@@ -85,7 +86,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: OnyxConfigEntry) -> bool
         token,
         local_address,
     )
-    _LOGGER.info("using config: %s", onyx_config)
+    # the fingerprint is deliberately logged: it is no credential, and the client
+    # identifies the ONYX.CENTER by it in its own logs; the token is not part of
+    # Configuration.__str__
+    _LOGGER.info(
+        "using the %s API: %s",
+        "local" if onyx_config.is_local else "cloud",
+        onyx_config,
+    )
     onyx_api = APIConnector(hass, onyx_config, entry)
     await onyx_api.async_config_entry_first_refresh()
     onyx_timezone = await onyx_api.get_timezone()
@@ -146,7 +154,6 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
             CONF_ACCESS_TOKEN: old_data.get(CONF_ACCESS_TOKEN),
         }
         new_options = {
-            CONF_LOCAL_ADDRESS: old_data.get(CONF_LOCAL_ADDRESS),
             CONF_SCAN_INTERVAL: old_data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
             CONF_INTERPOLATION_FREQUENCY: old_data.get(
                 CONF_INTERPOLATION_FREQUENCY, DEFAULT_INTERPOLATION_FREQUENCY
@@ -158,6 +165,8 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
                 CONF_MAX_DIM_DURATION, DEFAULT_MAX_DIM_DURATION
             ),
         }
+        if old_data.get(CONF_LOCAL_ADDRESS):
+            new_options[CONF_LOCAL_ADDRESS] = old_data[CONF_LOCAL_ADDRESS]
         hass.config_entries.async_update_entry(
             config_entry, data=new_data, options=new_options, version=3, minor_version=1
         )

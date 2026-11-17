@@ -1,5 +1,6 @@
 """Test for ONYX integration init, setup and teardown."""
 
+import logging
 from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
@@ -65,6 +66,40 @@ def mock_config_entry():
         subentries_data={},
     )
     return entry
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("option", "expected", "api"),
+    [
+        (None, None, "cloud"),
+        ("", None, "cloud"),
+        ("  ", None, "cloud"),
+        (" 192.168.1.50 ", "192.168.1.50", "local"),
+    ],
+)
+@patch("custom_components.hella_onyx.APIConnector")
+async def test_async_setup_entry_local_address(
+    mock_api_connector_class, mock_config_entry, option, expected, api, caplog
+):
+    """An empty local address selects the cloud API, never a local URL."""
+    caplog.set_level(logging.INFO)
+    hass = MagicMock()
+    mock_api = MagicMock()
+    mock_api.async_config_entry_first_refresh = AsyncMock()
+    mock_api.get_timezone = AsyncMock(return_value="Europe/Vienna")
+    mock_api_connector_class.return_value = mock_api
+    hass.config_entries.async_forward_entry_setups = AsyncMock(return_value=True)
+    entry = MagicMock()
+    entry.data = mock_config_entry.data
+    entry.options = {**mock_config_entry.options, CONF_LOCAL_ADDRESS: option}
+
+    assert await async_setup_entry(hass, entry)
+    config = mock_api_connector_class.call_args.args[1]
+    assert config.local_address == expected
+    assert config.is_local is (expected is not None)
+    assert f"using the {api} API" in caplog.text
+    assert "token_123" not in caplog.text
 
 
 @pytest.mark.asyncio
@@ -308,7 +343,6 @@ async def test_async_migrate_entry_v2_defaults():
             CONF_ACCESS_TOKEN: "token_123",
         },
         options={
-            CONF_LOCAL_ADDRESS: None,
             CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
             CONF_INTERPOLATION_FREQUENCY: DEFAULT_INTERPOLATION_FREQUENCY,
             CONF_MIN_DIM_DURATION: DEFAULT_MIN_DIM_DURATION,
