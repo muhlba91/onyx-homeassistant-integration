@@ -1,6 +1,23 @@
 # Changelog
 
 
+## [14.0.2](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v14.0.1...v14.0.2) (2026-11-20)
+
+
+### Bug Fixes
+
+* fix mutmut config ([63ebbc5](https://github.com/muhlba91/onyx-homeassistant-integration/commit/63ebbc5821401b7cd668c557e30734eb83b45f02))
+
+
+### Miscellaneous Chores
+
+* **deps:** update actions/dependency-review-action action to v5.0.1 ([9691499](https://github.com/muhlba91/onyx-homeassistant-integration/commit/9691499665cf8d6ac1d171ad9b4e1ba8efbab422))
+* **deps:** update dependency ruff to v0.17.6 ([9ff010b](https://github.com/muhlba91/onyx-homeassistant-integration/commit/9ff010b4dcbfedb815f1457ce693cc2fbe8045b2))
+* **deps:** update github/codeql-action action to v4.39.4 ([889f7d0](https://github.com/muhlba91/onyx-homeassistant-integration/commit/889f7d00cae13c07538323699e61b49ac583d0d7))
+* **deps:** update jdx/mise-action action to v5.2.10 ([175ec44](https://github.com/muhlba91/onyx-homeassistant-integration/commit/175ec4424020ae3cd73734e6fa0851624eb76d22))
+* **deps:** update ossf/scorecard-action action to v2.6.0 ([d9f63f5](https://github.com/muhlba91/onyx-homeassistant-integration/commit/d9f63f5484067705c3740dc34de75dace8d64435))
+* **deps:** update step-security/harden-runner action to v2.23.0 ([7f076e8](https://github.com/muhlba91/onyx-homeassistant-integration/commit/7f076e84165052a5240cb31496464e2e3f626527))
+
 ## [14.0.1](https://github.com/muhlba91/onyx-homeassistant-integration/compare/v14.0.0...v14.0.1) (2026-11-17)
 
 
