@@ -1,11 +1,13 @@
 # Hella ONYX.CENTER Custom Component for Home Assistant
 
-[![](https://img.shields.io/github/license/muhlba91/onyx-homeassistant-integration?style=for-the-badge)](LICENSE)
-[![](https://img.shields.io/github/actions/workflow/status/muhlba91/onyx-homeassistant-integration/release.yml?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/actions/workflows/release.yml)
-[![](https://img.shields.io/coveralls/github/muhlba91/onyx-homeassistant-integration?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/)
-[![](https://api.scorecard.dev/projects/github.com/muhlba91/onyx-homeassistant-integration/badge?style=for-the-badge)](https://scorecard.dev/viewer/?uri=github.com/muhlba91/onyx-homeassistant-integration)
+[![License](https://img.shields.io/github/license/muhlba91/onyx-homeassistant-integration?style=for-the-badge)](LICENSE)
+[![Release workflow](https://img.shields.io/github/actions/workflow/status/muhlba91/onyx-homeassistant-integration/release.yml?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/actions/workflows/release.yml)
+[![Coverage](https://img.shields.io/coveralls/github/muhlba91/onyx-homeassistant-integration?style=for-the-badge)](https://github.com/muhlba91/onyx-homeassistant-integration/)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/muhlba91/onyx-homeassistant-integration/badge?style=for-the-badge)](https://scorecard.dev/viewer/?uri=github.com/muhlba91/onyx-homeassistant-integration)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
-[![](https://img.shields.io/github/all-contributors/muhlba91/onyx-homeassistant-integration?color=ee8449&style=for-the-badge)](#contributors)
+[![All contributors](https://img.shields.io/github/all-contributors/muhlba91/onyx-homeassistant-integration?color=ee8449&style=for-the-badge)](#contributors)
+<!-- sized badge: markdown image syntax cannot set width and height -->
+<!-- markdownlint-disable-next-line MD033 -->
 <a href="https://www.buymeacoffee.com/muhlba91" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="28" width="150"></a>
 
 This component creates an integration that provides the following entities to control [Hella's ONYX.CENTER](https://www.hella.info/) via Home Assistant:
@@ -222,6 +224,7 @@ The project uses [ruff](https://github.com/astral-sh/ruff) for automated code li
 poetry run pre-commit install
 ```
 
+<!-- markdownlint-disable-next-line MD029 -- numbering restarts after the code block -->
 3) Run ruff:
 
 ```bash
@@ -271,4 +274,6 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 
 If you enjoy the application and want to support my efforts, please feel free to buy me a coffe. :)
 
+<!-- sized badge: markdown image syntax cannot set width and height -->
+<!-- markdownlint-disable-next-line MD033 -->
 <a href="https://www.buymeacoffee.com/muhlba91" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="75" width="300"></a>
