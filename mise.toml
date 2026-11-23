@@ -8,5 +8,4 @@ lockfile_platforms = ["macos-arm64", "linux-x64", "linux-arm64"]
 python = "3.14.10"
 uv = "0.13.5"
 actionlint = "1.7.12"
-"pipx:pre-commit" = "4.7.0"
 "pipx:poetry" = { version = "2.4.1", python = "3.14" }

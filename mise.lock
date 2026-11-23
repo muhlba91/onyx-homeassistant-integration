@@ -34,12 +34,6 @@ uv = { path = ".mise/locks/pipx-poetry/2.4.1~67ff1a72", digest = "sha256:65f022a
 [tools."pipx:poetry".options]
 python = "3.14"
 
-[[tools."pipx:pre-commit"]]
-version = "4.7.0"
-backend = "pipx:pre-commit"
-specifiers = ["4.7.0"]
-uv = { path = ".mise/locks/pipx-pre-commit/4.7.0", digest = "sha256:9bad54190d794dd0a7d8807a9a0f31767c71e7207e3a2539053adb19727ecfc2" }
-
 [[tools.python]]
 version = "3.14.10"
 backend = "core:python"
